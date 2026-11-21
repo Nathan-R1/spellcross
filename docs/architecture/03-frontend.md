@@ -59,7 +59,7 @@ animations, the same as Spellford, where values change as each step resolves.
 ```
 <BattleScreen>
   <TopBar exit  stats(hp,gold)  <AbilityBar triggerable /> />
-  <BattleLayout orientation={landscape|portrait}>
+  <BattleLayout>                         landscape only: panel | board | panel
     <CharacterPanel entity=player side="left">
       <EnergyOrb onClick={endTurn if active} label="2 / 2" | "END TURN" />
       <Portrait/> <HealthBar color="green"/> <Name/> <StatusRow onTap={showStatus}/>
@@ -80,27 +80,42 @@ animations, the same as Spellford, where values change as each step resolves.
 - **Lightning:** SVG polyline with random jitter from the actor's portrait to the target's, plus floating
   `-12` / `+3` text that rises 30px and fades (Spellford `Animation.kt`). Positions come from refs on the
   portraits.
-- **Input:** tap-tap selection (parity), plus **drag-to-swap** using pointer events (new; natural on the web).
+- **Input:** tap-tap selection (parity), plus **drag-to-swap** using pointer events (new, and more forgiving
+  than tapping on small tiles). The board sets `touch-action: none` so a drag never scrolls or zooms the page.
 
 ## World map rendering
 
-- Single `<svg viewBox="0 0 1600 1200">` inside a horizontally scrollable container.
-  - Drag-to-pan using pointer events with eased `scrollLeft` (Spellford eases the camera at `maxSpeed`).
-  - Clamped to map bounds.
+- Single `<svg viewBox="0 0 1600 1200">` inside a scrollable container.
+- **Open decision: map scale on a landscape phone.** The 4:3 world doesn't match a ~2.2:1 viewport:
+  - *Fit height* (≈0.29× at 350px tall): the whole map fits with spare width, so there's no panning, but a
+    Village is ~35px across and a Trail is ~2px wide.
+  - *Fit width* (≈0.53× at 844px wide): stops and roads are readable, and the map pans **vertically**
+    (~2× the viewport height). This departs from Spellford's horizontal pan (features 3.2.5).
+  - *Regenerate a wider world* (e.g. 2400×1100) for the new aspect ratio. This changes generation
+    constants, so it isn't a pure port.
+
+  Recommendation: fit width with vertical pan, since it's the only option where the map is readable
+  without changing generation. Decide before M5.
+- Drag-to-pan using pointer events with eased scrolling (Spellford eases the camera at `maxSpeed`),
+  clamped to map bounds.
 - Layers: `<Terrain/>` → `<Rivers/>` (two stroked paths: border, then 35%-width water) → `<Roads/>`
   (glow stroke + road stroke, quadratic Bézier, S-curve = two quads) → `<Stops/>` (shadow circle + `<image>`
   with rotation, procedural fallback) → `<PlayerToken/>`.
 - Travel: compute the point along the road's path with `SVGPathElement.getPointAtLength()` over
   `PLAYER_TRAVEL_DURATION`, which matches the curve exactly with no need to port the Bézier maths.
-- Only stops connected to the current stop are clickable. Others get `aria-disabled` and dimmed hover.
-- `<LegendPanel/>` slides in from the right (Framer Motion spring) when toggled from the TopBar.
+- Only stops connected to the current stop are tappable. Others get `aria-disabled` and are dimmed.
+  Whatever the map scale, each stop gets an invisible hit circle of at least 44px.
+- A drag that moves more than ~8px is a pan, not a tap, so panning never travels by accident.
+- `<LegendPanel/>` slides in from the right (Framer Motion spring) when toggled from the TopBar. It is
+  full height, scrolls on its own, and stays inside the right safe-area inset.
 
 ## Main menu scene
 
 SVG scene: sky `linearGradient`, twinkling stars (CSS keyframes on opacity, randomised per star), three
 mountain layers, ground and highlight. Four interactive objects, each a `<g role="button">`:
-Pathway (perspective path + looping walking figure), Tree, Hut, Chasm. Hover or focus lifts by 8px with
-a glow, with a 150ms press delay before navigating (parity).
+Pathway (perspective path + looping walking figure), Tree, Hut, Chasm. Spellford's hover lift (8px plus a
+glow) plays on **press** instead, since phones have no hover. The 150ms delay before navigating lets the
+lift be seen (parity). Mouse hover also triggers it on desktop.
 
 Menu objects in prod (D11): **Pathway** = New run · **Hut** = Continue run (only when a save exists) ·
 **Chasm** = Abandon run (only when a save exists, with confirmation) · **Tree** = decorative. Spellford's
@@ -112,16 +127,74 @@ Layout: wood background (CSS gradient + grain), title banner, framed image pane 
 (right) with natural CSS text wrapping (replaces the manual `wrapText`), option buttons below the
 text. Each option renders `[Label]` in white, the cost in red and the reward in green, with drop shadows (parity).
 
-## Theming and layout
+On a phone in landscape the image pane is about 40% of the width and the text column scrolls on its own.
+Option buttons are pinned to the bottom of that column, at least 44px tall, so they are always reachable.
+Spellford's option hover state becomes a pressed state.
+
+## Theming
 
 - Design tokens in `theme/tokens.css`: wood browns, bar brown `#66401A`, panel grey, health green and red,
   team colours. Fonts loaded with `@font-face` from the ported `mytitle.ttf` and `mytext.ttf`.
-- Base design size 1280×720 (Spellford's `ExtendViewport`). The layout uses CSS units, not a scaled canvas.
-- Orientation via `@media (orientation: portrait)` or a container query on the battle layout.
-- Minimum supported width 360px.
+- The layout uses CSS units, not a scaled canvas.
+
+## Phone landscape layout
+
+Target: phone browsers held sideways. Everything else is secondary (D13).
+
+### Viewport budget
+
+| | Size (CSS px) | Example |
+|---|---|---|
+| Reference design | 844 × 390 | iPhone 13/14, Safari toolbar hidden |
+| Minimum supported | 667 × 320 | iPhone SE 2/3 with Safari's landscape toolbar showing |
+| Large | 932 × 430 | iPhone Pro Max, large Android phones |
+
+Height is the constraint and width is plentiful. Rules:
+
+- Size with `100dvh` (falling back to `100svh`), never `100vh`. On mobile, `vh` includes the hidden browser
+  toolbar, so content gets cut off.
+- **Top bar ≤ 40px.** Exit, HP and gold on the left, abilities in the middle, Legend on the right. Ability
+  slots are 36px icons whose tap areas extend to the full bar height.
+- **Battle:** the board is a square of side `100dvh − top bar − 8px`, so ~272–382px and tiles of
+  **~34–48px**. The two character panels share the remaining width, ~150–250px each. Panels stack
+  their contents vertically and let the status row wrap or scroll. They never push the board smaller.
+- **Popups:** `max-height: calc(100dvh − 16px)` with internal scroll. In landscape, use a two-column
+  layout (icon and stats left, text right) so they stay short.
+
+### Safe areas
+
+In landscape the notch or Dynamic Island sits on the **left or right** edge, and the home indicator sits
+at the bottom.
+
+- `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`.
+- Backgrounds (wood, sky, map) go edge to edge. Interactive content is padded by
+  `env(safe-area-inset-left/right/bottom)`. The character panels and the Legend panel absorb the side insets.
+
+### Orientation
+
+- `@media (orientation: portrait)` shows a full-screen **"Rotate your device"** overlay over the paused
+  app. No state is lost and no portrait layout exists (D13).
+- On Android Chrome, the first tap on New run / Continue run requests fullscreen and then
+  `screen.orientation.lock('landscape')`. This is best effort, and failures are ignored.
+- iOS Safari supports neither the orientation lock nor the manifest `orientation` key, so iOS always
+  relies on the overlay.
+- Desktop or any viewport wider than 932px: the app renders at the large size, centred and letterboxed, so
+  there is still a single layout to design and test.
+
+### Touch rules
+
+- Interactive targets are **≥ 44×44px** wherever space allows. Battle tiles are the one accepted
+  exception (see Risks in 01). Their whole cell is the target, with no gaps between tiles.
+- No hover-only affordances. Anything Spellford shows on hover shows on press (`:active` / pointer down).
+- Page-level: `overscroll-behavior: none` (no pull-to-refresh or rubber-banding), `touch-action:
+  manipulation` (no double-tap zoom), `user-select: none` and `-webkit-touch-callout: none` on game
+  surfaces (no text selection or long-press menus).
+- `pointercancel` (for example a notification swipe) aborts any drag in progress without making a move.
 
 ## Performance budget
 
 - First load < 300 KB JS gzip (excluding images). Assets lazy-loaded per screen.
 - Battle: 60 fps on a mid-range phone during a 3-step cascade (animate `transform` and `opacity` only).
+  Reference devices: iPhone SE (2nd gen) and a ~US$200 Android phone from the last three years.
+- Assume mobile networks: first screen interactive in < 3s on "Fast 3G" throttling.
 - Map SVG: < 2,000 nodes. Terrain is generated once per run and memoised.

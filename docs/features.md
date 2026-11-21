@@ -13,6 +13,10 @@ finished:
 **Planned** items are listed so they don't get lost, and they are scheduled in
 [05-migration-plan.md](architecture/05-migration-plan.md).
 
+**Combat redesign:** Spellcross replaces Spellford's 1v1 shared-board battle with an intent-based
+loop against 1–4 enemies (D14, specified in [combat.md](combat.md)). Rows in §5 that D14 replaces are
+marked **→ D14**. They're kept here as the record of what Spellford does.
+
 Paths below are relative to `spellford/app/src/main/kotlin/com/spellford/`.
 
 ---
@@ -25,7 +29,7 @@ Paths below are relative to `spellford/app/src/main/kotlin/com/spellford/`.
 | 1.2 | Screen navigation: Menu → World / Event / Battle → Menu | Done | `screens/*` | Screens swap via `game.screen = …` |
 | 1.3 | Persistent top menu bar on World, Event and Battle screens | Done | `ui/TopMenuBar.kt` | See §7 |
 | 1.4 | Exit button returns to the main menu from any screen | Done | `TopMenuBar.onExitClick` | |
-| 1.5 | Landscape and portrait layouts | Done | `BattleScreen.calculateLayout` | Battle swaps layout by aspect ratio |
+| 1.5 | Landscape and portrait layouts | Done | `BattleScreen.calculateLayout` | Battle swaps layout by aspect ratio. Spellcross: **landscape only**, with a rotate prompt in portrait (D13) |
 | 1.6 | Custom fonts (title and body) | Done | `utils/FontManager.kt`, `assets/fonts/mytitle.ttf`, `mytext.ttf` | |
 | 1.7 | Quit the app | Done | Menu "chasm" object → `Gdx.app.exit()` | On web: becomes "Abandon run" (D11) |
 | 1.8 | Save / load game | Planned | `prompt.txt` | Not implemented. No persistence at all today |
@@ -42,7 +46,7 @@ An animated illustrated scene. Each menu option is an object in the scene, not a
 | 2.3 | **Tree with wood** object → play a random story event | Done | Debug/shortcut entry point |
 | 2.4 | **Hut** object → battle prep, then a battle | Done | Debug/shortcut entry point. Uses a fresh `Player` |
 | 2.5 | **Chasm** object → quit | Done | |
-| 2.6 | Hover lift animation on scene objects (lerp to +8px), with a hover glow | Done | |
+| 2.6 | Hover lift animation on scene objects (lerp to +8px), with a hover glow | Done | Spellcross: plays on press (phones have no hover) |
 | 2.7 | Short press delay (0.15s) before acting on a selection | Done | Visual feedback |
 | 2.8 | Icons for menu objects | Done | `assets/icons/icon_book.png`, `icon_chasm.png`, `icon_house.png`, `icon_stone.png` |
 
@@ -118,7 +122,7 @@ An animated illustrated scene. Each menu option is an object in the scene, not a
 | 4.1.4 | Randomised branches resolved when the event is built (gamble outcome, chest success, tavern ambush) | Done | |
 | 4.1.5 | Death check after an option: HP 0 → back to the main menu | Done | Placeholder for game over |
 | 4.1.6 | Event types `NORMAL` and `BATTLE_PREP` | Done | |
-| 4.1.7 | Event screen layout: wood background, title banner, framed image pane, text pane with word wrap, option list with hover state | Done | |
+| 4.1.7 | Event screen layout: wood background, title banner, framed image pane, text pane with word wrap, option list with hover state | Done | Spellcross: hover becomes a pressed state |
 | 4.1.8 | Random event picker from the library, seeded | Done | |
 
 ### 4.2 Event content (must port verbatim)
@@ -140,7 +144,7 @@ An animated illustrated scene. Each menu option is an object in the scene, not a
 | # | Feature | Status | Notes |
 |---|---|---|---|
 | 5.1.1 | Shows the player's spell pool (up to 6 icons) | Done | |
-| 5.1.2 | N loadout slots (default 3, `spellSelections`) | Done | |
+| 5.1.2 | N loadout slots (default 3, `spellSelections`) | Done | Kept at 3 (combat §2.4) |
 | 5.1.3 | Select a spell, then tap a slot to place it. Tapping a filled slot with nothing selected empties it. Spells already slotted are greyed out | Done | |
 | 5.1.4 | FIGHT! button starts the battle with this loadout | Done | |
 | 5.1.5 | Random loadout if the player enters battle with none | Done | `Entity.selectSpells(count)` |
@@ -150,8 +154,8 @@ An animated illustrated scene. Each menu option is an object in the scene, not a
 | # | Feature | Status | Notes |
 |---|---|---|---|
 | 5.2.1 | Grid is 8 columns × 16 rows. The top 8 rows are a hidden **refill buffer** and the bottom 8 are visible | Done | `Constants` says 8×8 (visible area) |
-| 5.2.2 | Tile pool = both entities' selected spells + Dud spells (Ash, Rubble, Mist) + Nova spells (Surge, Critical) | Done | Built in `BattleScreen.show` |
-| 5.2.3 | **Weighted random** tile generation. Dud weights normalised to total 3 and Nova/Both weights normalised to total 3 | Done | Player/enemy spells default weight 1 |
+| 5.2.2 | Tile pool = both entities' selected spells + Dud spells (Ash, Rubble, Mist) + Nova spells (Surge, Critical) | Done | **→ D14**: player loadout only (combat §2.4) |
+| 5.2.3 | **Weighted random** tile generation. Dud weights normalised to total 3 and Nova/Both weights normalised to total 3 | Done | **→ D14**: 60 / 25 / 15 split (combat §2.4) |
 | 5.2.4 | Initial fill has **no pre-existing matches** (re-roll until no set) | Done | |
 | 5.2.5 | Swap two orthogonally adjacent, *available* tiles | Done | Swaps are allowed even if no match forms |
 | 5.2.6 | Match detection: 3+ in a row, horizontal or vertical. L/T shapes merge at the shared tile | Done | `getSetTiles` |
@@ -171,12 +175,12 @@ An animated illustrated scene. Each menu option is an object in the scene, not a
 | # | Feature | Status | Notes |
 |---|---|---|---|
 | 5.3.1 | Player always goes first | Done | |
-| 5.3.2 | **Energy**: max 2 per turn. Each swap costs 1 and you can't swap at 0 | Done | |
-| 5.3.3 | Player ends their turn by tapping their own energy circle (shows "X / X" or "END TURN") | Done | |
-| 5.3.4 | AI turn: picks moves via its behaviour tree and auto-ends at 0 energy | Done | |
+| 5.3.2 | **Energy**: max 2 per turn. Each swap costs 1 and you can't swap at 0 | Done | **→ D14**: 3 moves per turn |
+| 5.3.3 | Player ends their turn by tapping their own energy circle (shows "X / X" or "END TURN") | Done | **→ D14**: auto-end at 0 moves, plus an End Turn button |
+| 5.3.4 | AI turn: picks moves via its behaviour tree and auto-ends at 0 energy | Done | **→ D14**: enemy phase plays intents |
 | 5.3.5 | Status hooks fire at turn start, turn end, round start (when control returns to the player), each tile move, and spell activate/apply | Done | |
-| 5.3.6 | Win/loss detection at end of turn | Partial | Detected and logged. **No victory or defeat screen**, no rewards, no return to the map |
-| 5.3.7 | Defaults when started from the menu: a fresh Player vs a Wolf | Done | |
+| 5.3.6 | Win/loss detection at end of turn | Partial | Detected and logged. **No victory or defeat screen**, no rewards, no return to the map. Spellcross: combat §1 |
+| 5.3.7 | Defaults when started from the menu: a fresh Player vs a Wolf | Done | Debug panel: any encounter |
 | 5.3.8 | XP, levelling and spell unlocks after battle | Stub | `systems/ProgressionSystem.kt` empty |
 
 ### 5.4 Damage and healing formula (`spells/Spell.kt::triggerSpell`)
@@ -219,6 +223,9 @@ Hook order: target `onSpellActivated` → actor `onSpellActivated` → compute �
 | Critical | Both | | | | Critical 1 → self | |
 
 \* Defaults that look like data-entry mistakes. Corrected in Spellcross (D3).
+
+**→ D14:** enemy spells (Dark Bolt to Frenzy) don't go on the board in Spellcross. They become or are
+replaced by enemy intents (combat §5).
 
 Elements: Fire, Lightning, Water, Earth, Air, Acid.
 
@@ -281,7 +288,12 @@ portrait, team colour.
 
 Portrait assets exist for **bear, boar, harbinger** but those enemies are not implemented yet.
 
+**→ D14:** Spellcross enemies are defined by HP, tier and an intent cycle (combat §3, roster in §5), and
+battles have 1–4 of them.
+
 ### 5.9 Enemy AI (`ai/*`)
+
+**→ D14:** the whole behaviour tree is replaced by fixed, visible intent cycles (combat §3.3). Kept for reference.
 
 | # | Feature | Status |
 |---|---|---|
@@ -295,14 +307,14 @@ Portrait assets exist for **bear, boar, harbinger** but those enemies are not im
 
 | # | Feature | Status |
 |---|---|---|
-| 5.10.1 | Board centred, portraits either side (landscape) or below (portrait) | Done |
-| 5.10.2 | Tile background tinted by spell colour and team colour. Icon scaled to fit, aspect preserved. Linked-tile and lock overlays | Done |
-| 5.10.3 | Tap-tap selection with highlight border. Tapping a non-adjacent tile reselects | Done |
+| 5.10.1 | Board centred, portraits either side (landscape) or below (portrait) | Done. **→ D14**: board left, enemy zone and player strip right (combat §6) |
+| 5.10.2 | Tile background tinted by spell colour and team colour. Icon scaled to fit, aspect preserved. Linked-tile and lock overlays | Done. Spellcross: no team tint (player-only board) |
+| 5.10.3 | Tap-tap selection with highlight border. Tapping a non-adjacent tile reselects | Done. The only swap input in Spellcross (combat §2.2) |
 | 5.10.4 | Drop animation: tiles slide down by blanks-below × tile size over the cascade timer | Done |
 | 5.10.5 | Disappearing tiles flash with a white halo | Done |
 | 5.10.6 | Per-step **lightning bolt** from actor to target, plus floating, fading damage and +healing numbers. One animation per target per step | Done |
 | 5.10.7 | Character panel: portrait, energy circle, health bar (green player / red enemy) with "cur/max" text, name, status icons with value badges (wrapping) | Done |
-| 5.10.8 | Tap a tile's spell → popup (icon, name, description, damage, healing, status icons) | Done |
+| 5.10.8 | Tap a tile's spell → popup (icon, name, description, damage, healing, status icons) | Done. Spellcross: **long-press**, since tap selects |
 | 5.10.9 | Tap a status → popup (description, value, duration) | Done |
 | 5.10.10 | Popups are modal: tapping outside dismisses them and clears selection | Done |
 | 5.10.11 | Wood-texture background, with a solid-colour fallback | Done |
@@ -349,14 +361,15 @@ Spellcross needs a generic placeholder fallback for any missing asset.
 
 ## Resolved decisions
 
-These behaviours look accidental in Spellford. Each one has been decided as **Replicate** (port
-as-is) or **Fix** (port the evident intent). Spellcross implements the **Decision** column, and every
+These behaviours look accidental in Spellford, conflict with Spellcross's target platform, or are being redesigned. Each one has been
+decided as **Replicate** (port as-is), **Fix** (port the evident intent) or **Change** (deliberate departure
+for the web/phone platform). Spellcross implements the **Decision** column, and every
 Fix gets a unit test that names this entry (e.g. `// features.md D1`).
 
 | # | Spellford behaviour | Decision | Spellcross behaviour |
 |---|---|---|---|
-| D1 | Strength, Weakness and Charge add to the *self-per-tile* channel, which boosts **healing**. Descriptions say "damage dealt" | **Fix** | They act on the **damage** channel (`addOtherPerTile`): Strength `+value`/tile, Charge `+value`/tile, Weakness `−value`/tile. Per-tile damage is floored at 0, so Weakness can't turn damage into healing. They only apply when the spell deals base damage > 0. Strength and Weakness keep ticking down 1 duration per cast, as in Spellford |
-| D2 | `Leaf.validate()` is never called, so AI conditions are ignored | **Fix** | Selector nodes skip a leaf whose `when` is false. The Wolf then only uses its first Frenzy branch below 50% HP. (Frenzy is still reachable later in the list, so overall Wolf behaviour changes only slightly) |
+| D1 | Strength, Weakness and Charge add to the *self-per-tile* channel, which boosts **healing**. Descriptions say "damage dealt" | **Fix** (Weakness and ticking amended by D14, combat §4) | They act on the **damage** channel (`addOtherPerTile`): Strength `+value`/tile, Charge `+value`/tile, Weakness `−value`/tile. Per-tile damage is floored at 0, so Weakness can't turn damage into healing. They only apply when the spell deals base damage > 0. Strength and Weakness keep ticking down 1 duration per cast, as in Spellford |
+| D2 | `Leaf.validate()` is never called, so AI conditions are ignored | ~~Fix~~ **Superseded by D14** (no behaviour tree) | Selector nodes skip a leaf whose `when` is false. The Wolf then only uses its first Frenzy branch below 50% HP. (Frenzy is still reachable later in the list, so overall Wolf behaviour changes only slightly) |
 | D3 | Several spells keep the default element Fire (Dark Bolt, Life Drain, Curse, Frost Nova, Vampiric Touch), and Heal is Lightning | **Fix** | Elements follow name and icon: Heal → Water, Dark Bolt → Earth, Life Drain → Water, Curse → Acid, Frost Nova → Water, Vampiric Touch → Acid. Elements have no combat effect today except through D4, so this is low risk |
 | D4 | Charge Fire/Lightning/Stone and Fortify Ice/Stone/Air have no effect. Bulwark of Ice grants *generic* Fortify, unlike its siblings | **Fix** | **Charge ‹element›**: `+value` damage per tile on spells of that element (Fire, Lightning, Stone→Earth). It ticks 1 duration per matching cast. **Fortify ‹element›**: incoming damage from spells of that element (Ice→Water, Stone→Earth, Air) is reduced by `value × tiles`, and it ticks 1 duration at the owner's turn end. Bulwark of Ice grants **Fortify Ice**. Generic Fortify stays as-is (cast → gain Block) |
 | D5 | Gambler shows a wager but never deducts it. Warlock "Weight Gem" option gives "Spell Upgrade" | **Fix** | The wager (50 / 200) is deducted when chosen, and the outcome is rolled 50/50. On a win: **Insist** = +2× wager gold, **Take some junk** = wager back + Gemstone. The Warlock option gives a **Weight Gem** item |
@@ -367,6 +380,10 @@ Fix gets a unit test that names this entry (e.g. `// features.md D1`).
 | D10 | Linked tiles other than Surge are only cleared, with no effect | **Replicate** | Ash, Slime, Orb, Charge and Wall stay "board cleaners": they get pulled into adjacent sets and removed, adding nothing. Surge keeps its mimic behaviour. The engine has a `linkBehaviour` hook so real effects can be added later (post-parity) |
 | D11 | Chasm quits the app (`Gdx.app.exit()`) | **Fix** | Chasm becomes **"Abandon run"**, shown only when a saved run exists, with a confirmation dialog. Otherwise it's decorative. Hut becomes **"Continue run"** (when a save exists). Pathway = **New run**. Tree and Hut's original shortcuts (random event, quick battle) move to the dev-only debug panel |
 | D12 | Sicken is described as "Poison the target heavily". `combine(2×value)` actually **triples** Poisoned | **Replicate** | Keep the ×3 result and update the description to "Triple the target's Poisoned" so the text matches the behaviour |
+| D13 | Spellford supports both landscape and portrait (1.5, 5.10.1) | **Change** (platform) | Spellcross targets **phone browsers in landscape**. There is one landscape layout, and portrait shows a "rotate your device" overlay without losing state. Hover-only feedback (2.6, 4.1.7) moves to press. Desktop shows the same layout letterboxed. Portrait and tablet layouts are post-parity |
 
-Decisions D1–D4 change combat balance. After M2, re-run the 500-seed Player vs Wolf headless sim
-and record the win rate and average turn count in `05-migration-plan.md` as the balance baseline.
+| D14 | 1v1 battle where the enemy plays on the shared board using a behaviour tree. 2 energy per turn | **Change** (design) | Intent-based combat against **1–4 enemies**. The board is the player's alone, with **3 moves per turn** by tap-tap swap. Each enemy repeats a fixed, visible intent cycle that can damage the player, heal itself or its allies, buff, debuff, or (elite and boss only) alter the board. Full spec: [combat.md](combat.md) |
+
+Decisions D1, D4 and D14 change combat balance. After M2, run the 500-seed headless sim over every
+starter encounter (combat §5) and record the win rate, average turns and average HP lost per encounter in
+`05-migration-plan.md` as the balance baseline.

@@ -6,6 +6,9 @@ the browser and a parity check against [features.md](../features.md).
 ## M0: Scaffold (½ day)
 
 - Vite + React + TS strict, ESLint (with engine/UI boundary rule), Prettier, Vitest, Playwright.
+- Playwright projects use landscape phone emulation (`devices['iPhone 13 landscape']`,
+  `devices['Pixel 7 landscape']`) plus one 667×320 viewport for the minimum size. Desktop Chromium is a smoke test only.
+- App shell: viewport meta with `viewport-fit=cover`, `dvh` sizing, safe-area padding, portrait rotate overlay.
 - Copy assets. Build the asset manifest script. Load fonts.
 - `engine/rng.ts` with tests.
 - CI: typecheck, lint, unit tests, build.
@@ -28,9 +31,12 @@ the browser and a parity check against [features.md](../features.md).
 ## M3: Battle UI (§5.1, §5.10, §7)
 
 - BattlePrepScreen, BattleScreen, BoardView/TileView, CharacterPanel, EnergyOrb, StatusRow, TopBar,
-  AbilityBar, Popup, animation playback queue, lightning and floating numbers, landscape and portrait layouts.
+  AbilityBar, Popup, animation playback queue, lightning and floating numbers, phone landscape layout
+  (03-frontend § Phone landscape layout).
 - ResultScreen (new, minimal; D9).
-- **Exit:** a full battle is playable on desktop and on a phone. Playwright e2e test: prep → swap → end turn → AI turn.
+- **Exit:** a full battle is playable by touch on a **real iPhone (Safari) and a real Android phone (Chrome) in
+  landscape**, including the 667×320 minimum. Tap-tap and drag-to-swap both work, and nothing is clipped by the
+  notch or toolbars. Playwright e2e on the landscape phone projects: prep → swap → end turn → AI turn.
 
 ## M4: Menu and events (§2, §4)
 
@@ -42,7 +48,7 @@ the browser and a parity check against [features.md](../features.md).
 ## M5: World map (§3)
 
 - `generateMap` + terrain/river generation port, with invariant tests over 1,000 seeds.
-- MapView SVG, drag-to-pan, travel along road paths, legend panel.
+- MapView SVG, drag-to-pan, travel along road paths, legend panel. Pan and tap must not get mixed up on touch.
 - **Exit:** the generated map is visually comparable to Spellford for the same seed (side-by-side screenshots).
 
 ## M6: Run loop and persistence (§1.8, §3.3.6–8, §6)
@@ -58,7 +64,8 @@ the browser and a parity check against [features.md](../features.md).
 
 ## M7: Polish and release
 
-- PWA (offline, installable), reduced-motion, keyboard play, a11y pass, performance budget check.
+- PWA (offline, installable from the home screen on iOS and Android, landscape manifest, Android fullscreen and
+  orientation lock), reduced-motion, a11y pass, performance budget check on the reference phones.
 - Deploy as a static site (any static host; choose per company hosting policy).
 - Parity sign-off: walk through every row of features.md and tick it.
 
@@ -68,9 +75,11 @@ the browser and a parity check against [features.md](../features.md).
 - DialogueSystem.
 - Item effects (Gemstone, Weapon, Spell Upgrade, Weight Gem, Recharge).
 - More enemies (Bear, Boar, Harbinger: portraits already exist).
-- Linked-tile behaviours for Ash, Slime, Orb, Charge and Wall. Effects for the Charge* and Fortify* statuses.
+- Linked-tile behaviours for Ash, Slime, Orb, Charge and Wall (D10). (Charge* and Fortify* effects are *not*
+  here: D4 ships them in M2.)
 - Sound and music (Spellford spec lists `sounds/` and `music/` folders, which are empty).
 - Optional PixiJS board renderer.
+- Portrait and tablet layouts, if there's demand (D13).
 
 ## Keeping Spellford and Spellcross in sync
 

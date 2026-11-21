@@ -2,8 +2,12 @@
 
 ## Goals
 
-1. **Feature parity** with Spellford. [features.md](../features.md) is the checklist.
-2. **Runs in the browser** on desktop and mobile (touch first, portrait and landscape), and is installable as a PWA.
+1. **Feature parity** with Spellford. [features.md](../features.md) is the checklist, except for the combat
+   redesign in [combat.md](../combat.md) (D14).
+2. **Built for phone browsers in landscape.** iOS Safari and Android Chrome on a phone held sideways are the
+   primary target. Input is touch-only by design, and the app is installable as a PWA. Desktop browsers get a
+   letterboxed version of the same layout (mouse works as touch) but are not a design target. Portrait shows a
+   "rotate your device" overlay (D13).
 3. **Game logic is separate from rendering.** The rules engine is plain TypeScript with no React or DOM imports,
    so it is deterministic, unit-testable, and could later run on a server or in a worker.
 4. **Content is data, not code.** Spells, statuses, abilities, enemies and events are defined declaratively
@@ -15,6 +19,7 @@
 - Multiplayer, accounts or a backend. Spellcross is a static, client-only app.
 - A game engine like Phaser or Unity. React plus SVG/CSS covers an 8×8 board and a 2D map.
 - Pixel-identical visuals. We match the layout and feel, not libGDX rendering details.
+- A portrait layout, and tablet- or desktop-specific layouts (D13).
 
 ## Tech stack
 
@@ -33,7 +38,7 @@
 | Persistence | `localStorage` (save slots, settings) | See doc 04 |
 | Testing | **Vitest** (engine), **React Testing Library** (components), **Playwright** (e2e) | |
 | Lint/format | ESLint + Prettier, plus an import-boundary rule | Enforces "engine never imports UI" |
-| PWA | `vite-plugin-pwa` | Offline play and home-screen install on mobile |
+| PWA | `vite-plugin-pwa` | Offline play and home-screen install. Manifest sets `orientation: "landscape"` and `display: "fullscreen"` |
 
 **Escape hatch:** if board effects outgrow the DOM (particles, shaders), swap the board view for
 **PixiJS via `@pixi/react`** without touching the engine. The engine/view boundary below exists to keep
@@ -51,11 +56,11 @@ that option open.
 │  orchestrates engine calls, queues engine events for UI     │
 ├─────────────────────────────────────────────────────────────┤
 │  Engine layer (pure TS)      src/engine/                    │
-│  board, battle, spells, statuses, abilities, ai, world,     │
+│  board, battle, spells, statuses, abilities, intents, world,│
 │  events, progression, rng — NO React/DOM imports            │
 ├─────────────────────────────────────────────────────────────┤
 │  Content layer (data)        src/content/                   │
-│  spells, statuses, abilities, enemies, events, map tables   │
+│  spells, statuses, abilities, enemies, encounters, events…  │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -96,15 +101,15 @@ spellcross/
   src/
     main.tsx, App.tsx
     content/                  ← data definitions (doc 04)
-      spells.ts statuses.ts abilities.ts enemies.ts events/ map.ts
+      spells.ts statuses.ts abilities.ts enemies.ts encounters.ts events/ map.ts
     engine/
       rng.ts
       types.ts                ← Entity, Spell, Tile, StatusInstance, ...
       board/                  ← grid, matching, cascade, linked tiles, locking
-      battle/                 ← turn machine, energy, win/loss, spell resolution
+      battle/                 ← turn machine, moves, targeting, win/loss, spell resolution
       status/                 ← hook pipeline + status behaviours
       ability/
-      ai/                     ← behaviour tree + actions/conditions
+      intents/                ← enemy intent cycles and effect resolution
       world/                  ← map generation, travel, encounters
       events/                 ← story event runner
       progression/
@@ -115,8 +120,9 @@ spellcross/
       persistence.ts
     ui/
       screens/  MenuScreen WorldScreen EventScreen BattlePrepScreen BattleScreen ResultScreen
-      components/ TopBar AbilityBar Popup StatusIcon HealthBar EnergyOrb Legend ...
+      components/ TopBar AbilityBar Popup StatusIcon HealthBar Legend ...
       board/    BoardView TileView effects/
+      battle/   EnemyZone EnemySlot IntentBadge PlayerStrip MovesPips
       world/    MapView RoadPath StopNode Terrain River PlayerToken
       menu/     MenuScene ...
       theme/    tokens.css fonts.css
@@ -128,12 +134,14 @@ spellcross/
 ## Runtime flow
 
 ```
-MenuScreen ──Pathway──▶ WorldScreen ──arrive/encounter──▶ EventScreen ─┐
-    │                     ▲    │                                       │
-    │ Tree (debug)        │    └──battle──▶ BattlePrep ──▶ Battle ──▶ Result
-    │ Hut (debug)         └──────────────────────────────────────────────┘
-    └ Chasm → "Return to title" / no-op on web
+MenuScreen ──Pathway (new run)──▶ WorldScreen ──arrive/encounter──▶ EventScreen ─┐
+    │                                ▲    │                                       │
+    │ Hut (continue run) ────────────┤    └──battle──▶ BattlePrep ──▶ Battle ──▶ Result
+    │                                └──────────────────────────────────────────────┘
+    └ Chasm → "Abandon run" (confirm) · Tree → decorative
 ```
+
+Spellford's Tree (random event) and Hut (quick battle) shortcuts move to the debug panel (D11).
 
 A **run** (one journey from Start to Finish) lives in `sessionStore`: seed, generated map, current stop,
 player entity, inventory. Screens are views over that store.
@@ -141,12 +149,13 @@ player entity, inventory. Screens are views over that store.
 ## Cross-cutting concerns
 
 - **Determinism:** every random choice goes through an RNG stream derived from the run seed
-  (`map`, `events`, `board`, `ai`). A run can be reproduced from its seed plus its list of inputs.
-- **Responsive layout:** CSS container queries and `aspect-ratio` replace the hand-computed
-  `calculateLayout`. Board is `min(95vh, 95vw)` square. Portraits sit beside it in landscape and below it in portrait.
-- **Accessibility:** tiles are buttons with `aria-label="Fireball, row 3 col 5"`, and keyboard arrows + Enter
-  can swap. Popups are dialogs that trap focus. Animations respect `prefers-reduced-motion`. These go beyond
-  parity but cost little with DOM rendering.
+  (`map`, `events`, `board`, `battle`). A run can be reproduced from its seed plus its list of inputs.
+- **Landscape phone layout:** height is the scarce dimension. See [03-frontend.md § Phone landscape
+  layout](03-frontend.md#phone-landscape-layout) for the viewport budget, safe areas, orientation
+  handling and touch rules. This replaces Spellford's hand-computed `calculateLayout`.
+- **Accessibility:** tiles are buttons with `aria-label="Fireball, row 3 col 5"`, popups are dialogs
+  that trap focus, and animations respect `prefers-reduced-motion`. Keyboard play is a cheap extra for
+  desktop and external keyboards, not a target.
 - **Debug tooling:** a dev-only panel (or `?debug=1`) to set the seed, print the board, jump to any event,
   and start a battle against any enemy. This replaces Spellford's menu shortcuts and `printBoard` logs.
 - **Error handling:** missing assets fall back to a placeholder (Spellford's behaviour). Engine invariants
@@ -156,7 +165,11 @@ player entity, inventory. Screens are views over that store.
 
 | Risk | Mitigation |
 |---|---|
-| Behaviour drift during the port | Port Spellford's tests first, then write golden tests from Spellford runs with a fixed seed |
+| Behaviour drift during the port | Port Spellford's board tests first, then golden tests from Spellford runs with a fixed seed. Combat is redesigned (D14), so its tests come from combat.md, not from Spellford |
 | Status hooks mutating shared spell objects (Spellford pattern) | Replace with a per-cast `CastContext` (doc 02) |
 | Mobile perf of Framer Motion with 64 animated tiles | Animate `transform` only. Fall back to CSS transitions or Pixi if needed |
-| Ambiguous intended behaviour | "Resolved decisions" table (D1–D12) in features.md. Each fix has a test tagged with its id |
+| Small tiles: on a ~320–360px-tall landscape viewport the 8-row board gives ~34–40px tiles, below the 44pt touch guideline | Whole cell is the hit target (no gaps), compact top bar, tap-tap is forgiving (a mis-tap just reselects, it doesn't swap). Check on a 375px-tall device in M3 |
+| 4 enemies at the 667px minimum width leave ~70px per enemy slot | Intent badge and HP bar take priority over portrait size. Status rows collapse to "+n". Verify in M3 with the 4-Wolf encounter |
+| Player-only tile pool makes boards match-starved | Retuned pool weights (combat §2.4), checked by the M2 sim (average matches per move) |
+| iOS Safari can't lock orientation, and its toolbars change the viewport height | Rotate overlay in portrait. Size with `dvh`/`svh`, never `vh`. Test on real iOS hardware every milestone from M3 |
+| Ambiguous intended behaviour | "Resolved decisions" table (D1–D14) in features.md. Each fix has a test tagged with its id |
