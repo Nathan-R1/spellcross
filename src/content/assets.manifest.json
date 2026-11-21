@@ -1,0 +1,709 @@
+{
+ "abilities/bulwark-of-air.png": {
+  "w": 32,
+  "h": 32
+ },
+ "abilities/bulwark-of-fire.png": {
+  "w": 32,
+  "h": 32
+ },
+ "abilities/bulwark-of-ice.png": {
+  "w": 32,
+  "h": 32
+ },
+ "abilities/bulwark-of-lightning.png": {
+  "w": 32,
+  "h": 32
+ },
+ "abilities/bulwark-of-stone.png": {
+  "w": 32,
+  "h": 32
+ },
+ "abilities/crane-stance.png": {
+  "w": 32,
+  "h": 32
+ },
+ "abilities/finisher-fire.png": {
+  "w": 32,
+  "h": 32
+ },
+ "abilities/fuel-of-air.png": {
+  "w": 32,
+  "h": 32
+ },
+ "abilities/fuel-of-fire.png": {
+  "w": 32,
+  "h": 32
+ },
+ "abilities/fuel-of-ice.png": {
+  "w": 32,
+  "h": 32
+ },
+ "abilities/fuel-of-lightning.png": {
+  "w": 32,
+  "h": 32
+ },
+ "abilities/fuel-of-stone.png": {
+  "w": 32,
+  "h": 32
+ },
+ "abilities/low-blow.png": {
+  "w": 32,
+  "h": 32
+ },
+ "abilities/sicken.png": {
+  "w": 32,
+  "h": 32
+ },
+ "fonts/mytext.ttf": {},
+ "fonts/mytitle.ttf": {},
+ "icons/gem.png": {
+  "w": 4725,
+  "h": 4725
+ },
+ "icons/gold.png": {
+  "w": 4725,
+  "h": 4725
+ },
+ "icons/heart.png": {
+  "w": 256,
+  "h": 256
+ },
+ "icons/icon_book.png": {
+  "w": 32,
+  "h": 32
+ },
+ "icons/icon_chasm.png": {
+  "w": 32,
+  "h": 32
+ },
+ "icons/icon_house.png": {
+  "w": 32,
+  "h": 32
+ },
+ "icons/icon_stone.png": {
+  "w": 32,
+  "h": 32
+ },
+ "icons/player.png": {
+  "w": 72,
+  "h": 72
+ },
+ "maps/people/player.png": {
+  "w": 72,
+  "h": 72
+ },
+ "maps/stops/campfire1.png": {
+  "w": 64,
+  "h": 64
+ },
+ "maps/stops/campfire2.png": {
+  "w": 64,
+  "h": 64
+ },
+ "maps/stops/campfire3.png": {
+  "w": 64,
+  "h": 64
+ },
+ "maps/stops/encounter1.png": {
+  "w": 250,
+  "h": 250
+ },
+ "maps/stops/market1.png": {
+  "w": 64,
+  "h": 64
+ },
+ "maps/stops/market2.png": {
+  "w": 64,
+  "h": 64
+ },
+ "maps/stops/town1.png": {
+  "w": 124,
+  "h": 124
+ },
+ "maps/stops/town2.png": {
+  "w": 124,
+  "h": 124
+ },
+ "maps/stops/village1.png": {
+  "w": 75,
+  "h": 75
+ },
+ "maps/stops/village2.png": {
+  "w": 75,
+  "h": 75
+ },
+ "portraits/bear.png": {
+  "w": 90,
+  "h": 90
+ },
+ "portraits/boar.png": {
+  "w": 72,
+  "h": 72
+ },
+ "portraits/harbinger.png": {
+  "w": 72,
+  "h": 72
+ },
+ "portraits/player.png": {
+  "w": 72,
+  "h": 72
+ },
+ "portraits/wolf.png": {
+  "w": 72,
+  "h": 72
+ },
+ "spells/acid/block-poison-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/acid/block-poison-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/acid/block-poison-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/acid/dmg-poison-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/acid/dmg-poison-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/acid/dmg-poison-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/acid/healing-poison-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/acid/healing-poison-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/acid/healing-poison-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/acid/poison-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/acid/poison-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/acid/poison-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/acid/poison-chaos-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/acid/poison-chaos-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/dud/ash.png": {
+  "w": 120,
+  "h": 120
+ },
+ "spells/dud/mist.png": {
+  "w": 120,
+  "h": 120
+ },
+ "spells/dud/orb.png": {
+  "w": 159,
+  "h": 159
+ },
+ "spells/dud/rubble.png": {
+  "w": 120,
+  "h": 120
+ },
+ "spells/dud/slime.png": {
+  "w": 170,
+  "h": 170
+ },
+ "spells/earth/block-chaos-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/block-chaos-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/block-chaos-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/default.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/dmg-block-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/dmg-block-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/dmg-block-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/dmg-chaos-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/dmg-chaos-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/dmg-chaos-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/dmg-healing-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/dmg-healing-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/dmg-healing-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/dmg-poison-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/dmg-poison-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/dmg-poison-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/healing-block-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/healing-block-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/earth/healing-block-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/block-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/block-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/block-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/block-chaos-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/block-chaos-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/block-chaos-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/block-poison-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/block-poison-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/block-poison-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/default.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/dmg-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/dmg-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/dmg-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/dmg-block-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/dmg-block-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/dmg-block-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/dmg-chaos-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/dmg-chaos-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/dmg-chaos-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/dmg-healing-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/dmg-healing-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/dmg-healing-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/dmg-poison-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/dmg-poison-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/dmg-poison-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/healing-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/healing-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/healing-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/healing-block-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/healing-block-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/healing-block-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/healing-chaos-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/healing-chaos-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/fire/healing-chaos-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/lightning/block-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/lightning/default.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/lightning/dmg-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/lightning/dmg-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/lightning/dmg-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/lightning/dmg-block-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/lightning/dmg-block-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/lightning/dmg-block-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/lightning/dmg-poison-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/lightning/dmg-poison-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/lightning/dmg-poison-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/lightning/healing-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/lightning/healing-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/lightning/healing-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/linkedTile.png": {
+  "w": 350,
+  "h": 346
+ },
+ "spells/lockTile.png": {
+  "w": 134,
+  "h": 161
+ },
+ "spells/monster/monster-bite.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/monster/monster-howl.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/monster/monster-whirl.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/nova/charge.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/nova/critical.png": {
+  "w": 124,
+  "h": 124
+ },
+ "spells/nova/surge.png": {
+  "w": 120,
+  "h": 120
+ },
+ "spells/nova/wall.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/nova/wild.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/block-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/block-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/block-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/default.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-block-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-block-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-block-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-chaos-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-chaos-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-chaos-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-healing-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-healing-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-healing-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-healing-4.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-poison-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-poison-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/dmg-poison-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/healing-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/healing-block-1.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/healing-block-2.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/healing-block-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "spells/water/healing-poison-3.png": {
+  "w": 32,
+  "h": 32
+ },
+ "status/block.png": {
+  "w": 512,
+  "h": 512
+ },
+ "status/charge-air.png": {
+  "w": 563,
+  "h": 563
+ },
+ "status/charge-fire.png": {
+  "w": 563,
+  "h": 563
+ },
+ "status/charge-ice.png": {
+  "w": 563,
+  "h": 563
+ },
+ "status/charge-lightning.png": {
+  "w": 563,
+  "h": 563
+ },
+ "status/charge-stone.png": {
+  "w": 563,
+  "h": 563
+ },
+ "status/charge.png": {
+  "w": 512,
+  "h": 512
+ },
+ "status/critical.png": {
+  "w": 563,
+  "h": 563
+ },
+ "status/default.png": {
+  "w": 512,
+  "h": 512
+ },
+ "status/fortify-fire.png": {
+  "w": 564,
+  "h": 563
+ },
+ "status/fortify-ice.png": {
+  "w": 563,
+  "h": 563
+ },
+ "status/fortify-stone.png": {
+  "w": 563,
+  "h": 563
+ },
+ "status/fortify.png": {
+  "w": 512,
+  "h": 512
+ },
+ "status/perma-block.png": {
+  "w": 512,
+  "h": 512
+ },
+ "status/poisoned.png": {
+  "w": 564,
+  "h": 563
+ },
+ "status/strength.png": {
+  "w": 512,
+  "h": 512
+ },
+ "status/weakness.png": {
+  "w": 512,
+  "h": 512
+ },
+ "town/town.jpg": {}
+}
