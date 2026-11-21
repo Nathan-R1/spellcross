@@ -38,7 +38,8 @@ battle start
   whole cascade) and after each enemy's turn start (Poisoned). The battle ends at once, and the remaining
   moves are lost.
 - **Loss:** player HP reaches 0 at any point. The battle stops immediately, even mid enemy phase.
-- Then the ResultScreen (D9). Victory gold is the sum of each defeated enemy's reward roll.
+- Then the ResultScreen (D9). Victory gold is the sum of each defeated enemy's reward roll, plus a possible gem
+  drop (normal 25%, elite 100%; spells-and-gems §3.2).
 
 ## 2. The player's turn
 
@@ -72,77 +73,58 @@ There is no dragging and no path-drawing. Long-press on a tile opens its spell p
   - `single`: the current target (default for damage spells).
   - `all`: every living enemy, each taking the full formula.
   - `random`: one living enemy chosen from the battle RNG, per cast.
-  - `self`: the player (Heal, Shield).
+  - `self`: the player (Restore). A spell's *statuses* have their own self/target flag, so Shield is
+    `single` (1 damage to the target) and also gives the player Block.
 - Spell damage uses the formula in [features.md §5.4](features.md#54-damage-and-healing-formula-spellsspellkttriggerspell)
-  separately for each target, including that target's weaknesses, resistances, Block and Fortify.
+  separately for each target, including that target's weaknesses, resistances, Block and Perma Block.
 
 ### 2.4 The board
 
 The board is the player's alone. Enemies never swap on it.
 
-- **Tile pool** = the player's loadout spells + Dud spells + Nova spells. There are no enemy spells and no
-  team tint.
+- **Tile pool** = the player's loadout spells + the base Dud spells (Ash, Rubble, Mist) + the base Nova
+  spells (Surge, Critical) + the player's **selected junk**. There are no enemy spells or enemy junk, and no
+  team tint (Spellford now tints by spell colour too).
+- **Junk selection** (Spellford 5.1.6): in battle prep the player fills **2 junk slots** from their junk pool
+  (starting pool: Orb, Slime). Selected junk joins the dud or nova share by its class. It's a real choice,
+  because linked junk like Orb and Slime gets pulled into adjacent sets and clears space. Empty junk slots
+  are allowed.
 - **Pool weights must be retuned.** In Spellford, enemy spells made up part of the pool. With only the
   player's 3 loadout spells, Spellford's normalisation (duds total 3, novas total 3) would make only a
-  third of tiles matchable. Starting split *(tune)*: **loadout spells 60%** (shared equally), **duds 25%**,
-  **novas 15%**.
-- **Loadout slots: 3** *(tune; 4 is the fallback if boards feel starved).*
+  third of tiles matchable. Starting split *(tune)*: **loadout spells 60%** (shared by each spell's weight: base 1, ×1.2 per Weight gem; spells-and-gems §3.2), **duds 25%**
+  (base duds and selected dud junk, shared equally), **novas 15%** (same rule).
+- **Size: 8 columns × 6 visible rows** (D15), so 48 tiles. The hidden refill buffer above it is also 6
+  rows.
+- **Loadout slots: 3 for Road battles, 4 for Trail battles** (Spellford 3.3.7). FIGHT needs every slot
+  filled (Spellford requires ≥3).
+- **No reshuffle** (C4). Any swap of two adjacent available tiles is legal even without a match, so the
+  player is never stuck. A board with no matching move just means setup swaps.
 - Matching, cascades, linked tiles, locks and initial no-match fill work exactly as described in features
   §5.2. Locks still matter: tiles you swap stay locked through your next turn, so you can't hammer the
   same spot.
 
 ## 3. Enemies and intents
 
-### 3.1 Enemy model
+### 3.1 Enemy model and intents
 
-```ts
-interface EnemyDef {
-  id: string; name: string; portrait: string;
-  maxHp: number;
-  tier: 'normal' | 'elite' | 'boss';
-  intents: IntentDef[];               // the cycle, played in order, repeating forever
-  start?: 'first' | 'random';         // where in the cycle it starts (default 'first')
-  startingStatuses?: StatusInstance[];
-  weaknesses?: Element[]; resistances?: Element[];
-  reward: { goldMin: number; goldMax: number };
-}
+Enemies, generic and named intents, and the data-file format are specified in
+**[enemies.md](enemies.md)**. In short:
 
-interface IntentDef {
-  id: string; name: string; icon: string; description: string;
-  effects: IntentEffect[];            // applied in order
-}
+- An enemy has a tier (`normal`, `elite` or `boss`), HP, a gold reward, and an **ordered list of
+  intents** that it cycles through.
+- An intent is either **generic** (Attack X, Defend X, Heal X, Heal Ally X, Heal Allies X, Buff, Debuff,
+  Steal X, Lock N, Add Tiles) or **named**: a name and icon around any number of other intents, run in
+  order (*Disable* = Attack 5 + Weaken 1).
+- Intents can damage or debuff the player, heal or buff the enemy itself, heal or buff its allies, steal
+  gold, or alter the board.
 
-type IntentEffect =
-  | { type: 'damage'; amount: number; hits?: number }               // to the player
-  | { type: 'heal'; amount: number; target: HealTarget }
-  | { type: 'block'; amount: number; target: HealTarget }
-  | { type: 'status'; status: StatusId; value: number; target: 'player' | HealTarget }
-  | { type: 'lockTiles'; count: number }                            // board: elite/boss only
-  | { type: 'addTiles'; spell: SpellId; count: number };            // board: elite/boss only
+### 3.2 Targets and board effects
 
-type HealTarget = 'self' | 'lowestAlly' | 'allAllies';
-```
-
-### 3.2 What intents can do
-
-| Category | Effects | Who uses it |
-|---|---|---|
-| **Attack** | `damage` to the player, optionally multi-hit | anyone |
-| **Debuff** | `status` on the player (Weak, Poisoned, …) | anyone |
-| **Buff** | `status` / `block` on self or allies (Strength, Block, …) | anyone |
-| **Heal** | `heal` self, lowest ally, or all allies | anyone |
-| **Board** | lock random free visible tiles, or add junk tiles (e.g. Rubble) | **elite and boss only** |
-
-Intents can combine effects (Disable = damage + debuff).
-
-- **Ally targets:** "allies" are the living enemies, **including** the one acting. `lowestAlly` picks the
-  living ally with the lowest HP fraction (ties go to the leftmost) and may pick itself. Heals can't exceed
-  max HP and can't revive.
-- **Board effects:** `lockTiles` locks `count` random **free, visible** tiles (as if swapped last turn,
-  so they're freed after the player's next turn). `addTiles` replaces `count` random visible tiles with
-  the given spell, without triggering matches. Both use the battle RNG.
-- **The board rule is enforced by content validation:** an enemy with `tier: 'normal'` that has a board
-  effect fails the build.
+- **Ally targets:** "allies" are the living enemies, **including** the one acting. Heal Ally picks the
+  living ally with the lowest HP fraction (ties go to the leftmost) and may pick itself. Heals can't
+  exceed max HP and can't revive.
+- **Board effects** (Lock, Add Tiles) are **elite and boss only**, enforced by content validation. They
+  use the battle RNG.
 
 ### 3.3 The cycle
 
@@ -160,8 +142,9 @@ Each enemy shows its **current intent** above its portrait at all times during t
 
 - an icon per category (sword = attack, down arrow = debuff, up arrow = buff, heart = heal, grid =
   board), with
-- the **final number** after Strength, Weak and the player's Fortify, e.g. "⚔ 6", or "⚔ 4×2" for
-  multi-hit. The player does arithmetic on board state, not on modifiers.
+- the **final number** after the enemy's Strength and Weak, e.g. "⚔ 6", or "⚔ 4×2" for multi-hit.
+  It doesn't subtract the player's Block, which is shown on the player strip. So the badge is stable while
+  you play, and you compare two plain numbers.
 
 Tap an enemy to target it. **Long-press an enemy** to open its popup: name, HP, statuses, and the
 **full cycle** with the current step highlighted and each intent's description.
@@ -181,48 +164,33 @@ Spellford's statuses carry over (features §5.6, with D1 and D4), with these cha
 D14 amends D1: Weak becomes a ×0.75 multiplier instead of −value per tile, and Strength and Weak no longer
 tick per cast.
 
-## 5. Starting roster *(tune)*
+## 5. Roster and encounters
 
-Spellford has the Wolf and Dark Mage, plus unused portraits for the bear, boar and harbinger. Enemy spells
-become intents.
+See [enemies.md](enemies.md): **Wolf** and **Bear** (normal), **Spider** (elite), and the **Harbinger** (boss), plus
+the starter encounters. Road battles draw normal encounters, Trail battles draw elite ones, and the boss is fought at
+Finish (D17). Battles are drawn from encounter definitions (1–4 enemies, left to right), not
+single enemies.
 
-| Enemy | Tier | HP | Cycle | Start | Reward |
-|---|---|---|---|---|---|
-| **Wolf** | normal | 60 | Fangs (⚔5) → Disable (⚔5, Weak 1 → player) → Rage (Strength +1 self) | random | 25–40 |
-| **Boar** | normal | 70 | Charge (⚔8) → Snort (Block 6 self) → Gore (⚔4×2) | first | 30–45 |
-| **Harbinger** | normal | 45 | Mend (heal 10, lowest ally) → Hex (Poisoned 3 → player) → Bless (Block 5, all allies) | first | 35–50 |
-| **Dark Mage** | elite | 80 | Dark Bolt (⚔8) → Life Drain (⚔6, heal 6 self) → Curse (Weak 2 → player, lock 3 tiles) → Inferno (⚔12) | first | 40–60 |
-| **Bear** | elite | 110 | Maul (⚔10) → Roar (Strength +2 self, add 3 Rubble) → Swipe (⚔6×2) | first | 50–70 |
-
-Wolf no longer starts with Charge 1 (Charge only affects spells). Spellford's other enemy spells (Frost
-Nova, Vampiric Touch, Bite, Howl, Frenzy) are retired or folded into the cycles above.
-
-### Encounters
-
-Battles are drawn from encounter definitions, not single enemies:
-
-```ts
-interface EncounterDef { id: string; tier: 'normal' | 'elite' | 'boss'; enemies: EnemyId[] /* 1–4, left to right */ }
-```
-
-Starting set *(tune)*: `[wolf]`, `[wolf, wolf]`, `[boar]`, `[wolf, harbinger, wolf]`, `[wolf, wolf, wolf, wolf]`;
-elites `[dark_mage]`, `[bear]`, `[harbinger, bear]`. How world travel picks encounters (by stop, road type
-and distance) is part of M6.
+Spellford's enemy spells (Dark Bolt, Life Drain, Bite, Howl, Frenzy, …) don't go on the board. Some live
+on as intent names. Wolf no longer starts with Charge 1 (Charge only affects spells).
 
 ## 6. Screen layout (phone landscape)
 
 ```
 ┌ Exit │ abilities ···························································┐ 40px
-│ ┌──────────────────┐ ┌─ ⚔6 ──────── ⚔5 ⬇ ───── ♥10 ──────── ⚔12 ─┐    │
-│ │                  │ │  [wolf]      [wolf]◎    [harb.]    [bear]   │    │ enemy zone
-│ │   board 8×8      │ │  ▓▓▓▓ 60     ▓▓░░ 34    ▓▓▓ 45     ▓▓▓▓ 110 │    │
-│ │   square,        │ │  ☠2          W1         🛡5        STR2      │    │
-│ │   full height    │ ├─────────────────────────────────────────────┤    │
+│ ┌──────────────────┐ ┌─ ⚔6 ──────── ⚔5 ▼ ───── ▦4 ──────── ⚔12 ─┐    │
+│ │                  │ │  [wolf]      [wolf]◎    [spider]   [boss]   │    │ enemy zone
+│ │   board 8×6      │ │  ▓▓▓▓ 60     ▓▓░░ 34    ▓▓▓ 75     ▓▓▓▓ 180 │    │
+│ │   8 cols×6 rows, │ │  ☠2          W1         🛡5        STR2      │    │
+│ │   tiles ≤48px    │ ├─────────────────────────────────────────────┤    │
 │ │                  │ │ [you] ▓▓▓▓▓▓░ 72/100 🛡6 STR1 │ ●●○ END TURN │    │ player strip ~84px
 │ └──────────────────┘ └─────────────────────────────────────────────┘    │
 ```
 
-- **Left:** the board, a square filling the height below the top bar.
+- **Left:** the board, **8 columns × 6 rows** (D15). Tile size is `(100dvh − top bar − 8px) / 6`, capped at
+  **48px**, so tiles are ~45px on the 667×320 minimum and 48px from the reference size up. The cap stops
+  the board from eating the enemy zone on larger phones. If the board is shorter than the space, it is
+  centred vertically.
 - **Right:** the **enemy zone**, which is the whole remaining width above the player strip. It has 1–4
   enemy slots with equal widths. Each slot holds the intent badge (top), portrait, HP bar and status row.
   With fewer enemies, slots get wider and portraits bigger, up to a cap. Dead enemies fade out but their
@@ -231,9 +199,9 @@ and distance) is part of M6.
   a 44px-tall **End Turn** button. This replaces Spellford's "tap your energy circle".
 - Gold is hidden in battle. The top bar holds Exit and the ability bar.
 
-Space check at the 844×390 reference: after safe areas (~47px each side on notched iPhones) and a ~342px
-board, the right side is ~400px wide, so 4 enemies get ~100px each. At the 667px minimum, 4 enemies get
-~70px each. Intent badges and HP bars still fit, but portraits shrink. Status rows show up to 3 icons
+Space check at the 844×390 reference: after safe areas (~47px each side on notched iPhones) and a 384px
+wide board, the right side is ~366px wide, so 4 enemies get ~90px each. At the 667px minimum (no notch) the
+board is ~363px wide, leaving ~300px, so 4 enemies get ~75px each. Intent badges and HP bars still fit, but portraits shrink. Status rows show up to 3 icons
 plus "+n".
 
 ## 7. Feedback and animation
@@ -249,8 +217,6 @@ plus "+n".
 
 ## 8. Open questions
 
-- Whether 3 loadout slots is enough with a player-only pool, or whether it should be 4 (decide after the
-  M2 sim).
-- Whether permanent Strength makes long fights against Wolf packs too punishing. Fallback: Spellford's
-  3-turn duration.
-- Should intents ever be hidden ("?") for bosses? Not in v1.
+Tracked in [open-questions.md](open-questions.md): the player's Strength value (C2). Decided: Strength and Charge
+stay permanent (C1, watched in the M2 sim), junk selection is fine as is (C3), there's no reshuffle (C4), and
+abilities cost no moves (C5). Hidden ("?") boss intents are not in v1.

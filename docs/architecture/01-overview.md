@@ -17,7 +17,7 @@
 ## Non-goals (v1)
 
 - Multiplayer, accounts or a backend. Spellcross is a static, client-only app.
-- A game engine like Phaser or Unity. React plus SVG/CSS covers an 8×8 board and a 2D map.
+- A game engine like Phaser or Unity. React plus SVG/CSS covers an 8×6 board and a 2D map.
 - Pixel-identical visuals. We match the layout and feel, not libGDX rendering details.
 - A portrait layout, and tablet- or desktop-specific layouts (D13).
 
@@ -30,7 +30,7 @@
 | Build/dev | **Vite** | Fast, zero-config, static output |
 | App state | **Zustand** | Small store that works outside React (the engine loop can read and write it) |
 | Immutable updates | **Immer** (via Zustand middleware) | Lets engine reducers read like the Kotlin mutations but stay immutable |
-| Rendering: board, portraits, popups | **DOM + CSS Grid** | 64 tiles is trivial for the DOM, and gives free accessibility and hit-testing |
+| Rendering: board, portraits, popups | **DOM + CSS Grid** | 48 tiles is trivial for the DOM, and gives free accessibility and hit-testing |
 | Rendering: world map, menu scene | **SVG** | Bézier roads, rivers and terrain map directly onto `<path>` |
 | Animation | **Framer Motion** | Layout animations for tile drops, plus presence for popups and floating numbers |
 | Routing | **React Router** (memory or hash router) | Screen = route. Hash router keeps static hosting trivial |
@@ -73,7 +73,7 @@ content registry is injected. This is enforced with `eslint-plugin-boundaries` (
 In Spellford, `BattleScreen` drives the cascade with a 1-second frame timer, calling
 `board.progressMove()` once per tick, and rendering reads mutable board state mid-cascade.
 
-In Spellcross, `engine.playMove(state, move)` **resolves the whole move at once** and returns:
+In Spellcross, `engine.playerMove(state, a, b)` **resolves the whole move at once** and returns:
 
 ```ts
 { state: BattleState, events: BattleEvent[] }
@@ -101,10 +101,11 @@ spellcross/
   src/
     main.tsx, App.tsx
     content/                  ← data definitions (doc 04)
-      spells.ts statuses.ts abilities.ts enemies.ts encounters.ts events/ map.ts
+      spells.ts statuses.ts abilities.ts gems.ts items.ts player.ts
+      intents.ts enemies.ts encounters.ts events/ (incl. set/) map.ts config.ts
     engine/
       rng.ts
-      types.ts                ← Entity, Spell, Tile, StatusInstance, ...
+      types.ts                ← Player, EnemyState, Spell, Tile, StatusInstance, ...
       board/                  ← grid, matching, cascade, linked tiles, locking
       battle/                 ← turn machine, moves, targeting, win/loss, spell resolution
       status/                 ← hook pipeline + status behaviours
@@ -112,14 +113,14 @@ spellcross/
       intents/                ← enemy intent cycles and effect resolution
       world/                  ← map generation, travel, encounters
       events/                 ← story event runner
-      progression/
+      progression/            ← spell instances: resolveSpell, sockets, upgrades (D16)
     state/
       sessionStore.ts         ← the current run: player, map, position, seed
       battleStore.ts          ← BattleState + animation queue
       settingsStore.ts
       persistence.ts
     ui/
-      screens/  MenuScreen WorldScreen EventScreen BattlePrepScreen BattleScreen ResultScreen
+      screens/  MenuScreen WorldScreen EventScreen SpellbookScreen BattlePrepScreen BattleScreen ResultScreen
       components/ TopBar AbilityBar Popup StatusIcon HealthBar Legend ...
       board/    BoardView TileView effects/
       battle/   EnemyZone EnemySlot IntentBadge PlayerStrip MovesPips
@@ -153,7 +154,7 @@ player entity, inventory. Screens are views over that store.
 - **Landscape phone layout:** height is the scarce dimension. See [03-frontend.md § Phone landscape
   layout](03-frontend.md#phone-landscape-layout) for the viewport budget, safe areas, orientation
   handling and touch rules. This replaces Spellford's hand-computed `calculateLayout`.
-- **Accessibility:** tiles are buttons with `aria-label="Fireball, row 3 col 5"`, popups are dialogs
+- **Accessibility:** tiles are buttons with `aria-label="Scorch, row 3 col 5"`, popups are dialogs
   that trap focus, and animations respect `prefers-reduced-motion`. Keyboard play is a cheap extra for
   desktop and external keyboards, not a target.
 - **Debug tooling:** a dev-only panel (or `?debug=1`) to set the seed, print the board, jump to any event,
@@ -167,9 +168,9 @@ player entity, inventory. Screens are views over that store.
 |---|---|
 | Behaviour drift during the port | Port Spellford's board tests first, then golden tests from Spellford runs with a fixed seed. Combat is redesigned (D14), so its tests come from combat.md, not from Spellford |
 | Status hooks mutating shared spell objects (Spellford pattern) | Replace with a per-cast `CastContext` (doc 02) |
-| Mobile perf of Framer Motion with 64 animated tiles | Animate `transform` only. Fall back to CSS transitions or Pixi if needed |
-| Small tiles: on a ~320–360px-tall landscape viewport the 8-row board gives ~34–40px tiles, below the 44pt touch guideline | Whole cell is the hit target (no gaps), compact top bar, tap-tap is forgiving (a mis-tap just reselects, it doesn't swap). Check on a 375px-tall device in M3 |
+| Mobile perf of Framer Motion with 48 animated tiles | Animate `transform` only. Fall back to CSS transitions or Pixi if needed |
+| Small tiles on a ~320px-tall landscape viewport | Resolved by D15: 6 visible rows give ≥ 45px tiles (capped at 48px). Whole cell is still the hit target. Check on a real iPhone SE in M3 |
 | 4 enemies at the 667px minimum width leave ~70px per enemy slot | Intent badge and HP bar take priority over portrait size. Status rows collapse to "+n". Verify in M3 with the 4-Wolf encounter |
-| Player-only tile pool makes boards match-starved | Retuned pool weights (combat §2.4), checked by the M2 sim (average matches per move) |
+| Player-only tile pool and the smaller 8×6 board (D15) make boards match-starved | Retuned pool weights (combat §2.4), checked by the M2 sim (average matches per move). No reshuffle is needed, because swaps without a match are legal (C4). Fallbacks: 4 loadout slots, or 7 rows if tiles allow |
 | iOS Safari can't lock orientation, and its toolbars change the viewport height | Rotate overlay in portrait. Size with `dvh`/`svh`, never `vh`. Test on real iOS hardware every milestone from M3 |
-| Ambiguous intended behaviour | "Resolved decisions" table (D1–D14) in features.md. Each fix has a test tagged with its id |
+| Ambiguous intended behaviour | "Resolved decisions" table (D1–D17) in features.md. Each fix has a test tagged with its id |

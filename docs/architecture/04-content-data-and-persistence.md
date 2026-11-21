@@ -10,11 +10,13 @@ and leaves room to move content to JSON later for modding or a content editor.
 ```ts
 // src/content/spells.ts
 export const spells = defineSpells({
-  fireball: { name: 'Fireball', description: 'Deal fire damage to the enemy',
-              icon: 'spells/fire/fire-burst.png', element: 'fire',
-              damage: 3, healing: 0, weight: 1, spellClass: 'player', linked: false,
-              statuses: [], color: '#ff0000' },
-  poison:   { ..., statuses: [{ status: 'poisoned', value: 1, self: false }] },
+  scorch: { name: 'Scorch', description: 'Damage the enemy',
+            element: 'fire',              // no icon: derived from stats → spells/fire/dmg-2.png
+            damage: 4, healing: 0, weight: 1, spellClass: 'player', linked: false, target: 'single',
+            statuses: [], color: '#ffb3b3' },
+  strike: { ..., damage: 2, statuses: [{ status: 'chargeLightning', value: 1, self: true, perTile: false }] },
+  shield: { ..., damage: 1, statuses: [{ status: 'block', value: 2, self: true, perTile: true }] },
+  venom:  { ..., statuses: [{ status: 'poisoned', value: 1, self: false, perTile: true }] },
   ash:      { ..., spellClass: 'dud', linked: true },
   surge:    { ..., spellClass: 'nova', linked: true, linkBehaviour: 'mimicNeighbour' },
   ...
@@ -26,18 +28,38 @@ export const spells = defineSpells({
 | `SpellLibrary.kt` | `content/spells.ts` | `linkBehaviour` names a handler in `engine/board/linkBehaviours.ts` |
 | `StatusLibrary.kt` | `content/statuses.ts` (name, icon, description, kind, default value/duration) | Hooks in `engine/status/behaviours/*.ts`, keyed by status id |
 | `AbilitiesLibrary.kt` | `content/abilities.ts` | `effects: [{type:'doublePoison'}]` → `engine/ability/effects.ts` |
-| `Player.kt`, `Wolf.kt`, `Enemy.kt` | `content/entities.ts` (stats, pool, starting statuses, AI tree as data) | |
+| `Player.kt` | `content/player.ts` (HP, `movesPerTurn: 3`, starting spells as instances, junk pool Orb + Slime, no starting abilities: the Traveller gives one) | |
+| *(new, D16)* | `content/gems.ts`: the 10 gems (design tier, property, values by spell level 1–5, special) | Specials (Chaos, Darkstone, Sunstone) are handlers in `engine/progression/` |
+| `Wolf.kt` (+ new Bear, Spider, Boss) | `content/intents.ts` (named intents) and `content/enemies.ts` (each enemy's ordered intent list). Format in [enemies.md §4](../enemies.md#4-data-files) | Generic intents are a closed set in `engine/intents/` |
+| *(new)* | `content/encounters.ts`: 1–4 enemy ids per encounter, with tier | |
 | `EventLibrary.kt` | `content/events/*.ts`, one file per event graph | Effects and branch types are a closed set in the engine |
 | `StopType`, `RoadType` enums | `content/map.ts` (chance tables, links, blocks, minimums, radius, width) | |
 | `Constants.kt` | `content/config.ts` | |
 
 **Validation at boot (dev and tests):** every referenced id exists (spell → status, ability → status,
-entity → spell, event → node, event → item), every icon path resolves in the asset manifest, and every
-event graph is acyclic or terminates (parametric chains have a max).
+intent → status/spell, encounter → enemy, event → node, event → item/gem), every icon path resolves in the
+asset manifest, and every event graph is acyclic or terminates (parametric chains have a max). Combat rules
+are validated too: encounters have 1–4 enemies, every enemy has at least one intent, and **only `elite`
+and `boss` enemies may have board effects** (combat §3.2). Starting spell instances obey the socket rules
+(spells-and-gems §3.3).
 
-**Items:** Spellford uses raw strings (`"Gemstone"`, `"Weapon"`, `"Spell Upgrade"`, `"Recharge"`, `"Ability"`).
-Spellcross adds `content/items.ts` with ids, names and icons, with `effect: null` for parity. Item effects
-are a post-parity feature.
+**Items:** Spellford uses raw strings (`"Gemstone"`, `"Spell Upgrade"`, spelled `"Spellupgrade"` in shops).
+In Spellcross, gems are their own content (`content/gems.ts`), held as `inventory.gems` (no rank). Spell
+Upgrades are a counter (`inventory.spellUpgrades`). Spellford's "+Gemstone" shop purchases become "pick 1 of
+3 random gems", and battles can drop gems (spells-and-gems §3.2) and its Weight Gem becomes the **Weight** gem ([spells-and-gems.md](../spells-and-gems.md), D16).
+`content/items.ts` remains for any other items and is empty at launch.
+
+**Set events:** `content/events/set/*.ts` hold the stop-arrival events (Traveller, Campfire, Village, Town,
+Market), and `content/map.ts` maps stop type → set event id (features §4.3).
+
+**Spell icons from stats:** player spells don't name an icon. `iconForSpell(def)` ports Spellford's
+`getIconPathFromStats` (features §5.5): categories dmg/healing/block/poison/chaos, tiers at 1/4/8, top two
+categories, falling back to `spells/<element>/default.png` and then the generic placeholder. It's computed
+from the spell instance's **final** stats (base + upgrades + gems; `resolveSpell`), so customisation shows
+on the icon. Rule, quirks and tests: [spells-and-gems.md §2](../spells-and-gems.md#2-spell-icons-from-stats).
+
+**Player spells are instances:** the save stores `player.spells: SpellInstance[]` (spell id, element, upgrade
+level, sockets) instead of spell ids. See [spells-and-gems.md §5](../spells-and-gems.md#5-data-model).
 
 ## Assets
 
@@ -47,7 +69,9 @@ are a post-parity feature.
 - `<AssetImage path>` component: preloads the image and falls back to a generated placeholder (coloured
   circle + initial) if missing. This mirrors Spellford's null-texture fallback.
 - Fonts → `@font-face` in `theme/fonts.css`.
-- Missing today: `wood.png` (use a CSS wood texture) and `status/fortify-air.png`.
+- Missing today: `wood.png` (use a CSS wood texture), `status/fortify-air.png`, `portraits/traveller.png`,
+  `spells/air/*` (Wind Wall) and `spells/acid/default.png`. Spellford references `town/town.png`, but the
+  file is `town/town.jpg`, so Spellcross references the `.jpg`.
 
 ## Persistence
 
@@ -58,7 +82,7 @@ otherwise wipe the run.
 |---|---|---|---|
 | Settings | `localStorage` | `spellcross:settings:v1` | on change |
 | Current run | `localStorage` | `spellcross:run:v1` | after each travel, event option, and battle end |
-| Battle in progress | not saved in v1 | n/a | Refresh mid-battle restarts the battle from its start snapshot (saved at `startBattle`) |
+| Battle in progress | `localStorage` | inside `spellcross:run:v1` (`pendingBattle`) | at `startBattle` and at the **start of every player turn**. A refresh or an iOS tab eviction resumes at the start of the current turn. Battle state is plain data, so this is cheap |
 
 ```ts
 interface SaveFileV1 {
@@ -67,9 +91,9 @@ interface SaveFileV1 {
   seed: number; rng: Record<string, RngState>;
   map: WorldMap;                // or regenerate from seed. Store anyway to survive generator changes
   currentStopId: number;
-  player: Entity;               // ids only: spell ids, status instances, ability ids + uses
+  player: Player;               // spell instances (id, element, upgrades, sockets), gems, junk, ability ids + uses
   currentEvent?: { nodeId: string; params?: Record<string, number> };
-  pendingBattle?: { enemyId: string; snapshot: BattleState };
+  pendingBattle?: { encounterId: string; snapshot: BattleState };   // latest player-turn start; includes intent cursors
 }
 ```
 
@@ -83,7 +107,8 @@ interface SaveFileV1 {
 ## Determinism and seeds
 
 - `newRun(seed = Date.now())` (Spellford: `System.currentTimeMillis()`).
-- RNG streams forked from the run seed: `map`, `terrain`, `events`, `board:<battleN>`, `ai:<battleN>`.
+- RNG streams forked from the run seed: `map`, `terrain`, `events`, `board:<battleN>`, `battle:<battleN>`
+  (random targeting, random intent start positions, board-intent tile picks).
 - Debug panel can display and copy the seed and start a run from a given one.
 - Battle replays: `{ startSnapshot, inputs: Move[] }` is enough to reproduce a battle. That's useful
   for bug reports and golden tests.

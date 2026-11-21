@@ -7,14 +7,17 @@
 | `/` | `MenuScreen` | `MenuScreen.kt` + `MenuRendering.kt` | settings, save slots | `newRun`, `continueRun`, debug shortcuts |
 | `/world` | `WorldScreen` | `WorldScreen.kt` + `WorldMapRenderer.kt` | session.map, position | `travelTo(stopId)` |
 | `/event/:nodeId` | `EventScreen` | `EventScreen.kt` (normal) | session.event | `chooseOption(i)` |
-| `/battle/prep` | `BattlePrepScreen` | `EventScreen.kt` (BATTLE_PREP mode) | player.spellPool, loadout | `setLoadoutSlot`, `startBattle` |
-| `/battle` | `BattleScreen` | `BattleScreen.kt` + `BattleBoardRenderer.kt` | battleStore | `swap`, `endTurn`, `useAbility` |
+| `/spellbook` | `SpellbookScreen` | *(new, D16)* | player.spells, gem and upgrade counts | `socketGem`, `upgradeSpell`, `unsocketGem` |
+| `/battle/prep` | `BattlePrepScreen` | `EventScreen.kt` (BATTLE_PREP mode) | player.spells (resolved: final stats and icons), junkPool, loadout, junk | `setLoadoutSlot`, `setJunkSlot`, `startBattle` |
+| `/battle` | `BattleScreen` | `BattleScreen.kt` + `BattleBoardRenderer.kt` (redesigned, D14) | battleStore | `selectTile`, `swap`, `setTarget`, `endTurn`, `useAbility` |
 | `/battle/result` | `ResultScreen` | *(new: Spellford has a TODO)* | battle.outcome | `continue` |
 
 Use a hash or memory router so deep links can't skip game state. Each screen guards on store state and
 redirects to `/` if there's no active run.
 
-`BattlePrepScreen` is its own screen in Spellcross. In Spellford it's a mode of `EventScreen`.
+`BattlePrepScreen` is its own screen in Spellcross. In Spellford it's a mode of `EventScreen`. In landscape:
+spell pool and loadout slots (3 or 4) on the left, junk pool and 2 junk slots on the right, FIGHT pinned
+bottom-right and disabled until the loadout is full.
 It reuses the event layout components (banner, framed pane, wood background).
 
 ## State management
@@ -22,15 +25,15 @@ It reuses the event layout components (banner, framed pane, wood background).
 ```
 sessionStore (Zustand + persist)
   seed, rngState, map, currentStopId, travel: {from,to,progress}|null,
-  player: Entity, currentEvent: {nodeId, params}|null, flags
+  player: Player, currentEvent: {nodeId, params}|null, flags
   actions: newRun(seed?), travelTo, arrive, chooseOption, startBattle, finishBattle
 
-battleStore (Zustand, not persisted mid-battle in v1)
+battleStore (Zustand; a snapshot is written to the run save at each player-turn start, doc 04)
   state: BattleState                       // authoritative, already resolved
   queue: BattleEvent[]                     // pending animations
   view: ViewBoard                          // what the UI currently shows (lags state while animating)
   selection: TilePos | null
-  actions: selectTile, swap, endTurn, useAbility, advanceQueue
+  actions: selectTile, swap, setTarget, endTurn, useAbility, advanceQueue
 
 settingsStore (persist): animationSpeed, reducedMotion, sound(future), debug
 ```
@@ -43,13 +46,19 @@ the engine and push the returned `events` onto `queue`.
 ```
 swap(a,b):
   if queue.length > 0 → ignore             // input locked during playback (Spellford: moveActive)
-  {state, events} = engine.resolveMove(...)
+  {state, events} = engine.playerMove(...)
   set({ state, queue: events })
+
+endTurn() / last move used:
+  {state, events} = engine.endPlayerTurn(...)   // the whole enemy phase, already resolved
+  queue.push(...events)
 
 <BattleScreen> useEffect on queue[0]:
   animate(event) → on complete → advanceQueue()   // applies event to `view`
-  when queue empty and active entity is AI → setTimeout(aiDelay) → dispatch aiTurn()
+  tap during playback → fast-forward the rest of the queue
 ```
+
+There's no AI timer. Enemy turns are just more events in the queue, paced at ~600ms per enemy (combat §7).
 
 `view` is updated event by event, so health bars, statuses and tiles change *in sync* with the
 animations, the same as Spellford, where values change as each step resolves.
@@ -58,44 +67,52 @@ animations, the same as Spellford, where values change as each step resolves.
 
 ```
 <BattleScreen>
-  <TopBar exit  stats(hp,gold)  <AbilityBar triggerable /> />
-  <BattleLayout>                         landscape only: panel | board | panel
-    <CharacterPanel entity=player side="left">
-      <EnergyOrb onClick={endTurn if active} label="2 / 2" | "END TURN" />
-      <Portrait/> <HealthBar color="green"/> <Name/> <StatusRow onTap={showStatus}/>
-    </CharacterPanel>
-    <BoardView>                         CSS grid 8×8, visible rows only
-      <TileView × 64 layoutId=tileUid/> icon, team tint, linked overlay, lock overlay, selected ring
+  <TopBar exit  <AbilityBar triggerable /> />            gold hidden in battle
+  <BattleLayout>                                          board | right column (combat §6)
+    <BoardView>                         CSS grid 8 cols × 6 rows, visible rows only
+      <TileView × 48 layoutId=tileUid/> icon, spell tint, "+n" pip, linked overlay, lock overlay, selected ring
       <EffectsLayer/>                    lightning bolts (SVG), floating numbers, clear halos
     </BoardView>
-    <CharacterPanel entity=enemy side="right" />
+    <RightColumn>
+      <EnemyZone count={1..4}>
+        <EnemySlot × n onTap={setTarget} onLongPress={showEnemy}>
+          <IntentBadge/> <Portrait/> <TargetReticle/> <HealthBar color="red"/> <StatusRow/>
+        </EnemySlot>
+      </EnemyZone>
+      <PlayerStrip>
+        <Portrait/> <HealthBar color="green"/> <BlockBadge/> <StatusRow onTap={showStatus}/>
+        <MovesPips left={movesLeft} max={3}/> <EndTurnButton/>
+      </PlayerStrip>
+    </RightColumn>
   </BattleLayout>
-  <Popup/>                              spell / status / ability info (modal)
+  <Popup/>                              spell / status / ability / enemy-cycle info (modal)
 </BattleScreen>
 ```
 
 - **Tile identity:** each spawned tile gets a stable `uid` so Framer Motion `layoutId` animates drops
   naturally. This replaces Spellford's manual `blanksBelowThisSpace × tileSize × timer` offset.
 - **Clears:** `AnimatePresence` exit animation with a white halo and fade (Spellford `renderDisappearance`).
-- **Lightning:** SVG polyline with random jitter from the actor's portrait to the target's, plus floating
+- **Lightning:** SVG polyline with random jitter from the player portrait to each target enemy, plus floating
   `-12` / `+3` text that rises 30px and fades (Spellford `Animation.kt`). Positions come from refs on the
   portraits.
-- **Input:** tap-tap selection (parity), plus **drag-to-swap** using pointer events (new, and more forgiving
-  than tapping on small tiles). The board sets `touch-action: none` so a drag never scrolls or zooms the page.
+- **Enemy actions:** the acting slot lunges and its intent badge pulses. Then the damage number flies to the
+  PlayerStrip, heals and buffs glow on their targets, and board intents animate lock overlays or tiles
+  morphing. The next intent fades in afterwards.
+- **Input:** tap to select, tap an adjacent tile to swap (combat §2.2). There's no drag-to-swap. Long-press
+  (~400ms) opens info popups for tiles and enemies, because a plain tap is taken by selection and targeting.
+  The board sets `touch-action: none` so nothing on it scrolls or zooms the page.
 
 ## World map rendering
 
-- Single `<svg viewBox="0 0 1600 1200">` inside a scrollable container.
-- **Open decision: map scale on a landscape phone.** The 4:3 world doesn't match a ~2.2:1 viewport:
-  - *Fit height* (≈0.29× at 350px tall): the whole map fits with spare width, so there's no panning, but a
-    Village is ~35px across and a Trail is ~2px wide.
-  - *Fit width* (≈0.53× at 844px wide): stops and roads are readable, and the map pans **vertically**
-    (~2× the viewport height). This departs from Spellford's horizontal pan (features 3.2.5).
-  - *Regenerate a wider world* (e.g. 2400×1100) for the new aspect ratio. This changes generation
-    constants, so it isn't a pure port.
-
-  Recommendation: fit width with vertical pan, since it's the only option where the map is readable
-  without changing generation. Decide before M5.
+- **Fit the height and scroll horizontally, as in Spellford (U1).** Spellford generates the world at
+  **2 screens wide × 1 screen tall** in device pixels (features 3.2.5), and its stop radii, road widths and
+  jitter are tuned at that scale (e.g. Town radius 125 on a ~1080px-tall phone).
+- Spellcross generates the map in a fixed **logical space 1080 units tall** and `2 × 1080 × (viewport
+  width / viewport height)` units wide, so the generation constants port unchanged. That's ~4,670 units
+  wide at the 844×390 reference. The size is fixed when the run starts and stored in the save, so a resize or
+  rotation never regenerates the map.
+- Rendered as one `<svg>` whose `viewBox` is that logical space, scaled so its height fills the area below the
+  top bar, inside a horizontally scrolling container about 2 viewport widths long.
 - Drag-to-pan using pointer events with eased scrolling (Spellford eases the camera at `maxSpeed`),
   clamped to map bounds.
 - Layers: `<Terrain/>` → `<Rivers/>` (two stroked paths: border, then 35%-width water) → `<Roads/>`
@@ -129,7 +146,9 @@ text. Each option renders `[Label]` in white, the cost in red and the reward in 
 
 On a phone in landscape the image pane is about 40% of the width and the text column scrolls on its own.
 Option buttons are pinned to the bottom of that column, at least 44px tall, so they are always reachable.
-Spellford's option hover state becomes a pressed state.
+Spellford's option hover state becomes a pressed state. Unavailable options (features 4.1.9) are greyed with
+the cost in red. The **recharge popup** (features 4.1.10) is a modal listing abilities with their uses and a
+"+1" button each, plus a counter of recharges left.
 
 ## Theming
 
@@ -153,11 +172,14 @@ Height is the constraint and width is plentiful. Rules:
 
 - Size with `100dvh` (falling back to `100svh`), never `100vh`. On mobile, `vh` includes the hidden browser
   toolbar, so content gets cut off.
-- **Top bar ≤ 40px.** Exit, HP and gold on the left, abilities in the middle, Legend on the right. Ability
+- **Top bar ≤ 40px.** Exit, HP and gold on the left, abilities in the middle, Legend and Spellbook (World screen) on the right. Ability
   slots are 36px icons whose tap areas extend to the full bar height.
-- **Battle:** the board is a square of side `100dvh − top bar − 8px`, so ~272–382px and tiles of
-  **~34–48px**. The two character panels share the remaining width, ~150–250px each. Panels stack
-  their contents vertically and let the status row wrap or scroll. They never push the board smaller.
+- **Battle** (sketch in combat §6): the board is **8 columns × 6 rows** (D15). Tile size is
+  `min((100dvh − top bar − 8px) / 6, 48px)`, so **~45px** at the 320px-tall minimum and **48px** from the
+  reference size up (board 384×288). Everything to its right is the enemy zone (1–4 equal-width slots)
+  above an ~84px player strip. 4 enemies get ~90px each at 844px wide and ~75px at the 667px minimum. Priority when space
+  runs out: intent badge > HP bar > portrait > statuses (collapse to "+n"). The right column never pushes
+  the board smaller.
 - **Popups:** `max-height: calc(100dvh − 16px)` with internal scroll. In landscape, use a two-column
   layout (icon and stats left, text right) so they stay short.
 
@@ -168,7 +190,7 @@ at the bottom.
 
 - `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`.
 - Backgrounds (wood, sky, map) go edge to edge. Interactive content is padded by
-  `env(safe-area-inset-left/right/bottom)`. The character panels and the Legend panel absorb the side insets.
+  `env(safe-area-inset-left/right/bottom)`. On the battle screen the board absorbs the left inset and the right column the right inset. Elsewhere the Legend panel and screen gutters do.
 
 ### Orientation
 
@@ -183,8 +205,8 @@ at the bottom.
 
 ### Touch rules
 
-- Interactive targets are **≥ 44×44px** wherever space allows. Battle tiles are the one accepted
-  exception (see Risks in 01). Their whole cell is the target, with no gaps between tiles.
+- Interactive targets are **≥ 44×44px** wherever space allows. Battle tiles meet this too (≥ 45px with
+  6 rows, D15). Their whole cell is the target, with no gaps between tiles.
 - No hover-only affordances. Anything Spellford shows on hover shows on press (`:active` / pointer down).
 - Page-level: `overscroll-behavior: none` (no pull-to-refresh or rubber-banding), `touch-action:
   manipulation` (no double-tap zoom), `user-select: none` and `-webkit-touch-callout: none` on game
