@@ -3,6 +3,30 @@
 The plan ports Spellford to Spellcross in vertical slices. Each milestone ends with something playable in
 the browser and a parity check against [features.md](../features.md).
 
+## Progress (v0, 2026-11-21)
+
+A first playable build covers M0–M6b in one pass: engine, content, run loop, events, map, battle UI,
+Spellbook, saving, PWA build. 169 unit, integration and UI tests pass (`pnpm test`). Not done yet:
+
+- Real-device testing (M3 exit) and Playwright e2e on phone profiles.
+- Battle polish from combat §7: lightning bolts, shake on locked tiles (a toast shows instead).
+- The balance work in [open-questions.md](../open-questions.md) B1–B5 and C1.
+
+**Sim baseline** (`pnpm sim`, greedy bot with setup swaps, 10 seeds, first 3–4 starting spells, full HP,
+no abilities or retargeting, so it's a floor rather than a skilled player):
+
+| Encounter | Win | Avg rounds | Avg HP lost | Moves with no match |
+|---|---|---|---|---|
+| wolf | 100% | 1.9 | 1.6 | 4% |
+| wolf_pair | 100% | 3.9 | 2.9 | 7% |
+| bear | 100% | 2.8 | 1.8 | 3% |
+| wilds | 100% | 4.7 | 3.7 | 13% |
+| hunting_party | 100% | 6.5 | 10.8 | 13% |
+| pack | 100% | 7.4 | 13.2 | 17% |
+| spider (elite) | 100% | 2.6 | 4.7 | 6% |
+| nest (elite) | 100% | 5.7 | 12.5 | 16% |
+| boss | 0% | 10.8 | 100 | 37% |
+
 ## M0: Scaffold (½ day)
 
 - Vite + React + TS strict, ESLint (with engine/UI boundary rule), Prettier, Vitest, Playwright.

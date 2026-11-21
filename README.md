@@ -66,7 +66,7 @@ public/assets/   art and fonts, copied from Spellford
 | Doc | What it covers |
 |---|---|
 | [docs/spec.md](docs/spec.md) | **Start here.** The consolidated game spec: final rules for every system, with all decisions folded in |
-| [docs/features.md](docs/features.md) | Every feature in Spellford, with its status and source file, plus the decision log (D1–D17) |
+| [docs/features.md](docs/features.md) | Every feature in Spellford, with its status and source file, plus the decision log (D1–D21) |
 | [docs/combat.md](docs/combat.md) | The core combat loop: 3 moves per turn, targeting, enemy intent cycles, 1–4 enemies, battle layout. Replaces Spellford's battle model (D14) |
 | [docs/enemies.md](docs/enemies.md) | Generic and named intents, the enemy roster (Wolf, Bear, Spider, Harbinger) with their intent cycles, encounters, and the enemy/intent data-file format |
 | [docs/spells-and-gems.md](docs/spells-and-gems.md) | Player spells, the stat-based spell icon rule, and spell customisation: gem sockets, Spell Upgrades, the Spellbook screen (D16) |
@@ -82,5 +82,5 @@ public/assets/   art and fonts, copied from Spellford
 The Spellford codebase as of commit `3f7b1a0` ("Fixing cloning abilities") on branch `startup`, re-baselined from
 `9b0a7bb`. `docs/features.md` ends with a summary of what changed between the two.
 Where Spellford's behaviour looks accidental (bugs, TODOs), the docs don't quietly copy or fix it.
-Each case, and each deliberate redesign, is recorded as a **resolved decision** (D1–D17 in `docs/features.md`) stating whether
+Each case, and each deliberate redesign, is recorded as a **resolved decision** (D1–D21 in `docs/features.md`) stating whether
 Spellcross replicates or fixes it.

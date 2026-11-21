@@ -1,19 +1,20 @@
 # 03: Frontend (React)
 
-## Screens and routes
+## Screens
 
-| Route | Screen | Replaces | Reads | Dispatches |
-|---|---|---|---|---|
-| `/` | `MenuScreen` | `MenuScreen.kt` + `MenuRendering.kt` | settings, save slots | `newRun`, `continueRun`, debug shortcuts |
-| `/world` | `WorldScreen` | `WorldScreen.kt` + `WorldMapRenderer.kt` | session.map, position | `travelTo(stopId)` |
-| `/event/:nodeId` | `EventScreen` | `EventScreen.kt` (normal) | session.event | `chooseOption(i)` |
-| `/spellbook` | `SpellbookScreen` | *(new, D16)* | player.spells, gem and upgrade counts | `socketGem`, `upgradeSpell`, `unsocketGem` |
-| `/battle/prep` | `BattlePrepScreen` | `EventScreen.kt` (BATTLE_PREP mode) | player.spells (resolved: final stats and icons), junkPool, loadout, junk | `setLoadoutSlot`, `setJunkSlot`, `startBattle` |
-| `/battle` | `BattleScreen` | `BattleScreen.kt` + `BattleBoardRenderer.kt` (redesigned, D14) | battleStore | `selectTile`, `swap`, `setTarget`, `endTurn`, `useAbility` |
-| `/battle/result` | `ResultScreen` | *(new: Spellford has a TODO)* | battle.outcome | `continue` |
+There's no router. `App.tsx` shows the screen named by `run.screen` (`map`, `event`, `prep`, `battle`,
+`result`, `victory`, `defeat`), or the menu when there's no run. The Spellbook is an overlay. This means deep
+links can't skip game state and a reloaded save opens on the right screen.
 
-Use a hash or memory router so deep links can't skip game state. Each screen guards on store state and
-redirects to `/` if there's no active run.
+| `run.screen` | Screen | Replaces | Store actions |
+|---|---|---|---|
+| *(no run)* | `MenuScreen` | `MenuScreen.kt` + `MenuRendering.kt` | `newRun`, `continueRun`, `abandonRun` |
+| `map` | `WorldScreen` | `WorldScreen.kt` + `WorldMapRenderer.kt` | `travelTo`, `roadBattle`, `arrive` |
+| `event` | `EventScreen` | `EventScreen.kt` (normal) | `chooseOption`, `assignRecharge`, `pickGem` |
+| *(overlay)* | `SpellbookScreen` | *(new, D16)* | `socket`, `upgrade`, `unsocket` |
+| `prep` | `BattlePrepScreen` | `EventScreen.kt` (BATTLE_PREP mode) | `startBattle(loadout, junk)` |
+| `battle` | `BattleScreen` | `BattleScreen.kt` + `BattleBoardRenderer.kt` (redesigned, D14) | `selectTile`, `target`, `ability`, `endTurn` |
+| `result` / `victory` / `defeat` | `ResultScreen` / `EndScreen` | *(new)* | `continueResult`, `toTitle` |
 
 `BattlePrepScreen` is its own screen in Spellcross. In Spellford it's a mode of `EventScreen`. In landscape:
 spell pool and loadout slots (3 or 4) on the left, junk pool and 2 junk slots on the right, FIGHT pinned
@@ -22,20 +23,13 @@ It reuses the event layout components (banner, framed pane, wood background).
 
 ## State management
 
+One Zustand store (`src/state/store.ts`):
+
 ```
-sessionStore (Zustand + persist)
-  seed, rngState, map, currentStopId, travel: {from,to,progress}|null,
-  player: Player, currentEvent: {nodeId, params}|null, flags
-  actions: newRun(seed?), travelTo, arrive, chooseOption, startBattle, finishBattle
-
-battleStore (Zustand; a snapshot is written to the run save at each player-turn start, doc 04)
-  state: BattleState                       // authoritative, already resolved
-  queue: BattleEvent[]                     // pending animations
-  view: ViewBoard                          // what the UI currently shows (lags state while animating)
-  selection: TilePos | null
-  actions: selectTile, swap, setTarget, endTurn, useAbility, advanceQueue
-
-settingsStore (persist): animationSpeed, reducedMotion, sound(future), debug
+run: RunState | null        // the whole run, battle included; saved to localStorage after every action
+playback: { queue, view, current }   // battle events still to animate; `view` lags `run.battle` while animating
+selection, toasts, spellbookOpen, debug
+actions: newRun, continueRun, travelTo, chooseOption, startBattle, selectTile, target, ability, endTurn, …
 ```
 
 **Rule:** components never call engine functions directly. They dispatch store actions, which call
@@ -89,8 +83,8 @@ animations, the same as Spellford, where values change as each step resolves.
 </BattleScreen>
 ```
 
-- **Tile identity:** each spawned tile gets a stable `uid` so Framer Motion `layoutId` animates drops
-  naturally. This replaces Spellford's manual `blanksBelowThisSpace × tileSize × timer` offset.
+- **Tile identity:** each spawned tile gets a stable `uid`; tiles are absolutely positioned by `uid`, so a CSS
+  `transform` transition animates drops naturally. This replaces Spellford's manual `blanksBelowThisSpace × tileSize × timer` offset.
 - **Clears:** `AnimatePresence` exit animation with a white halo and fade (Spellford `renderDisappearance`).
 - **Lightning:** SVG polyline with random jitter from the player portrait to each target enemy, plus floating
   `-12` / `+3` text that rises 30px and fades (Spellford `Animation.kt`). Positions come from refs on the
@@ -123,7 +117,7 @@ animations, the same as Spellford, where values change as each step resolves.
 - Only stops connected to the current stop are tappable. Others get `aria-disabled` and are dimmed.
   Whatever the map scale, each stop gets an invisible hit circle of at least 44px.
 - A drag that moves more than ~8px is a pan, not a tap, so panning never travels by accident.
-- `<LegendPanel/>` slides in from the right (Framer Motion spring) when toggled from the TopBar. It is
+- `<LegendPanel/>` slides in from the right (CSS transition) when toggled from the TopBar. It is
   full height, scrolls on its own, and stays inside the right safe-area inset.
 
 ## Main menu scene

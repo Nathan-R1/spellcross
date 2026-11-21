@@ -4,7 +4,7 @@
 
 Spellford defines content as Kotlin `object`s with lambdas (`SpellLibrary`, `StatusLibrary`,
 `AbilitiesLibrary`, `EventLibrary`). Spellcross moves it to **typed TypeScript data modules** under
-`src/content/`, validated at startup with **Zod** schemas. This keeps type-checking and IDE autocomplete,
+`src/content/`. Validation runs as a **test suite** (`tests/content/validation.test.ts`) rather than at boot, so it costs players nothing. This keeps type-checking and IDE autocomplete,
 and leaves room to move content to JSON later for modding or a content editor.
 
 ```ts
@@ -80,20 +80,25 @@ otherwise wipe the run.
 
 | Data | Storage | Key | When written |
 |---|---|---|---|
-| Settings | `localStorage` | `spellcross:settings:v1` | on change |
-| Current run | `localStorage` | `spellcross:run:v1` | after each travel, event option, and battle end |
-| Battle in progress | `localStorage` | inside `spellcross:run:v1` (`pendingBattle`) | at `startBattle` and at the **start of every player turn**. A refresh or an iOS tab eviction resumes at the start of the current turn. Battle state is plain data, so this is cheap |
+| Current run, including a battle in progress | `localStorage` | `spellcross:run:v1` | after **every action** (travel, event option, swap, ability, retarget, battle end). The RNG state is saved too, so a refresh or an iOS tab eviction resumes exactly where you were, with nothing to re-roll |
+
+Settings aren't persisted in v0 (there are none yet).
 
 ```ts
-interface SaveFileV1 {
+// The save is the store's RunState (src/engine/run.ts), as JSON:
+interface RunState {
   version: 1;
-  createdAt: string; updatedAt: string;
-  seed: number; rng: Record<string, RngState>;
-  map: WorldMap;                // or regenerate from seed. Store anyway to survive generator changes
+  seed: number; createdAt: string; updatedAt: string;
+  rng: { events: RngState; run: RngState };   // battle RNG lives inside `battle`
+  battleCount: number;
+  map: WorldMap; terrainSeed: number;          // map stored, terrain regenerated from its seed
   currentStopId: number;
-  player: Player;               // spell instances (id, element, upgrades, sockets), gems, junk, ability ids + uses
-  currentEvent?: { nodeId: string; params?: Record<string, number> };
-  pendingBattle?: { encounterId: string; snapshot: BattleState };   // latest player-turn start; includes intent cursors
+  travel: null | { from; to; roadId; battleAt: number | null; battleDone: boolean };
+  player: Player;                              // spell instances (id, element, level, sockets), gems, junk, abilities
+  screen: 'map' | 'event' | 'prep' | 'battle' | 'result' | 'victory' | 'defeat';
+  event: EventState | null; prep: PrepState | null;
+  battle: BattleState | null;                  // the live battle, including intent cursors
+  result: { outcome; gold; gem; boss } | null;
 }
 ```
 
@@ -107,8 +112,9 @@ interface SaveFileV1 {
 ## Determinism and seeds
 
 - `newRun(seed = Date.now())` (Spellford: `System.currentTimeMillis()`).
-- RNG streams forked from the run seed: `map`, `terrain`, `events`, `board:<battleN>`, `battle:<battleN>`
-  (random targeting, random intent start positions, board-intent tile picks).
+- RNG streams forked from the run seed: `map`, `terrain`, `events` (event rolls and offers), `run` (road-battle
+  position, encounter picks, rewards) and `battle:<N>` (the board, random targeting, intent start positions,
+  board-intent tile picks).
 - Debug panel can display and copy the seed and start a run from a given one.
 - Battle replays: `{ startSnapshot, inputs: Move[] }` is enough to reproduce a battle. That's useful
   for bug reports and golden tests.

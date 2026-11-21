@@ -75,7 +75,8 @@ Main menu ─New run─▶ Map (Start: Traveller event) ─travel─▶ … ─a
   effects, and optionally a next event.
 - Options with an unmet **condition** (not enough gold or HP, no abilities, …) are shown **disabled**.
 - **Randomness is rolled when an option is chosen**, from the run RNG (D7). Probabilities are as listed.
-- Options marked *stay* keep the event open, so you can do several things in one visit.
+- Options marked *stay* keep the event open, so you can do several things in one visit. Each *stay* option
+  works **once per visit** (Spellford). Cancelling the gem pick gives the Buy gem option back.
 - "Heal" always means **+50% of max HP** (clamped). "Rest" gives **1 ability recharge per ability owned**,
   which you assign in the recharge popup.
 
@@ -86,7 +87,7 @@ Main menu ─New run─▶ Map (Start: Traveller event) ─travel─▶ … ─a
 | Start | Traveller | Pick 1 of 3 random abilities |
 | Campfire | Campfire | Heal *or* Rest |
 | Village | Village | Heal, Rest, Buy gem (100gp: pick 1 of 3 random gems), Leave (all *stay*) |
-| Town | Town | Heal, Rest, Buy gem (100gp, pick 1 of 3), Train (100gp, +1 Spell Upgrade), Unsocket a gem (50gp), Leave (all *stay*) |
+| Town | Town | Heal, Rest, Buy gem (100gp, pick 1 of 3), Train (100gp, +1 Spell Upgrade), Leave (all *stay*). While at a Town, the Spellbook also offers Unsocket (50gp) |
 | Market | Market | Train (200gp, +random ability), Buy gem (100gp, pick 1 of 3), Study (100gp, +1 Spell Upgrade), Leave (all *stay*) |
 | Encounter | random event | §4.3 |
 | Finish | the boss battle | §2 |
@@ -104,7 +105,9 @@ with the text ported word for word from Spellford's `EventLibrary.kt`. Spellcros
 - **Mysterious Chest:** success gives a random ability.
 - **Fight for Loot:** *Explore* gives the Wind Wall spell, then a normal-encounter battle (3 slots).
 - **Alchemist:** changes the **first element** of the first spell in your collection that isn't already that element.
-- Anything that grants an ability does nothing when you already hold 5.
+- **Holding 5 abilities:** paid ability options (Market Train, Salesman Weapon) are disabled. Free grants (Chest,
+  Traveller) give nothing. Spellford instead took the gold and gave nothing (D20). Ability and gem rolls are
+  uniform, and duplicate abilities are allowed (open-questions B5).
 
 ## 5. Battle preparation
 
@@ -127,7 +130,8 @@ fixed, visible cycle of intents. The board belongs to the player alone, and enem
 - **8 columns × 6 visible rows** (48 tiles), plus a hidden 6-row refill buffer above (D15).
 - **Tile pool:** loadout spells, base duds (Ash, Rubble, Mist), base novas (Surge, Critical) and selected
   junk. Weights *(tune)*:
-  - **Loadout spells: 60%**, shared by each spell's weight. Weight = 1 + 0.2 per Weight gem.
+  - **Loadout spells: 60%**, shared by each spell's weight. Weight = 1 + 0.2 per Weight gem (additive). The
+    share stays 60% in total, so with 3 spells one Weight gem takes a spell from 20% to 22.5% of tiles.
   - **Duds: 25%**, shared equally (base duds + selected dud junk).
   - **Novas: 15%**, shared equally (base novas + selected nova junk).
 - **The initial fill** has no ready-made matches (re-roll until there are none).
@@ -139,8 +143,13 @@ fixed, visible cycle of intents. The board belongs to the player alone, and enem
 - **Linked tiles** (Ash, Slime, Orb, Surge, Charge, Wall): a linked tile orthogonally next to a triggered set is
   pulled in and cleared, but only if it's **available** (not locked or hidden). A pulled **Surge** turns into
   the adjacent spell and adds +1 power. Other linked tiles just clear (D10).
-- **Locks:** both swapped tiles become *pending*. At the end of the player's turn, pending → locked and
-  locked → free. Locked tiles can't be swapped or matched. Hidden tiles can't be swapped.
+- **Locks:** both swapped tiles become *pending*. Pending tiles can still be swapped and matched this turn.
+  At the end of the player's turn, pending → locked and locked → free. Locked tiles can't be swapped or
+  matched. Hidden tiles can't be swapped. A lock belongs to the **tile**, not the cell: it falls with the tile,
+  and clears when the tile is cleared.
+- **Cast order within a cascade step:** groups cast in reading order of their top-left tile (top row first, then
+  left to right). This decides which cast uses up a Critical. A Surge next to two matched spells joins the
+  first one found looking down, up, right, then left.
 
 ### 6.3 Turn structure
 
@@ -163,9 +172,11 @@ battle start: enemies placed left→right in slots 0..n-1; intent cursors set (0
 - **Moves:** one move = one swap of two orthogonally adjacent, available tiles. A swap costs a move **even
   without a match**. Because any such swap is legal, there's **no reshuffle** (C4).
 - **Free actions:** retargeting, info popups, and triggering abilities (each spends its own uses).
-- **Win:** all enemies dead. This is checked after each move fully resolves and after each enemy's turn start.
-  Remaining moves are lost.
+- **Win:** the battle ends **the moment the last enemy dies**, even mid-cascade. The killing cast's healing and
+  statuses still apply, but its self-damage and extra move don't, and no later casts happen (the board still
+  settles). Remaining moves are lost.
 - **Loss:** player HP 0 at any moment. The battle stops immediately.
+- **Ties:** if both happen at once, **victory wins**.
 
 ### 6.4 Input
 
@@ -196,10 +207,13 @@ target's then actor's `onSpellApplied`):
 
 ```
 spell stats are FINAL stats (base + gems at the spell's level; §9)
-chaos         : if the spell has Chaos C, roll damage | block | healing (battle RNG) and add C per tile to it
+chaos         : if the spell has Chaos C, roll damage | block | healing ONCE per cast (battle RNG, before targets)
+                and add C per tile to that channel. Chaos damage counts as damage (gets Strength/Charge);
+                a self spell with Chaos targets an enemy, since it may roll damage
 
 mult          = actor.strengthStat (1) × 1.5 if actor has Critical (then Critical expires)
-elementMod    = 2 if target weak to the spell's element, 0.5 if resistant, else 1   (either element with Sunstone)
+elementMod    = 2 if target weak to the spell's element, 0.5 if resistant, else 1   (either element with Sunstone;
+                by element, not spell name as in Spellford, D21. No v1 enemy has weaknesses or resistances)
 dmgPerTile    = if spell.damage > 0:
                   max(0, spell.damage × mult × elementMod
                          + Strength + Charge + Charge‹spell element›)              (D1, D4)
@@ -211,7 +225,10 @@ healing       = floor(healPerTile × power), applied to the actor (clamped to ma
 statuses      = each spell status at value × power if per-tile, else value
                 (Block per tile → actor; Poisoned per tile → target; Charge Lightning on Strike → actor, flat)
 on cast       : Fortify → actor gains Block = power × value; Fortify‹spell element› likewise
-                Darkstone → actor takes its self-damage (ignores Block); +1 move, once per turn
+                Darkstone → actor takes its self-damage (ignores Block); +1 move, at most once per turn
+                across all spells. Several Darkstones on one spell add their damage, not more moves
+Critical      : ×1.5 to damage and healing only (not Block or statuses, as in Spellford), consumed by the
+                next cast even if that cast does neither
 ```
 
 Healing applies once per cast, not once per target. If the target dies mid-cascade, later casts retarget to
@@ -249,14 +266,19 @@ new (for Chargestone and Stormstone) and use placeholder icons.
   the leftmost). Heals can't revive.
 - **Board intents** (Lock, Add Tiles) are allowed on **elite and boss** enemies only.
 - Each enemy shows its **current intent** as a badge: an icon per part, with numbers after its own Strength
-  and Weak (not after your Block). Long-press shows the whole cycle.
+  and Weak (not after your Block). The numbers also include Strength from **allies acting earlier** in the
+  same enemy phase (e.g. the Harbinger's Rally before the Bear's Maul), so the badge always matches the hit.
+  Long-press shows the whole cycle.
+- **Lock** picks free visible tiles. **Add Tiles** picks visible tiles that aren't locked, keeps their pending
+  state, and only adds junk (so it can't create a set).
 - **Roster, cycles, encounters and data format:** [enemies.md](enemies.md). Wolf and Bear (normal), Spider
   (elite), Harbinger (boss, with a Wolf and a Bear).
 
 ### 6.8 Battle end
 
 - **Victory:** gold = sum of each enemy's reward roll. **Gem drop** *(tune)*: normal encounter 25%, elite
-  100%. Shown on the ResultScreen, then back to travel. The boss leads to run victory instead (§2).
+  100%, boss 0%. Shown on the ResultScreen, then back to travel. After the boss, the ResultScreen leads to
+  run victory (§2).
 - **Defeat:** the run ends (§2).
 
 ### 6.9 Battle screen
@@ -290,7 +312,7 @@ Powers outside the board. Each has **3 uses**, and triggering one costs no move.
 |---|---|
 | Low Blow | Poisoned 6 → target |
 | Crane Stance | Block 20 → self |
-| Finisher | 15 Fire damage × strength stat, element mods apply |
+| Finisher | 15 Fire damage × strength stat, element mods apply. Block absorbs it (Spellford bypassed Block: open-questions B4) |
 | Fuel of Fire / Lightning / Stone | Charge Fire / Lightning / Earth 2 → self |
 | Sicken | Triples the target's Poisoned (D12: description "Triple the target's Poisoned") |
 | Bulwark of Ice / Stone / Air | Fortify Water / Earth / Air 1 → self |
@@ -325,7 +347,7 @@ Gems have no level of their own. Each value is read from the spell's level (1 / 
 | Walled | +Block per tile to self: 2 / 2 / 3 / 3 / 4 |
 | Toxicut | +Poisoned per tile to target: 1 / 1 / 1 / 2 / 3 |
 | Cracked | +Chaos per tile: 2 / 2 / 2 / 4 / 4. Each cast, Chaos becomes damage, Block or healing at random |
-| Weight | Tile weight +0.2 (spell appears ~20% more often) |
+| Weight | Tile weight +0.2, within the 60% loadout share (with 3 spells: 20% → 22.5% of tiles) |
 | Chargestone | Each cast: Charge ‹spell's element› 1 / 1 / 1 / 2 / 3 → self |
 | Stormstone | Each cast: Fortify ‹spell's element› 1 / 1 / 1 / 2 / 3 → self |
 | Darkstone | Each cast: take 3 / 3 / 4 / 4 / 5 self-damage. +1 move, at most once per turn |
@@ -334,7 +356,10 @@ Gems have no level of their own. Each value is read from the spell's level (1 / 
 - **Sockets:** all 3 open. Any gem in any socket. The same gem can repeat (values add). **No cap on effect
   types.**
 - **Sources:** battle drops (§6.8), shops (pick 1 of 3 for 100gp), and the Gambler (random).
-- **Unsocket:** Towns, 50gp, gem returned.
+- **Unsocket:** in the Spellbook while at a Town, 50gp, gem returned.
+- **Sunstone details:** a second Sunstone on the same spell adds nothing. If the Alchemist later makes the
+  first element equal the second, the spell simply has one element. Chargestone and Stormstone grant their
+  status for **each** of the spell's elements.
 
 ### 9.4 Spellbook
 
@@ -370,10 +395,12 @@ Gold can't go negative. Unaffordable options are disabled.
 
 ## 11. Saving and determinism
 
-- **One save slot** in `localStorage`. It's written after each travel step, event option and battle end, and at
-  the **start of every player turn** mid-battle. Reloading resumes there.
-- Everything random comes from RNG streams forked from the run seed (`map`, `terrain`, `events`, `board:N`,
-  `battle:N`). The same seed and inputs always replay the same run.
+- **One save slot** in `localStorage`. The whole run, including a battle in progress, is written after **every
+  action** (travel, event option, swap, ability, retarget). The RNG state is saved too, so reloading can't
+  re-roll anything.
+- Everything random comes from RNG streams forked from the run seed: `map`, `terrain`, `events` (event rolls
+  and offers), `run` (road-battle position, encounter picks, rewards) and `battle:N` (board and battle rolls).
+  The same seed and inputs always replay the same run.
 - Save format and migrations: [04-content-data-and-persistence.md](architecture/04-content-data-and-persistence.md).
 
 ## 12. Out of scope for v1

@@ -137,8 +137,10 @@ All picks use the run RNG. Weighting normal encounters by distance from Start is
 
 ## 4. Data files
 
-There are two content files. **`intents.ts`** defines the named intents. **`enemies.ts`** lists each
-enemy's cycle **in order**, mixing named intents (by id) and generic intents (inline).
+Everything lives in **`src/content/enemies.ts`**: the generic-intent helpers (`attack()`, `defend()`, …), the
+named intents, the enemies (each listing its cycle **in order**, mixing named intents by id and generic intents
+inline) and the encounters. The snippets below show the shape; the file is the source of truth. The boss's id
+is `harbinger`, and the Spider has no portrait (placeholder, open-questions U5).
 
 ```ts
 // src/content/intents.ts
@@ -202,11 +204,11 @@ export const enemies = defineEnemies({
     intents: ['swipe', defend(10), 'maul', 'roar'],   // a generic intent used inline
   },
   spider: {
-    name: 'Spider', tier: 'elite', hp: 75, portrait: 'portraits/spider.png',
+    name: 'Spider', tier: 'elite', hp: 75, // no portrait yet (U5)
     gold: [45, 65],
     intents: ['venomBite', 'spinWeb', 'lunge', 'feed'],
   },
-  boss: {
+  harbinger: {
     name: 'Harbinger', tier: 'boss', hp: 180, portrait: 'portraits/harbinger.png',
     gold: [100, 150],
     intents: ['darkBolt', 'rally', 'corrupt', 'ward', 'doom'],

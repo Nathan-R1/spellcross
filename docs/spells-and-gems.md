@@ -78,7 +78,7 @@ match size, and non-category statuses.
 
 | Element | Has | Missing |
 |---|---|---|
-| fire | every single and pair category, tiers 1–3, `default` | |
+| fire | dmg, healing, block and most pairs, tiers 1–3, `default` | `poison-*`, `chaos-*`, `healing-poison-*`, `poison-chaos-*` |
 | water | dmg, block, most pairs, `default` | `healing-2/3`, `poison-*`, `chaos-*`, some pairs. Has an odd `dmg-healing-4` |
 | lightning | dmg, healing, `block-1`, dmg-block, dmg-poison, `default` | most others |
 | earth | pairs only, `default` | **all single categories** (so `dmg-2` → `default`) |
@@ -144,7 +144,9 @@ What the effects do:
   per seed). Example: Chaos 6 becomes 6 damage, *or* 6 Block, *or* 6 healing per tile. The popup and the cast
   animation show which one came up. This replaces Spellford's use of "chaos" for Critical in the icon
   categories. Spellford's Critical tile and status are unchanged.
-- **Weight**: "+20% chance" = this spell's tile weight ×1.2. Two Weight gems give ×1.4. It isn't a category.
+- **Weight**: tile weight +0.2 per gem (additive: two give 1.4). The loadout's share of the board stays 60%, so
+  this redistributes within it: with 3 spells, one Weight gem takes a spell from 20% to 22.5% of tiles. It isn't
+  a category.
   It replaces the Warlock's Weight Gem item (D5).
 - **Chargestone / Stormstone**: ‹X› = the spell's own element (both elements with Sunstone). Each cast gives
   you Charge ‹element› / Fortify ‹element› at the gem's value (permanent, features §5.6). This needs Charge and
@@ -203,7 +205,7 @@ Ice Bolt (Water, damage 3), across a run:
 | Socket Weight | 3 | dmg 6, block 3, weight ×1.2 | `water/dmg-block-2` |
 | Spell Upgrade ×2 | 5 | dmg 8, block 4 | `water/dmg-block-3` |
 
-A 3-match at the end deals 24 damage and gives you 12 Block, and the spell turns up 20% more often.
+A 3-match at the end deals 24 damage and gives you 12 Block, and the spell makes up ~22.5% of tiles instead of 20%.
 
 ### 3.6 Element synergy
 
@@ -218,9 +220,8 @@ This already works through statuses ported from Spellford (features §5.6, D4). 
 
 ## 4. Spellbook screen
 
-Where customisation happens. It opens from a **Spellbook** button in the World screen's top bar, and from the
-stop events that sell gems and upgrades (Village, Town, Market). It isn't available during battles or
-battle prep.
+Where customisation happens. It opens from the **Spellbook** button in the World screen's top bar. It isn't
+available during battles or battle prep. Unsocket is offered while the player is at a Town.
 
 Phone landscape layout (03-frontend § Phone landscape layout):
 

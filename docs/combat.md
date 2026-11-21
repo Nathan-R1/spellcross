@@ -34,9 +34,9 @@ battle start
 ```
 
 - **The player always goes first**, as in Spellford.
-- **Win:** every enemy is dead. This is checked after each player move has fully resolved (including the
-  whole cascade) and after each enemy's turn start (Poisoned). The battle ends at once, and the remaining
-  moves are lost.
+- **Win:** the battle ends **the moment the last enemy dies**, even mid-cascade or at an enemy's turn start
+  (Poisoned). No later casts happen and the killing cast's self-damage doesn't apply. Remaining moves are lost.
+  If the player dies at the same moment, **victory wins** (spec §6.3).
 - **Loss:** player HP reaches 0 at any point. The battle stops immediately, even mid enemy phase.
 - Then the ResultScreen (D9). Victory gold is the sum of each defeated enemy's reward roll, plus a possible gem
   drop (normal 25%, elite 100%; spells-and-gems §3.2).
@@ -91,7 +91,7 @@ The board is the player's alone. Enemies never swap on it.
   are allowed.
 - **Pool weights must be retuned.** In Spellford, enemy spells made up part of the pool. With only the
   player's 3 loadout spells, Spellford's normalisation (duds total 3, novas total 3) would make only a
-  third of tiles matchable. Starting split *(tune)*: **loadout spells 60%** (shared by each spell's weight: base 1, ×1.2 per Weight gem; spells-and-gems §3.2), **duds 25%**
+  third of tiles matchable. Starting split *(tune)*: **loadout spells 60%** (shared by each spell's weight: base 1, +0.2 per Weight gem, within the 60%; spells-and-gems §3.2), **duds 25%**
   (base duds and selected dud junk, shared equally), **novas 15%** (same rule).
 - **Size: 8 columns × 6 visible rows** (D15), so 48 tiles. The hidden refill buffer above it is also 6
   rows.
@@ -100,8 +100,8 @@ The board is the player's alone. Enemies never swap on it.
 - **No reshuffle** (C4). Any swap of two adjacent available tiles is legal even without a match, so the
   player is never stuck. A board with no matching move just means setup swaps.
 - Matching, cascades, linked tiles, locks and initial no-match fill work exactly as described in features
-  §5.2. Locks still matter: tiles you swap stay locked through your next turn, so you can't hammer the
-  same spot.
+  §5.2. Locks still matter: tiles you swap are *pending* (still usable) for the rest of this turn, then locked
+  through your next turn, so you can't hammer the same spot across turns. Locks travel with their tile.
 
 ## 3. Enemies and intents
 
@@ -143,8 +143,8 @@ Each enemy shows its **current intent** above its portrait at all times during t
 - an icon per category (sword = attack, down arrow = debuff, up arrow = buff, heart = heal, grid =
   board), with
 - the **final number** after the enemy's Strength and Weak, e.g. "⚔ 6", or "⚔ 4×2" for multi-hit.
-  It doesn't subtract the player's Block, which is shown on the player strip. So the badge is stable while
-  you play, and you compare two plain numbers.
+  It doesn't subtract the player's Block, which is shown on the player strip. It does include Strength from
+  allies acting earlier in the same enemy phase (Rally before Maul), so the badge always matches the hit.
 
 Tap an enemy to target it. **Long-press an enemy** to open its popup: name, HP, statuses, and the
 **full cycle** with the current step highlighted and each intent's description.

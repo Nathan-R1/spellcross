@@ -10,12 +10,32 @@ doc it points to.
 |---|---|---|---|
 | **C2** | Player **Strength** value (explained below). *Deferred:* nothing grants the player Strength in v1 | Revisit when something does | Later |
 | **U5** | Spider art: Spellford has no spider portrait or intent icons to pull | Placeholder (generated silhouette) until drawn. Intent icons fall back to the generic category icons | M3 |
+| **B1** | **Difficulty cliff.** Sim (bot, 10 seeds, starting spells, full HP): every normal and elite encounter wins 100% (Wolf in ~2 rounds losing ~2 HP; Pack and Nest lose ~13 HP), but the boss wins **0%**. | Raise normal/elite HP or damage, lower boss pressure (or make Harbinger two-phase), then add a whole-run sim with HP carry-over and gems before tuning further | M2 / M6 |
+| **B2** | **Board clog.** Rubble and Mist can't match and aren't linked, so they never leave the board, and Corrupt adds 4 Rubble every 5 turns. Moves with no match available grow with fight length: ~5% in short fights, ~15% at 5–7 rounds, **37% in the boss fight** | Pick one: make Rubble/Mist linked (cleared next to a match); or duds crumble after N turns; or Corrupt adds a linked dud. Then re-sim | M2 |
+| **B3** | **Gamble Big is a trap.** Both wagers pay a flat +201 on a win, so Big (−200) has an expected value of −99.5 gold vs +50.5 for Small | Pay 2× the wager + 1 (Small 101, Big 401), or keep it as flavour | M4 |
+| **B4** | **Finisher vs Block.** Spellford's Finisher bypasses Block (`takeDamage`); Spellcross lets Block absorb it (relevant against Ward 15 and Bear's Defend 10) | Bypass Block, as Spellford: it's a finisher | M2 |
+| **B5** | **Roll weights.** Gems and abilities are rolled uniformly, so Sunstone/Darkstone are as common as Strikecut and ability rarity is unused; duplicate abilities are allowed | Weight gem drops by design tier (e.g. 6 / 3 / 1) and abilities by rarity; allow duplicates | M6b |
+| **C1** | (Reopened) Permanent Strength/Charge was decided on the condition that the sim logs damage per round. That logging doesn't exist yet | Add per-round damage logging to `pnpm sim`, then confirm | M2 |
 
 **C2 explained.** Strength is a status that makes each spell tile hit harder. In Spellford a Strength status
 defaults to **+2 per tile** (`StatusLibrary`, changed in `3f7b1a0`), and D1 moves it onto damage. Nothing in
 Spellcross currently *gives* the player Strength. No spell, ability or gem does, so the question is moot
 for v1. If something adds it later (e.g. a new ability), its value should be set there. "+2 per tile" is
 strong: it's +50% on Scorch.
+
+## Decided during the build and review (please confirm)
+
+Gaps the adversarial doc review found, which I filled so code and docs agree. Each is easy to change.
+
+| Rule | What I chose | Where |
+|---|---|---|
+| Win and loss at the same moment | Victory wins. The battle ends the instant the last enemy dies: no later casts, no Darkstone self-damage | spec §6.3 |
+| Intent badges with ally buffs | Badges include Strength from allies acting earlier the same phase (Rally → Maul shows 13, hits 13) | spec §6.7 |
+| Add Tiles on locked tiles | Skips locked tiles, keeps pending locks, only adds junk | spec §6.7 |
+| Chaos details | Rolled once per cast; counts as damage for Strength/Charge; a self spell with Chaos targets an enemy | spec §6.5 |
+| Critical scope | ×1.5 to damage and healing only, consumed by the next cast | spec §6.5 |
+| Saving | The whole run is saved after every action, battle included | spec §11 |
+| Spellford fixes | D18 map minimums, D19 Fight for Loot, D20 Shrine Ignore and full-inventory purchases, D21 element-based weaknesses | features.md |
 
 ## Decision log
 
@@ -41,7 +61,6 @@ strong: it's +50% on Scorch.
 | R5 | Prices stay as Spellford: gem 100, Spell Upgrade 100, ability 200, Unsocket 50, healing free | features §4.3 |
 | R6 | Defeat ends the run and deletes the save (permadeath) | D9 |
 | R7 | **No relic system** | n/a |
-| C1 | Enemy Strength and player Charge stay **permanent**. The M2 sim logs damage per round as a check | combat §4 |
 | C3 | Junk selection (Orb, Slime) is fine as it is | combat §2.4 |
 | C4 | **No reshuffle** when there's no matching move. Any adjacent swap is legal, so the player is never stuck | combat §2.4 |
 | C5 | Abilities cost no moves | combat §2.1 |
