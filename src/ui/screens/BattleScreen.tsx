@@ -3,7 +3,7 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { content } from '../../content';
-import { previewParts, snapshot, type IntentPreviewPart } from '../../engine/battle';
+import { pendingAllyStrength, previewParts, snapshot, type IntentPreviewPart } from '../../engine/battle';
 import type { EnemyState, ResolvedSpell, StatusInstance, Target, TimedEvent } from '../../engine/types';
 import { useStore } from '../../state/store';
 import { AbilityBar, Asset, HpBar, Modal, StatusInfo, StatusRow, TopBar, useLongPress } from '../components/common';
@@ -107,6 +107,7 @@ export function BattleScreen() {
               const v = view.enemies[e.slot];
               return (
                 <EnemySlot key={e.slot} enemy={e} hp={v.hp} statuses={v.statuses} alive={v.alive} cursor={v.intentCursor}
+                  allyStrength={pendingAllyStrength(battle.enemies.map((x) => ({ slot: x.slot, defId: x.defId, alive: view.enemies[x.slot].alive, intentCursor: view.enemies[x.slot].intentCursor })), e.slot, content)}
                   targeted={view.targetSlot === e.slot && v.alive} acting={acting === e.slot}
                   anchor={(el) => (anchors.current[String(e.slot)] = el)}
                   onTap={() => target(e.slot)} onLong={() => setEnemyInfo(e.slot)} />
@@ -191,18 +192,18 @@ function shade(hex: string) {
   return `rgb(${f(n >> 16)}, ${f((n >> 8) & 255)}, ${f(n & 255)})`;
 }
 
-function intentParts(enemy: EnemyState, statuses: StatusInstance[], cursor: number) {
+function intentParts(enemy: EnemyState, statuses: StatusInstance[], cursor: number, allyStrength: number) {
   const cycle = content.enemyIntents[enemy.defId];
   const intent = cycle[cursor % cycle.length];
-  return { intent, parts: previewParts(intent.parts, { ...enemy, statuses }) };
+  return { intent, parts: previewParts(intent.parts, { statuses }, allyStrength) };
 }
 
-function EnemySlot({ enemy, hp, statuses, alive, cursor, targeted, acting, anchor, onTap, onLong }: {
-  enemy: EnemyState; hp: number; statuses: StatusInstance[]; alive: boolean; cursor: number; targeted: boolean; acting: boolean;
+function EnemySlot({ enemy, hp, statuses, alive, cursor, allyStrength, targeted, acting, anchor, onTap, onLong }: {
+  enemy: EnemyState; hp: number; statuses: StatusInstance[]; alive: boolean; cursor: number; allyStrength: number; targeted: boolean; acting: boolean;
   anchor: (el: HTMLElement | null) => void; onTap: () => void; onLong: () => void;
 }) {
   const press = useLongPress(onTap, onLong);
-  const { parts } = useMemo(() => intentParts(enemy, statuses, cursor), [enemy, statuses, cursor]);
+  const { parts } = useMemo(() => intentParts(enemy, statuses, cursor, allyStrength), [enemy, statuses, cursor, allyStrength]);
   const def = content.enemies[enemy.defId];
   const block = statuses.find((s) => s.id === 'block')?.value ?? 0;
   return (

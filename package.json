@@ -7,19 +7,16 @@
     "dev": "vite --host",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run --exclude \"tests/sim/**\"",
+    "test:watch": "vitest --exclude \"tests/sim/**\"",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "assets:manifest": "node scripts/build-asset-manifest.mjs",
-    "sim": "vitest run tests/sim"
+    "sim": "vitest run tests/sim --silent=false"
   },
   "dependencies": {
-    "immer": "^11.2.10",
     "react": "19",
     "react-dom": "19",
-    "react-router-dom": "^7.18.6",
-    "zod": "^4.6.7",
     "zustand": "^5.1.0"
   },
   "devDependencies": {

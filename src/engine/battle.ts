@@ -98,8 +98,9 @@ class Ctx {
   combatant(t: Target) {
     return t === 'player' ? this.s.player : this.s.enemies[t];
   }
+  /** Enemies still in the fight (an enemy at 0 HP is out even before the death sweep flags it). */
   living() {
-    return this.s.enemies.filter((e) => e.alive);
+    return this.s.enemies.filter((e) => e.alive && e.hp > 0);
   }
 }
 
@@ -143,10 +144,11 @@ function checkDeaths(ctx: Ctx) {
 /** Ends the battle if someone has won. Returns true when the battle is over. */
 function checkOutcome(ctx: Ctx): boolean {
   if (ctx.s.outcome) return true;
-  if (ctx.s.player.hp <= 0) {
-    ctx.s.outcome = 'defeat';
-  } else if (ctx.living().length === 0) {
+  // Victory beats a simultaneous player death (spec §6.3).
+  if (ctx.living().length === 0) {
     ctx.s.outcome = 'victory';
+  } else if (ctx.s.player.hp <= 0) {
+    ctx.s.outcome = 'defeat';
   } else return false;
   ctx.s.phase = 'over';
   ctx.emit({ type: 'battleEnd', outcome: ctx.s.outcome });
@@ -216,6 +218,11 @@ function castSpell(ctx: Ctx, ref: string, power: number) {
 
   ctx.emit({ type: 'cast', ref, power, chaos, hits, healing: healed });
 
+  // If this cast killed the last enemy the battle is over: its self-damage and extra move don't apply.
+  if (ctx.living().length === 0) {
+    checkDeaths(ctx);
+    return;
+  }
   if (spell.selfDamage > 0) {
     const dealt = applyUnblockable(player, spell.selfDamage);
     ctx.emit({ type: 'damage', target: 'player', amount: dealt, blocked: 0, source: 'self' });
@@ -253,12 +260,11 @@ export function playerMove(state: BattleState, a: Pos, b: Pos, c: Content): Batt
     if (!s.outcome) {
       const groups = groupForTrigger(s.board, ctx.lookup, (r) => s.spells[r]?.linkBehaviour, matched, linked);
       for (const g of groups) {
-        if (s.player.hp <= 0) break;
+        if (s.player.hp <= 0 || ctx.living().length === 0) break;
         castSpell(ctx, g.ref, g.tiles.length);
       }
-      if (s.player.hp <= 0) {
-        checkOutcome(ctx);
-      }
+      // The battle ends mid-cascade the moment someone wins; the board still settles.
+      if (s.player.hp <= 0 || ctx.living().length === 0) checkOutcome(ctx);
     }
     const uids = clearTiles(s.board, all);
     ctx.emit({ type: 'cleared', uids });
@@ -425,12 +431,11 @@ function resolvePart(ctx: Ctx, enemy: EnemyState, part: GenericIntent) {
     }
     case 'addTiles': {
       if (!s.spells[part.spell]) s.spells[part.spell] = resolveJunk(ctx.c.spells[part.spell]);
-      const picks = ctx.rng.shuffle(visiblePositions(s.board)).slice(0, part.count);
-      for (const p of picks) {
-        const t = tileAt(s.board, p.x, p.y);
-        t.spell = part.spell;
-        t.lock = 'free';
-      }
+      // Never touches locked tiles (so it can't undo a web), and keeps pending locks. Replacements are
+      // junk (validated), so they can't form sets.
+      const open = visiblePositions(s.board).filter((p) => tileAt(s.board, p.x, p.y).lock !== 'locked');
+      const picks = ctx.rng.shuffle(open).slice(0, part.count);
+      for (const p of picks) tileAt(s.board, p.x, p.y).spell = part.spell;
       ctx.emit({ type: 'tilesReplaced', uids: picks.map((p) => tileAt(s.board, p.x, p.y).uid), spell: part.spell });
       break;
     }
@@ -452,16 +457,30 @@ export function previewIntent(state: BattleState, slot: number, c: Content): { i
   if (!enemy?.alive) return null;
   const cycle = c.enemyIntents[enemy.defId];
   const intent = cycle[enemy.intentCursor % cycle.length];
-  return { intent, parts: previewParts(intent.parts, enemy) };
+  return { intent, parts: previewParts(intent.parts, enemy, pendingAllyStrength(state.enemies, slot, c)) };
 }
 
-export function previewParts(parts: GenericIntent[], enemy: EnemyState): IntentPreviewPart[] {
+/**
+ * Strength an enemy will have gained from allies acting before it this enemy phase (they act left to
+ * right), e.g. the Harbinger's Rally before the Bear's Maul. Keeps the badge truthful (spec §6.7).
+ */
+export function pendingAllyStrength(enemies: Pick<EnemyState, 'slot' | 'alive' | 'defId' | 'intentCursor'>[], slot: number, c: Content): number {
+  let total = 0;
+  for (const e of enemies) {
+    if (e.slot >= slot || !e.alive) continue;
+    const cycle = c.enemyIntents[e.defId];
+    for (const p of cycle[e.intentCursor % cycle.length].parts) if (p.type === 'buffAllies' && p.status === 'strength') total += p.value;
+  }
+  return total;
+}
+
+export function previewParts(parts: GenericIntent[], enemy: Pick<EnemyState, 'statuses'>, allyStrength = 0): IntentPreviewPart[] {
   const out: IntentPreviewPart[] = [];
-  let strength = statusValue(enemy, 'strength');
+  let strength = statusValue(enemy as EnemyState, 'strength') + allyStrength;
   for (const p of parts) {
     switch (p.type) {
       case 'attack': {
-        const amount = weakAdjust(enemy, p.amount + strength);
+        const amount = weakAdjust(enemy as EnemyState, p.amount + strength);
         const last = out[out.length - 1];
         if (last && last.kind === 'attack' && last.amount === amount) last.hits = (last.hits ?? 1) + 1;
         else out.push({ kind: 'attack', amount, label: `${amount}` });
@@ -470,7 +489,7 @@ export function previewParts(parts: GenericIntent[], enemy: EnemyState): IntentP
       case 'defend': case 'defendAllies': out.push({ kind: 'defend', amount: p.amount, label: `${p.amount}${p.type === 'defendAllies' ? ' all' : ''}` }); break;
       case 'heal': case 'healAlly': case 'healAllies': out.push({ kind: 'heal', amount: p.amount, label: `${p.amount}${p.type === 'healAllies' ? ' all' : p.type === 'healAlly' ? ' ally' : ''}` }); break;
       case 'buff': case 'buffAllies':
-        if (p.status === 'strength' && p.type === 'buff') strength += p.value;
+        if (p.status === 'strength') strength += p.value; // buffAllies includes itself
         out.push({ kind: 'buff', amount: p.value, label: '' });
         break;
       case 'debuff': out.push({ kind: 'debuff', amount: p.value, label: '' }); break;

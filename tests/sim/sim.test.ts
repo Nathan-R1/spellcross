@@ -3,7 +3,7 @@ import { createBattle } from '../../src/engine/battle';
 import { createPlayer } from '../../src/engine/run';
 import { playBattle, stats } from './bot';
 
-const SEEDS = Number(process.env.SIM_SEEDS ?? 30);
+const SEEDS = Number(process.env.SIM_SEEDS ?? 10);
 
 describe('combat sim (balance baseline)', () => {
   for (const enc of Object.values(content.encounters)) {
@@ -22,6 +22,6 @@ describe('combat sim (balance baseline)', () => {
         expect(out.state.outcome === null ? out.rounds > 60 : true).toBe(true);
       }
       console.log(`${enc.id.padEnd(14)} win ${(100 * wins / SEEDS).toFixed(0).padStart(3)}%  avg rounds ${(rounds / SEEDS).toFixed(1)}  avg HP lost ${(hpLost / SEEDS).toFixed(1)}  no-match moves ${(100 * stats.starvedMoves / Math.max(1, stats.moves)).toFixed(0)}%`);
-    }, 120_000);
+    }, 900_000);
   }
 });

@@ -192,7 +192,13 @@ export function generateMap(seed: number, width: number, height: number): WorldM
   for (const req of STOP_TYPES.filter((t) => t.minimum > 0)) {
     let remaining = req.minimum - inner.filter((s) => s.type === req.id).length;
     while (remaining > 0) {
-      const cand = sortedStops.find((s) => s.type !== req.id);
+      // Fix of a Spellford bug: never convert a stop another minimum still depends on (Spellford could
+      // turn the only Town into a Campfire, leaving ~2% of maps without a Town or Campfire).
+      const protectedType = (t: StopType) => {
+        const row = stopRow(t);
+        return row.minimum > 0 && inner.filter((s) => s.type === t).length <= row.minimum;
+      };
+      const cand = sortedStops.find((s) => s.type !== req.id && !protectedType(s.type));
       if (!cand) break;
       cand.type = req.id;
       cand.name = `${req.name} ${nextInt(rng, 0, 100)}`;

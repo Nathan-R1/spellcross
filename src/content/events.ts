@@ -155,7 +155,7 @@ export const events: Record<string, EventNode> = {
       const n = p.attempt ?? 1;
       const guaranteed = n >= 10;
       const cost = 3 + n;
-      const chance = guaranteed ? 1 : (25 + n * 10) / 100;
+      const chance = guaranteed ? 1 : Math.min(1, (25 + n * 10) / 100);
       return [
         {
           label: '[Reach Inside]', reward: guaranteed ? '100% Relic' : `${Math.round(chance * 100)}% Relic`, cost: `Lose ${cost} HP`,

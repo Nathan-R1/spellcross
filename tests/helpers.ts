@@ -1,0 +1,51 @@
+// Test helpers: build battles with hand-drawn boards so outcomes are exact.
+
+import { content, type Content } from '../src/content';
+import { createBattle } from '../src/engine/battle';
+import { boardFromAscii } from '../src/engine/board';
+import { createPlayer } from '../src/engine/run';
+import type { BattleState, Player } from '../src/engine/types';
+
+/**
+ * Board letters. Player spells use createPlayer()'s instance uids (s1..s6 in starting order).
+ *   S Scorch  R Restore  T Strike  I Ice Bolt  V Venom  H Shield
+ *   a Ash  r Rubble  m Mist  o Orb  l Slime  u Surge  c Critical
+ */
+export const REF: Record<string, string> = {
+  S: 's1', R: 's2', T: 's3', I: 's4', V: 's5', H: 's6',
+  a: 'ash', r: 'rubble', m: 'mist', o: 'orb', l: 'slime', u: 'surge', c: 'critical',
+};
+
+/** 6 buffer rows of duds so refills never match. */
+export const BUFFER = ['mrmrmrmr', 'rmrmrmrm', 'mrmrmrmr', 'rmrmrmrm', 'mrmrmrmr', 'rmrmrmrm'];
+
+export interface MakeBattle {
+  rows: string[]; // 6 visible rows of 8
+  encounter?: string;
+  player?: (p: Player) => void;
+  state?: (s: BattleState) => void;
+  c?: Content;
+}
+
+export function makeBattle({ rows, encounter = 'wolf', player, state, c = content }: MakeBattle): BattleState {
+  const p = createPlayer(c);
+  player?.(p);
+  const { state: s } = createBattle({ player: p, encounter: c.encounters[encounter], loadout: p.spells.map((x) => x.uid), junk: ['orb', 'slime'], seed: 1 }, c);
+  s.board = boardFromAscii([...BUFFER, ...rows], (ch) => {
+    const ref = REF[ch];
+    if (!ref) throw new Error(`Unknown board letter ${ch}`);
+    return ref;
+  }, 6);
+  // Refills are pure Mist: never matches, so tests see exactly the cascades they draw.
+  s.pool = [{ ref: 'mist', weight: 1 }];
+  for (const e of s.enemies) e.intentCursor = 0;
+  state?.(s);
+  return s;
+}
+
+/** Visible-row coordinates: (x, row) where row 0 is the top visible row. */
+export const at = (x: number, row: number) => ({ x, y: 6 + row });
+
+/** A neutral filler row with no matches. */
+export const FILL = 'mrmrmrmr';
+export const FILL2 = 'rmrmrmrm';

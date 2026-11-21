@@ -59,7 +59,7 @@ export function resolveInstance(inst: SpellInstance, def: SpellDef, gemDefs: Rec
     damage, healing, chaos, statuses, selfDamage, extraMove, weight,
     spellClass: def.spellClass, linked: def.linked, linkBehaviour: def.linkBehaviour,
     // A spell that gained damage from gems but was 'self' still targets the current enemy.
-    target: def.target === 'self' && damage > 0 ? 'single' : def.target,
+    target: def.target === 'self' && (damage > 0 || chaos > 0) ? 'single' : def.target,
     color: def.color, icon: '', hiddenCategories: 0, gems: gemIds,
   };
   const { icon, hidden } = iconForSpell(resolved, iconExists);
