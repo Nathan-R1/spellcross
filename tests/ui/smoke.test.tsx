@@ -87,6 +87,17 @@ describe('UI smoke', () => {
     await waitFor(() => screen.getByText('Junk (1/2)'));
   });
 
+  it('battle prep: holding an enemy shows its intent cycle', async () => {
+    act(() => useStore.getState().newRun(42));
+    act(() => useStore.getState().chooseOption(0));
+    act(() => useStore.getState().debugBattle('spider'));
+    render(<App />);
+    fireEvent.pointerDown(screen.getByLabelText('Spider: hold for details'));
+    await waitFor(() => screen.getByText('Repeats this cycle:'), { timeout: 2000 });
+    expect(screen.getByText('Venom Bite')).toBeTruthy();
+    expect(screen.getByText(/elite · 38 HP/)).toBeTruthy();
+  });
+
   it('continue run restores a mid-battle save', async () => {
     act(() => useStore.getState().newRun(42));
     act(() => useStore.getState().chooseOption(0));

@@ -6,6 +6,7 @@ import { resolvedPlayerSpells } from '../../engine/run';
 import { resolveJunk } from '../../engine/spells';
 import { useStore } from '../../state/store';
 import { Asset, PlayerStats, TopBar, useLongPress } from '../components/common';
+import { EnemyInfo } from './BattleScreen';
 import { SpellDetails } from './SpellbookScreen';
 
 export function BattlePrepScreen() {
@@ -18,6 +19,7 @@ export function BattlePrepScreen() {
   // Junk starts empty: the player opts in.
   const [junk, setJunk] = useState<string[]>([]);
   const [info, setInfo] = useState<string | null>(null);
+  const [enemyInfo, setEnemyInfo] = useState<string | null>(null);
   const encounter = content.encounters[prep.encounterId];
 
   const toggle = (ref: string) => {
@@ -48,12 +50,7 @@ export function BattlePrepScreen() {
         <div className="prep-col panel" style={{ flex: 1, minWidth: 0 }}>
           <b>Enemies</b>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {encounter.enemies.map((id, i) => (
-              <div key={i} style={{ textAlign: 'center', fontSize: 12, width: 56 }}>
-                <Asset path={content.enemies[id].portrait} alt={content.enemies[id].name} size={44} color="#5a2a2a" />
-                <div>{content.enemies[id].name}</div>
-              </div>
-            ))}
+            {encounter.enemies.map((id, i) => <EnemyCard key={i} id={id} onLong={() => setEnemyInfo(id)} />)}
           </div>
           <b>Junk ({junk.length}/{content.config.junkSlots})</b>
           <div style={{ display: 'flex', gap: 6 }}>
@@ -66,6 +63,18 @@ export function BattlePrepScreen() {
         </div>
       </div>
       {infoSpell && <SpellDetails spell={infoSpell} onClose={() => setInfo(null)} />}
+      {enemyInfo && <EnemyInfo defId={enemyInfo} onClose={() => setEnemyInfo(null)} />}
+    </div>
+  );
+}
+
+function EnemyCard({ id, onLong }: { id: string; onLong: () => void }) {
+  const press = useLongPress(() => {}, onLong);
+  const def = content.enemies[id];
+  return (
+    <div style={{ textAlign: 'center', fontSize: 12, width: 56 }} role="button" aria-label={`${def.name}: hold for details`} {...press}>
+      <Asset path={def.portrait} alt={def.name} size={44} color="#5a2a2a" />
+      <div>{def.name}</div>
     </div>
   );
 }

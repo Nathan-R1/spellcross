@@ -133,7 +133,7 @@ export function BattleScreen() {
       {floaters.map((f) => <div key={f.id} className={`floater ${f.cls}`} style={{ left: f.x, top: f.y }}>{f.text}</div>)}
       {spellInfo && <SpellDetails spell={spellInfo} onClose={() => setSpellInfo(null)} />}
       {statusInfo && <StatusInfo s={statusInfo} onClose={() => setStatusInfo(null)} />}
-      {enemyInfo !== null && <EnemyInfo enemy={battle.enemies[enemyInfo]} cursor={view.enemies[enemyInfo].intentCursor} onClose={() => setEnemyInfo(null)} />}
+      {enemyInfo !== null && <EnemyInfo defId={battle.enemies[enemyInfo].defId} cursor={view.enemies[enemyInfo].intentCursor} onClose={() => setEnemyInfo(null)} />}
       {battle.outcome && !busy && (
         <div className="modal-back" style={{ background: 'rgba(0,0,0,0.4)' }}>
           <h1 className="title" style={{ fontSize: 48 }}>{battle.outcome === 'victory' ? 'Victory!' : 'Defeated'}</h1>
@@ -219,20 +219,22 @@ function EnemySlot({ enemy, hp, statuses, alive, cursor, allyStrength, targeted,
   );
 }
 
-function EnemyInfo({ enemy, cursor, onClose }: { enemy: EnemyState; cursor: number; onClose: () => void }) {
-  const def = content.enemies[enemy.defId];
-  const cycle = content.enemyIntents[enemy.defId];
+/** Enemy description popup: its intent cycle. `cursor` marks the next intent (unknown before battle). */
+export function EnemyInfo({ defId, cursor = null, onClose }: { defId: string; cursor?: number | null; onClose: () => void }) {
+  const def = content.enemies[defId];
+  const cycle = content.enemyIntents[defId];
+  const next = cursor === null ? -1 : cursor % cycle.length;
   return (
     <Modal onClose={onClose}>
       <div className="row">
         <Asset path={def.portrait} alt={def.name} size={64} color="#5a2a2a" />
         <div style={{ flex: 1 }}>
-          <h2>{def.name} <span className="dim" style={{ fontSize: 14 }}>{def.tier}</span></h2>
+          <h2>{def.name} <span className="dim" style={{ fontSize: 14 }}>{def.tier} · {def.hp} HP</span></h2>
           <div className="dim">Repeats this cycle:</div>
           <ol style={{ margin: '4px 0', paddingLeft: 20 }}>
             {cycle.map((it, i) => (
-              <li key={i} style={{ color: i === cursor % cycle.length ? 'var(--accent)' : undefined }}>
-                <b>{it.name}</b>{i === cursor % cycle.length ? ' (next)' : ''}: {it.description}
+              <li key={i} style={{ color: i === next ? 'var(--accent)' : undefined }}>
+                <b>{it.name}</b>{i === next ? ' (next)' : ''}: {it.description}
               </li>
             ))}
           </ol>
