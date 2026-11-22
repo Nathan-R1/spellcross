@@ -26,7 +26,7 @@ export function EventScreen() {
         </div>
         <div className="event-text panel">
           <div className="story">{view.text || <span className="dim">What will you do?</span>}</div>
-          <div className="options" style={{ padding: 8 }}>
+          <div className={`options ${view.options.length > 4 ? 'many' : ''}`} style={{ padding: 8 }}>
             {view.options.map((o, i) => (
               <button key={i} className="btn option" disabled={!o.enabled} onClick={() => chooseOption(i)}>
                 <span>{o.label}</span>
