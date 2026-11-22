@@ -25,8 +25,8 @@ export interface RoadTypeRow extends TypeRow<RoadType> { width: number }
 // Enum order matters: it is the iteration order of pickByChance.
 export const STOP_TYPES: StopTypeRow[] = [
   { id: 'town', name: 'Town', radius: 125, chances: [1, 2, 2], desc: 'Large settlement many shops', linkedRoad: 'trail', linkedStop: 'campfire', minimum: 1, variants: 2 },
-  { id: 'village', name: 'Village', radius: 60, chances: [4, 4, 4], desc: 'Small settlement some shops', minimum: 0, variants: 2 },
-  { id: 'campfire', name: 'Campfire', radius: 60, chances: [2, 5, 0], desc: 'Rest and heal', linkedStop: 'town', minimum: 1, variants: 3 },
+  { id: 'village', name: 'Village', radius: 60, chances: [4, 4, 4], desc: 'Small settlement: healer and shops', minimum: 0, variants: 2 },
+  { id: 'campfire', name: 'Campfire', radius: 60, chances: [2, 5, 0], desc: 'Rest: recharge abilities', linkedStop: 'town', minimum: 1, variants: 3 },
   { id: 'market', name: 'Market', radius: 60, chances: [0, 1, 1], desc: 'Buy and trade items', linkedRoad: 'trail', minimum: 1, variants: 2 },
   { id: 'encounter', name: 'Encounter', radius: 60, chances: [5, 5, 5], desc: 'A random event', minimum: 0, variants: 1 },
   { id: 'start', name: 'Start', radius: 65, chances: [0, 0, 0], desc: 'Journey begins here', minimum: 0, variants: 1 },

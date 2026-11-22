@@ -199,10 +199,18 @@ describe('events', () => {
     expect(() => run.chooseOption(r, optionIndex(r, '[Purchase]'), c)).toThrow();
   });
 
+  it('healing is sold only at Villages, 50gp for +50% max HP (D25)', () => {
+    const broke = at('village', 0, (x) => (x.player.hp = 40));
+    expect(run.eventView(broke, c)!.options[optionIndex(broke, '[Healing]')].enabled).toBe(false);
+    expect(optionIndex(at('town', 500), '[Healing]')).toBe(-1);
+    expect(optionIndex(at('campfire', 500), '[Healing]')).toBe(-1);
+  });
+
   it('stop options are single-use per visit; Leave ends the event', () => {
-    let r = at('village', 0, (x) => (x.player.hp = 40));
+    let r = at('village', 100, (x) => (x.player.hp = 40));
     r = run.chooseOption(r, optionIndex(r, '[Healing]'), c);
     expect(r.player.hp).toBe(90); // +50% of max
+    expect(r.player.gold).toBe(50);
     expect(run.eventView(r, c)!.options[optionIndex(r, '[Healing]')].enabled).toBe(false);
     r = run.chooseOption(r, optionIndex(r, '[Leave]'), c);
     expect(r.screen).toBe('map');

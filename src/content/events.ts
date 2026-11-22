@@ -53,7 +53,8 @@ const LEAVE: EventOption = { label: '[Leave]', next: 'end' };
 const gold = (n: number) => (p: Player) => p.gold >= n;
 const hasAbilities = (p: Player) => p.abilities.length > 0;
 
-const HEAL: EventOption = { label: '[Healing]', reward: '+50% HP', effects: [{ type: 'healPctMax', pct: 0.5 }], next: 'stay' };
+// Healing is only sold at Villages (D25). Spellford healed for free at Campfires, Villages and Towns.
+const HEAL: EventOption = { label: '[Healing]', reward: '+50% HP', cost: '-50gp', available: gold(50), effects: [{ type: 'gold', amount: -50 }, { type: 'healPctMax', pct: 0.5 }], next: 'stay' };
 const REST: EventOption = { label: '[Resting]', reward: '+1 Recharge per ability', available: hasAbilities, effects: [{ type: 'recharge', count: 'perAbility' }], next: 'stay' };
 const BUY_GEM: EventOption = { label: '[Purchase]', reward: '+Gem (pick 1 of 3)', cost: '-100gp', available: gold(100), effects: [{ type: 'gemOffer', price: 100 }], next: 'stay' };
 const TRAIN_UPGRADE = (label: string): EventOption => ({ label, reward: '+Spell Upgrade', cost: '-100gp', available: gold(100), effects: [{ type: 'gold', amount: -100 }, { type: 'spellUpgrade', count: 1 }], next: 'stay' });
@@ -69,10 +70,10 @@ export const events: Record<string, EventNode> = {
   }),
   campfire: node({
     id: 'campfire', title: 'Campfire', text: '', image: TOWN_IMG,
-    options: () => [{ ...HEAL, next: 'end' }, { ...REST, next: 'end' }],
+    options: () => [{ ...REST, next: 'end' }, LEAVE],
   }),
   village: node({ id: 'village', title: 'Village', text: '', image: TOWN_IMG, options: () => [HEAL, REST, BUY_GEM, LEAVE] }),
-  town: node({ id: 'town', title: 'Town', text: '', image: TOWN_IMG, options: () => [HEAL, REST, BUY_GEM, TRAIN_UPGRADE('[Train]'), LEAVE] }),
+  town: node({ id: 'town', title: 'Town', text: '', image: TOWN_IMG, options: () => [REST, BUY_GEM, TRAIN_UPGRADE('[Train]'), LEAVE] }),
   market: node({
     id: 'market', title: 'Market', text: '', image: TOWN_IMG,
     options: () => [

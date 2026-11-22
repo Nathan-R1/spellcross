@@ -10,7 +10,7 @@ export const config = {
   maxSpellLevel: 5,
   roadBattleAt: [0.3, 0.7] as [number, number],
   gemDrop: { normal: 0.25, elite: 1, boss: 0 },
-  prices: { gem: 100, spellUpgrade: 100, ability: 200, unsocket: 50, salesmanAbility: 100, salesmanHeal: 50, alchemistFire: 100 },
+  prices: { villageHeal: 50, gem: 100, spellUpgrade: 100, ability: 200, unsocket: 50, salesmanAbility: 100, salesmanHeal: 50, alchemistFire: 100 },
   healPct: 0.5,
   /** Relative chance of rolling an ability of each rarity. */
   abilityRarityWeight: { common: 3, uncommon: 1, rare: 0.5, legendary: 0.2 },
