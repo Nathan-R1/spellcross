@@ -9,18 +9,47 @@ match-3 board. Enemies telegraph their next move (see [docs/combat.md](docs/comb
 PWA). Every layout, touch-target and performance decision is made for a phone held sideways. Desktop
 browsers work but are not a design target, and portrait shows a "rotate your device" prompt (D13).
 
-## Running it
+## Host it on localhost
 
 You need **Node.js 20+** and **pnpm 9+** (`npm install -g pnpm`).
 
+**1. Install** (once, from the repo root):
+
 ```bash
-pnpm install          # once
-pnpm dev              # dev server on http://localhost:5173 (and your LAN, for testing on a phone)
+pnpm install
 ```
 
-**Play on your phone:** `pnpm dev` prints a `Network:` URL (e.g. `http://192.168.1.20:5173`). Open it in Safari
-or Chrome on a phone on the same Wi-Fi and turn the phone sideways. To install it as an app, build and serve
-it over HTTPS (service workers need HTTPS on anything but localhost), then use *Add to Home Screen*.
+**2a. Development server** (hot reload while you change code):
+
+```bash
+pnpm dev
+```
+
+Open **http://localhost:5173**. Stop it with `Ctrl+C`.
+
+**2b. Production build** (what players would get: minified, offline-capable PWA):
+
+```bash
+pnpm build      # typechecks, then builds into dist/
+pnpm preview    # serves dist/
+```
+
+Open **http://localhost:4173**.
+
+**3. Play on your phone.** Both commands also print `Network:` URLs, e.g. `http://192.168.1.20:5173`. Open
+one in Safari or Chrome on a phone on the **same Wi-Fi** and turn the phone sideways. If it doesn't load, your
+computer's firewall is probably blocking the port (5173 or 4173).
+
+**4. Play on a desktop browser.** The game is designed for a phone held sideways. On desktop it shows the same
+layout, letterboxed. For a realistic view, open DevTools' device toolbar (`Ctrl+Shift+M` in Chrome) and pick a
+phone in landscape (for example iPhone 14, rotated).
+
+**Ports in use?** Use another: `pnpm dev --port 3000` or `pnpm preview --port 3001`.
+
+**Installing as an app** (*Add to Home Screen*, offline play) needs the production build served over
+**HTTPS**. Browsers only allow service workers on `https://` or `http://localhost`, so a phone opening your LAN
+address over plain HTTP gets the game but not the offline install. Use a static host (see *Deploying* below)
+or an HTTPS tunnel for that.
 
 | Command | What it does |
 |---|---|
