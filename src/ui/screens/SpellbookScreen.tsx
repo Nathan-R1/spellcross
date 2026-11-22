@@ -160,7 +160,7 @@ export function SpellDetails({ spell, onClose }: { spell: ResolvedSpell; onClose
             <div key={i}>{content.statuses[s.status]?.name ?? s.status} {s.value}{s.perTile ? '/tile' : ''} → {s.self ? 'you' : 'target'}</div>
           ))}
           {spell.gems.length > 0 && <div className="dim">Gems: {spell.gems.map((g) => content.gems[g].name).join(', ')}</div>}
-          {spell.spellClass !== 'player' && <div className="dim">{spell.spellClass === 'dud' ? 'Junk: never matches.' : spell.spellClass === 'nova' ? 'Special: never matches.' : ''}{spell.linked ? ' Linked: cleared when next to a match.' : ''}</div>}
+          {spell.spellClass !== 'player' && <div className="dim">{spell.spellClass === 'dud' ? 'Junk: not much use. Line up 3 of the same to clear them away, but they do nothing.' : spell.spellClass === 'nova' ? 'Special: never matches.' : ''}{spell.linked ? ' Linked: cleared when next to a match.' : ''}</div>}
         </div>
       </div>
       <div className="actions"><button className="btn" onClick={onClose}>OK</button></div>
