@@ -187,7 +187,8 @@ What the effects do:
 - A **Spell Upgrade** raises one spell's level by 1, up to **level 5**.
 - For now, a level only changes the spell's **gem values** (§3.2). Base damage, healing and statuses don't
   change. The level is stored so later features can use it.
-- Sources: Town *Train* and Market *Study* (100gp each, existing options), Warlock *Listen*.
+- Sources: Market *Study* (100gp), Warlock *Listen*, and Campfire *Meditate* (levels a spell directly). Towns and
+  Villages sell random abilities instead.
 - The spell's name shows its level: "Scorch Lv 3".
 
 **Final stats** for a spell instance = base stats + each socketed gem's value at the spell's level.

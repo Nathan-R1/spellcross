@@ -242,11 +242,19 @@ describe('events', () => {
     expect(bought.player.gems).toEqual([gem]);
   });
 
-  it('Train adds a Spell Upgrade for 100gp', () => {
-    let r = at('town', 100);
-    r = run.chooseOption(r, optionIndex(r, '[Train]'), c);
-    expect(r.player.spellUpgrades).toBe(1);
-    expect(r.player.gold).toBe(0);
+  it('Villages, Towns and Markets sell a random ability for 200gp; only the Market sells Spell Upgrades', () => {
+    for (const stop of ['village', 'town', 'market']) {
+      let r = at(stop, 200);
+      r = run.chooseOption(r, optionIndex(r, '[Train]'), c);
+      expect(r.player.abilities).toHaveLength(2); // Traveller's pick + the new one
+      expect(r.player.gold).toBe(0);
+      expect(r.player.spellUpgrades).toBe(0);
+    }
+    expect(optionIndex(at('town', 500), '[Study]')).toBe(-1);
+    expect(optionIndex(at('village', 500), '[Study]')).toBe(-1);
+    let m = at('market', 100);
+    m = run.chooseOption(m, optionIndex(m, '[Study]'), c);
+    expect(m.player.spellUpgrades).toBe(1);
   });
 
   it('Rest gives 1 recharge per ability, assigned one at a time, capped at max uses', () => {

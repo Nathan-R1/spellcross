@@ -92,8 +92,8 @@ Main menu ─New run─▶ Map (Start: Traveller event) ─travel─▶ … ─a
 |---|---|---|
 | Start | Traveller | Pick 1 of 3 random abilities |
 | Campfire | Campfire | **One of:** Patch up (+20% HP), Rest (ability recharges) or **Meditate** (pick a spell: +1 level, free). Then Leave |
-| Village | Village | Patch up (+20%) *or* Healer (+50%, 50gp), Rest, Buy gem (100gp: pick 1 of 3 random gems), Leave (all *stay*) |
-| Town | Town | Patch up (+20%) *or* Healer (+50%, 50gp), Rest, Buy gem (100gp, pick 1 of 3), Train (100gp, +1 Spell Upgrade), Leave (all *stay*). While at a Town, the Spellbook also offers Unsocket (50gp) |
+| Village | Village | Patch up (+20%) *or* Healer (+50%, 50gp), Rest, Buy gem (100gp: pick 1 of 3 random gems), Train (200gp, +1 random ability), Leave (all *stay*) |
+| Town | Town | Patch up (+20%) *or* Healer (+50%, 50gp), Rest, Buy gem (100gp, pick 1 of 3), Train (200gp, +1 random ability), Leave (all *stay*). While at a Town, the Spellbook also offers Unsocket (50gp) |
 | Market | Market | Train (200gp, +random ability), Buy gem (100gp, pick 1 of 3), Study (100gp, +1 Spell Upgrade), Leave (all *stay*) |
 | Encounter | random event | §4.3 |
 | Finish | the boss battle | §2 |
@@ -345,7 +345,7 @@ Each owned spell is an instance with its own **element** (the Alchemist changes 
 
 ### 9.2 Levels
 
-A **Spell Upgrade** (Town Train, Market Study, Warlock) raises one spell's level by 1, up to 5. For now a level
+A **Spell Upgrade** (Market Study, Warlock) raises one spell's level by 1, as does **Meditate** at a Campfire, up to 5. For now a level
 only changes the spell's gem values.
 
 ### 9.3 Gems

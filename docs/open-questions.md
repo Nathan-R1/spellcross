@@ -53,6 +53,7 @@ Gaps the adversarial doc review found, which I filled so code and docs agree. Ea
 | n/a | One heal per visit: free +20% at Campfires, Villages and Towns, or +50% for 50gp at Villages and Towns (D25) | spec §4 |
 | n/a | Elites and boss at full HP (Spider 76, Harbinger 180); Spin Web locks 8 and opens the Spider's cycle; Harbinger opens with Rally (+2 Strength); new elite Stone Giant (100 HP, Crush 30 scaled by HP, alone) | enemies.md |
 | n/a | Campfires offer **one of** Patch up (+20% HP), Rest or Meditate (pick a spell, +1 level, free); cancelling Meditate gives all three back | spec §4.2 |
+| n/a | Villages and Towns sell a random ability (200gp) instead of Spell Upgrades; only the Market sells upgrades | spec §4.2 |
 | B3 | Gamble Big pays gold: Insist gives +601 after a Big win (+201 after Small) | spec §4.3 |
 | B5 | Rolls weighted by rarity: abilities common 3 : uncommon 1; gems Weight 6, Cracked 6, other tier-1 4, Chargestone/Stormstone 2, Darkstone/Sunstone 1; duplicate abilities allowed | spec §4.3, §9.3 |
 | G11 | The gem list's "Lvl" column is ignored (reference only) | spells-and-gems §3.2 |

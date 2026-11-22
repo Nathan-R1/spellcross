@@ -65,6 +65,12 @@ const REST: EventOption = { label: '[Resting]', reward: '+1 Recharge per ability
 const BUY_GEM: EventOption = { label: '[Purchase]', reward: '+Gem (pick 1 of 3)', cost: '-100gp', available: gold(100), effects: [{ type: 'gemOffer', price: 100 }], next: 'stay' };
 const TRAIN_UPGRADE = (label: string): EventOption => ({ label, reward: '+Spell Upgrade', cost: '-100gp', available: gold(100), effects: [{ type: 'gold', amount: -100 }, { type: 'spellUpgrade', count: 1 }], next: 'stay' });
 
+/** A random ability (rarity-weighted) for 200gp: Villages, Towns and Markets. Disabled at 5 abilities (D20). */
+const BUY_ABILITY: EventOption = {
+  label: '[Train]', reward: '+1 random ability', cost: '-200gp', available: (p) => p.gold >= 200 && p.abilities.length < p.maxAbilities,
+  effects: [{ type: 'gold', amount: -200 }, { type: 'addAbility' }], next: 'stay',
+};
+
 const node = (n: EventNode) => n;
 
 export const events: Record<string, EventNode> = {
@@ -87,12 +93,12 @@ export const events: Record<string, EventNode> = {
       LEAVE,
     ],
   }),
-  village: node({ id: 'village', title: 'Village', text: '', image: TOWN_IMG, options: () => [PATCH_UP, HEAL, REST, BUY_GEM, LEAVE] }),
-  town: node({ id: 'town', title: 'Town', text: '', image: TOWN_IMG, options: () => [PATCH_UP, HEAL, REST, BUY_GEM, TRAIN_UPGRADE('[Train]'), LEAVE] }),
+  village: node({ id: 'village', title: 'Village', text: '', image: TOWN_IMG, options: () => [PATCH_UP, HEAL, REST, BUY_GEM, BUY_ABILITY, LEAVE] }),
+  town: node({ id: 'town', title: 'Town', text: '', image: TOWN_IMG, options: () => [PATCH_UP, HEAL, REST, BUY_GEM, BUY_ABILITY, LEAVE] }),
   market: node({
     id: 'market', title: 'Market', text: '', image: TOWN_IMG,
     options: () => [
-      { label: '[Train]', reward: '+1 ability', cost: '-200 gp', available: (p) => p.gold >= 200 && p.abilities.length < p.maxAbilities, effects: [{ type: 'gold', amount: -200 }, { type: 'addAbility' }], next: 'stay' },
+      BUY_ABILITY,
       BUY_GEM,
       TRAIN_UPGRADE('[Study]'),
       LEAVE,
