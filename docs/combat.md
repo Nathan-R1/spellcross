@@ -23,7 +23,7 @@ battle start
   │    moves = movesPerTurn (3)
   │    player swaps / uses abilities / changes target, until moves = 0 or END TURN
   │    player statuses: onTurnEnd
-  │    board locks advance (pending → locked → free)
+  │    web locks free up (locked → free)
   │  ENEMY PHASE: for each living enemy, left to right:
   │    enemy statuses: onTurnStart (it may die here, e.g. from Poisoned)
   │    perform current intent
@@ -100,8 +100,8 @@ The board is the player's alone. Enemies never swap on it.
 - **No reshuffle** (C4). Any swap of two adjacent available tiles is legal even without a match, so the
   player is never stuck. A board with no matching move just means setup swaps.
 - Matching, cascades, linked tiles, locks and initial no-match fill work exactly as described in features
-  §5.2. Locks still matter: tiles you swap are *pending* (still usable) for the rest of this turn, then locked
-  through your next turn, so you can't hammer the same spot across turns. Locks travel with their tile.
+  §5.2, except that swapping **doesn't lock tiles** (D23). Spellford's swap locks stopped two players fighting
+  over the same tiles; with one player on the board they only got in the way. Only Spin Web locks tiles.
 
 ## 3. Enemies and intents
 

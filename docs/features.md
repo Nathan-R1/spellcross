@@ -197,7 +197,7 @@ Set events reference `town/town.png`, but the asset is `town/town.jpg`.
 | 5.2.8 | **Spell power = number of tiles in the group** (grouped by spell name across all sets this step) | Done | |
 | 5.2.9 | **Linked tiles**: tiles with `linkedTile=true` orthogonally adjacent to a triggered set are pulled in and cleared, 🆕 but only if **available** (a locked or hidden linked tile stays). A linked **Surge** turns into the adjacent spell and adds to its power | Partial | Only Surge converts (TODO in code). Ash and others are cleared but have no effect |
 | 5.2.10 | **Cascade**: cleared tiles drop down column by column, the buffer refills from the top, new sets trigger, repeat until stable | Done | Each cascade step currently runs on a 1s timer |
-| 5.2.11 | **Tile lock states**: swapped tiles become `PENDING`. At end of turn PENDING → LOCKED and LOCKED → FREE. Locked tiles can't be swapped or matched | Done | `assets/spells/lockTile.png` overlay |
+| 5.2.11 | **Tile lock states**: swapped tiles become `PENDING`. At end of turn PENDING → LOCKED and LOCKED → FREE. Locked tiles can't be swapped or matched | Done | `assets/spells/lockTile.png` overlay. **→ D23**: swaps no longer lock; only Spin Web does |
 | 5.2.12 | Hidden tiles can't be swapped | Done | |
 | 5.2.13 | Move enumeration and swap simulation (used by AI) | Done | `getAllValidMoves`, `simulateSwap` |
 | 5.2.14 | Board debug printing | Done | Dev only |
@@ -453,6 +453,7 @@ Fix gets a unit test that names this entry (e.g. `// features.md D1`).
 | D20 | Small event-flow quirks: Shrine *Ignore* does nothing; Market *Train* and Salesman *Weapon* take gold at 5 abilities and give nothing | **Fix** | *Ignore* ends the event. Paid ability options are disabled at 5 abilities. Free grants (Chest, Traveller) give nothing at 5 |
 | D21 | Weakness and resistance pools match by **spell name** (`Spell.kt:89-93`) | **Change** (design) | They match by **element** (×2 / ×0.5), so gems, the Alchemist and Sunstone interact with them. No v1 enemy has any; the hook is there for future content |
 | D22 | Duds never match (5.2.7), so non-linked Rubble and Mist can never leave the board; long fights clog (37% of boss-fight moves had no match in the sim) | **Change** (design) | **Duds of the same type clear as sets** (3+ Rubble, Mist, Ash, Orb or Slime) with no effect: no cast, so no Critical, Fortify or Darkstone. Mixed duds don't match. Surge never joins a dud set. Linked tiles next to a dud set are still pulled in. Starting boards have no dud sets either, and Corrupt never places Rubble that completes a set. Novas still never match. Sim: boss win rate 0% → 40%, boss no-match moves 37% → 10% |
+| D23 | Swapped tiles become pending, then locked for the next turn (5.2.11), to stop two players working the same tiles on a shared board | **Change** (design) | **Swapping doesn't lock tiles.** With one player on the board the locks only got in the way. Lock states remain for enemy intents: Spin Web locks 4 tiles, which free up at the end of the player's next turn |
 Decisions D1 and D14 change combat balance (see open-questions B1–B3 for the current sim results). After M2, run the 500-seed headless sim over every
 starter encounter (combat §5) and record the win rate, average turns and average HP lost per encounter in
 `05-migration-plan.md` as the balance baseline.

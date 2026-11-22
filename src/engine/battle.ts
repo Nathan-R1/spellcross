@@ -433,10 +433,8 @@ function resolvePart(ctx: Ctx, enemy: EnemyState, part: GenericIntent) {
     }
     case 'addTiles': {
       if (!s.spells[part.spell]) s.spells[part.spell] = resolveJunk(ctx.c.spells[part.spell]);
-      // Never touches locked tiles (so it can't undo a web), and keeps pending locks. Replacements are
-      // junk (validated), so they can't form sets.
-      // Never touches locked tiles, keeps pending locks, and never places a tile that completes a set (D22:
-      // duds can match now, so Corrupt must not leave a ready-made Rubble set).
+      // Never touches locked tiles (so it can't undo a web), and never places a tile that completes a set
+      // (duds can match, D22, so Corrupt must not leave a ready-made Rubble set).
       const open = ctx.rng.shuffle(visiblePositions(s.board).filter((p) => tileAt(s.board, p.x, p.y).lock !== 'locked'));
       const picks: Pos[] = [];
       for (const p of open) {

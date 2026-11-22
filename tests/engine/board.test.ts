@@ -68,10 +68,11 @@ describe('findSet (Spellford BoardSetTest)', () => {
     expect(findSet(b, lookup, 3, 0)).toEqual([]);
   });
 
-  it('pending tiles (just swapped) can still match', () => {
-    const b = make(['AAA']);
-    tileAt(b, 1, 0).lock = 'pending';
-    expect(findSet(b, lookup, 1, 0)).toHaveLength(3);
+  it('swapped tiles stay free and can match again (D23)', () => {
+    const b = make(['ABAA']);
+    swap(b, { x: 0, y: 0 }, { x: 1, y: 0 });
+    expect(tileAt(b, 0, 0).lock).toBe('free');
+    expect(tileAt(b, 1, 0).lock).toBe('free');
   });
 
   it('hidden buffer rows never match', () => {
@@ -110,14 +111,12 @@ describe('swapping and clearing (Spellford BoardFullTest)', () => {
     expect([0, 1, 2, 3].map((x) => tileAt(b, x, 2).spell).join('')).toBe('CDCD');
   });
 
-  it('swap marks both tiles pending; end of turn: pending → locked → free', () => {
+  it('end of turn frees locked tiles (D23)', () => {
     const b = make(['AB']);
-    swap(b, { x: 0, y: 0 }, { x: 1, y: 0 });
-    expect(tileAt(b, 0, 0).lock).toBe('pending');
-    endTurnLocks(b);
-    expect(tileAt(b, 0, 0).lock).toBe('locked');
+    tileAt(b, 0, 0).lock = 'locked';
     endTurnLocks(b);
     expect(tileAt(b, 0, 0).lock).toBe('free');
+    expect(tileAt(b, 1, 0).lock).toBe('free');
   });
 
   it('canSwap: orthogonal neighbours only, both available', () => {

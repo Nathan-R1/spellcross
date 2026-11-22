@@ -14,12 +14,14 @@ const swap3 = (s: BattleState, c: Content = content) => playerMove(s, at(2, 0), 
 const castEvents = (r: ReturnType<typeof playerMove>) => r.events.map((e) => e.event).filter((e) => e.type === 'cast');
 
 describe('moves', () => {
-  it('a swap costs a move and marks both tiles pending', () => {
+  it('a swap costs a move and does not lock the tiles (D23)', () => {
     const s = makeBattle({ rows: [FILL, FILL2, FILL, FILL2, FILL, FILL2] });
     const r = playerMove(s, at(0, 0), at(1, 0), content);
     expect(r.state.movesLeft).toBe(2);
-    expect(tileAt(r.state.board, 0, 6).lock).toBe('pending');
-    expect(tileAt(r.state.board, 1, 6).lock).toBe('pending');
+    expect(tileAt(r.state.board, 0, 6).lock).toBe('free');
+    expect(tileAt(r.state.board, 1, 6).lock).toBe('free');
+    // The same tiles can be swapped straight back, this turn and next.
+    expect(() => playerMove(r.state, at(0, 0), at(1, 0), content)).not.toThrow();
   });
 
   it('a swap without a match is legal (no reshuffle needed, C4)', () => {
@@ -464,20 +466,20 @@ describe('review fixes', () => {
     expect(previewIntent(s, 0, content)!.parts[0].amount).toBe(5);
   });
 
-  it('M16: Add Tiles never replaces locked tiles and keeps pending locks', () => {
-    const s = makeBattle({ rows: [FILL, FILL2, FILL, FILL2, FILL, FILL2], encounter: 'boss', state: (x) => {
-      x.enemies[1].intentCursor = 2;
-      for (const t of x.board.cells.slice(48)) t.lock = 'locked';
-      for (const t of x.board.cells.slice(48 + 40)) t.lock = 'pending';
-    } });
-    const r = endTurn(s, content);
-    const ev = r.events.find((e) => e.event.type === 'tilesReplaced')!.event;
-    const uids = ev.type === 'tilesReplaced' ? ev.uids : [];
-    expect(uids.length).toBeGreaterThan(0);
-    // Locks advance at the player's turn end, before the enemy phase: locked → free, pending → locked.
-    // So Corrupt may hit the formerly locked tiles (now free), never the formerly pending ones (now locked).
-    for (const uid of uids) expect(s.board.cells.find((t) => t.uid === uid)!.lock).toBe('locked');
-    for (const uid of uids) expect(r.state.board.cells.find((t) => t.uid === uid)!.lock).toBe('free');
+  it('M16: Add Tiles never replaces web-locked tiles', () => {
+    // The Spider webs tiles first (slot 0), then the Harbinger corrupts (slot 1) in the same enemy phase.
+    for (let seed = 0; seed < 20; seed++) {
+      const s = makeBattle({ rows: [FILL, FILL2, FILL, FILL2, FILL, FILL2], encounter: 'boss', state: (x) => {
+        x.enemies[0].defId = 'spider'; x.enemies[0].intentCursor = 1; // Spin Web
+        x.enemies[1].intentCursor = 2; // Corrupt
+        x.rng = seed;
+      } });
+      const r = endTurn(s, content);
+      const locked = r.events.find((e) => e.event.type === 'tilesLocked')!.event;
+      const replaced = r.events.find((e) => e.event.type === 'tilesReplaced')!.event;
+      const webbed = new Set(locked.type === 'tilesLocked' ? locked.uids : []);
+      for (const uid of replaced.type === 'tilesReplaced' ? replaced.uids : []) expect(webbed.has(uid)).toBe(false);
+    }
   });
 });
 

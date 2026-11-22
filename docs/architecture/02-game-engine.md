@@ -13,7 +13,7 @@ type StatusId = string;  // "poisoned"
 
 type SpellClass = 'player' | 'enemy' | 'dud' | 'nova' | 'both';
 type Element = 'fire' | 'lightning' | 'water' | 'earth' | 'air' | 'acid';
-type TileLock = 'free' | 'pending' | 'locked';
+type TileLock = 'free' | 'locked';   // only intents lock tiles (D23)
 
 interface SpellDef {             // content (immutable)
   id: SpellId; name: string; description: string;
@@ -91,7 +91,7 @@ live in a per-cast `CastContext` (below).
 | `groupForTrigger(board, tiles)` | `triggerSpells` grouping | Groups by `SpellRef`, so differently gemmed copies of a spell never merge. Linked Surge converts to its neighbour's spell (behaviour table in content) |
 | `collapse(board, cleared, rng)` | `resolveTiles`, `shiftDownTiles` | Gravity, then refill the top row from weighted RNG |
 | `validMoves(board)` | `getAllValidMoves` | |
-| `endTurnLocks(board)` | `Board.endTurn` | pending→locked, locked→free |
+| `endTurnLocks(board)` | `Board.endTurn` | locked→free (swaps no longer lock, D23) |
 | `lockRandom(board, n, rng)` | *(new)* | Board intent: lock n random free, visible tiles |
 | `replaceRandom(board, spell, n, rng)` | *(new)* | Board intent: replace n random visible tiles without triggering matches |
 
@@ -101,7 +101,7 @@ live in a per-cast `CastContext` (below).
 playerMove(battle, a, b):
   assert phase == 'player' && canSwap && movesLeft > 0
   movesLeft -= 1
-  swap a,b ; mark both 'pending'                         → event Swapped
+  swap a,b                                               → event Swapped
   fire status hook onTileMove(player)
   matched = findSet(a) ∪ findSet(b) ∪ linkedNeighbours(...)
   loop while matched not empty:                           (cascade step k)

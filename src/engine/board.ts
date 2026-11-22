@@ -1,5 +1,5 @@
 // Board module (doc 02, spec §6.2). Ports Spellford's Board.kt: weighted fill with no starting sets,
-// 3+ line matching with L/T merging, linked-tile pulls, gravity + refill, and pending/locked tiles.
+// 3+ line matching with L/T merging, linked-tile pulls, gravity + refill, and locked tiles (from intents).
 // All functions mutate the board passed in; callers clone first (battle.ts does).
 
 import type { Rng } from './rng';
@@ -215,20 +215,20 @@ export function canSwap(b: Board, a: Pos, c: Pos): boolean {
   return Math.abs(a.x - c.x) + Math.abs(a.y - c.y) === 1;
 }
 
-/** Swap two tiles and mark both pending (Spellford `swapTiles`). */
+/**
+ * Swap two tiles. Spellford marked them pending, then locked them for the next turn, to stop two players
+ * fighting over the same tiles. Spellcross has one player on the board, so swaps don't lock (D23).
+ */
 export function swap(b: Board, a: Pos, c: Pos): void {
   const i = idx(b, a.x, a.y);
   const j = idx(b, c.x, c.y);
   [b.cells[i], b.cells[j]] = [b.cells[j], b.cells[i]];
-  b.cells[i].lock = 'pending';
-  b.cells[j].lock = 'pending';
 }
 
-/** End of the player's turn: locked → free, pending → locked (Spellford `Board.endTurn`). */
+/** End of the player's turn: locks from intents (Spin Web) free up (D23). */
 export function endTurnLocks(b: Board): void {
   for (const t of b.cells) {
     if (t.lock === 'locked') t.lock = 'free';
-    else if (t.lock === 'pending') t.lock = 'locked';
   }
 }
 

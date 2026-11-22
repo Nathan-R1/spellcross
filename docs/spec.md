@@ -145,10 +145,10 @@ fixed, visible cycle of intents. The board belongs to the player alone, and enem
 - **Linked tiles** (Ash, Slime, Orb, Surge, Charge, Wall): a linked tile orthogonally next to a triggered set is
   pulled in and cleared, but only if it's **available** (not locked or hidden). A pulled **Surge** turns into
   the adjacent spell and adds +1 power (spell sets only, never a dud set). Other linked tiles just clear (D10).
-- **Locks:** both swapped tiles become *pending*. Pending tiles can still be swapped and matched this turn.
-  At the end of the player's turn, pending → locked and locked → free. Locked tiles can't be swapped or
-  matched. Hidden tiles can't be swapped. A lock belongs to the **tile**, not the cell: it falls with the tile,
-  and clears when the tile is cleared.
+- **Locks:** swapping **doesn't** lock tiles (D23). Only enemy intents lock them (the Spider's Spin Web).
+  Locked tiles can't be swapped or matched, and they free up at the end of the player's next turn. Hidden
+  tiles can't be swapped. A lock belongs to the **tile**, not the cell: it falls with the tile, and clears when
+  the tile is cleared.
 - **Cast order within a cascade step:** groups cast in reading order of their top-left tile (top row first, then
   left to right). This decides which cast uses up a Critical. A Surge next to two matched spells joins the
   first one found looking down, up, right, then left.
@@ -271,8 +271,8 @@ new (for Chargestone and Stormstone) and use placeholder icons.
   and Weak (not after your Block). The numbers also include Strength from **allies acting earlier** in the
   same enemy phase (e.g. the Harbinger's Rally before the Bear's Maul), so the badge always matches the hit.
   Long-press shows the whole cycle.
-- **Lock** picks free visible tiles. **Add Tiles** picks visible tiles that aren't locked, keeps their pending
-  state, and never places a tile that completes a set (duds can match, D22).
+- **Lock** picks free visible tiles. **Add Tiles** picks visible tiles that aren't locked and never places a tile
+  that completes a set (duds can match, D22).
 - **Roster, cycles, encounters and data format:** [enemies.md](enemies.md). Wolf and Bear (normal), Spider
   (elite), Harbinger (boss, with a Wolf and a Bear).
 

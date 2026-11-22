@@ -214,7 +214,8 @@ export interface ResolvedSpell {
 
 // ---------------------------------------------------------------- board & battle
 
-export type TileLock = 'free' | 'pending' | 'locked';
+/** Only enemy intents (Spin Web) lock tiles; swapping doesn't (D23). */
+export type TileLock = 'free' | 'locked';
 
 export interface Tile {
   uid: number;

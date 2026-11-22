@@ -178,7 +178,6 @@ function TileView({ spell, x, y, tile, lock, matched, selected, hidden, onTap, o
       <div style={{ background: spell ? `linear-gradient(160deg, ${spell.color}, ${shade(spell.color)})` : '#333' }}>
         <Asset path={spell?.icon} alt={name} color="transparent" />
         {spell?.linked && <span className="linked" />}
-        {lock === 'pending' && <span className="pending" />}
         {lock === 'locked' && <span className="lock" />}
         {spell && spell.hiddenCategories > 0 && <span className="pip">+{spell.hiddenCategories}</span>}
       </div>
