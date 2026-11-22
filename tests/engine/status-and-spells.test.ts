@@ -35,18 +35,19 @@ describe('statuses', () => {
     expect(c.hp).toBe(50);
   });
 
-  it('turn start: Block clears (D8) and Poisoned deals its value then halves, ignoring Block', () => {
+  it('turn start: Block clears (D8) and Poisoned deals its value then drops by 1 (D24), ignoring Block', () => {
     const c = dummy();
-    addStatus(c, 'poisoned', 5);
+    addStatus(c, 'poisoned', 3);
     addStatus(c, 'block', 20);
-    expect(onTurnStart(c)).toBe(5);
-    expect(c.hp).toBe(45);
+    expect(onTurnStart(c)).toBe(3);
+    expect(c.hp).toBe(47);
     expect(statusValue(c, 'block')).toBe(0);
     expect(statusValue(c, 'poisoned')).toBe(2);
-    onTurnStart(c);
-    onTurnStart(c);
+    expect(onTurnStart(c)).toBe(2);
+    expect(onTurnStart(c)).toBe(1);
     expect(statusValue(c, 'poisoned')).toBe(0);
-    expect(c.hp).toBe(42);
+    expect(c.statuses).toEqual([]);
+    expect(c.hp).toBe(44); // 3 + 2 + 1
   });
 
   it('Weak ticks down at turn end and expires', () => {

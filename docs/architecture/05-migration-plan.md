@@ -6,7 +6,7 @@ the browser and a parity check against [features.md](../features.md).
 ## Progress (v0, 2026-11-21)
 
 A first playable build covers M0–M6b in one pass: engine, content, run loop, events, map, battle UI,
-Spellbook, saving, PWA build. 178 unit, integration and UI tests pass (`pnpm test`). Not done yet:
+Spellbook, saving, PWA build. 180 unit, integration and UI tests pass (`pnpm test`). Not done yet:
 
 - Real-device testing (M3 exit) and Playwright e2e on phone profiles.
 - Battle polish from combat §7: lightning bolts, shake on locked tiles (a toast shows instead).
@@ -15,17 +15,20 @@ Spellbook, saving, PWA build. 178 unit, integration and UI tests pass (`pnpm tes
 **Sim baseline** (`pnpm sim`, greedy bot with setup swaps, 10 seeds, first 3–4 starting spells, full HP,
 no abilities or retargeting, so it's a floor rather than a skilled player):
 
-| Encounter | Win | Avg rounds | Avg HP lost | Moves with no match | (before D22: win / no match) |
-|---|---|---|---|---|---|
-| wolf | 100% | 2.0 | 2.1 | 4% | 100% / 4% |
-| wolf_pair | 100% | 3.5 | 1.8 | 8% | 100% / 7% |
-| bear | 100% | 2.9 | 2.4 | 8% | 100% / 3% |
-| wilds | 100% | 4.5 | 2.2 | 5% | 100% / 13% |
-| hunting_party | 100% | 6.0 | 3.5 | 8% | 100% / 13% |
-| pack | 100% | 5.3 | 4.6 | 3% | 100% / 17% |
-| spider (elite) | 100% | 2.8 | 4.8 | 8% | 100% / 6% |
-| nest (elite) | 100% | 5.6 | 12.5 | 11% | 100% / 16% |
-| boss | 40% | 11.0 | 84.4 | 10% | 0% / 37% |
+Current numbers (after D22 dud sets, D23 no swap locks, halved enemy HP, D24 linear poison). Earlier runs:
+boss 0% win / 37% no-match moves (original), 40% / 10% (D22), 70% / 7% (D23).
+
+| Encounter | Win | Avg rounds | Avg HP lost | Moves with no match |
+|---|---|---|---|---|
+| wolf | 100% | 1.3 | 1.5 | 4% |
+| wolf_pair | 100% | 2.0 | 0.7 | 4% |
+| bear | 100% | 1.5 | 1.8 | 3% |
+| wilds | 100% | 2.5 | 2.1 | 2% |
+| hunting_party | 100% | 3.0 | 2.3 | 3% |
+| pack | 100% | 3.6 | 2.1 | 2% |
+| spider (elite) | 100% | 1.6 | 3.5 | 0% |
+| nest (elite) | 100% | 2.5 | 5.5 | 3% |
+| boss | 100% | 6.6 | 23.9 | 4% |
 
 ## M0: Scaffold (½ day)
 

@@ -42,11 +42,11 @@ export const intents: Record<string, NamedIntentDef> = {
 };
 
 export const enemies: Record<string, EnemyDef> = {
-  wolf: { id: 'wolf', name: 'Wolf', tier: 'normal', hp: 60, portrait: 'portraits/wolf.png', start: 'random', gold: [25, 40], intents: ['fangs', 'disable', 'rage'] },
-  bear: { id: 'bear', name: 'Bear', tier: 'normal', hp: 90, portrait: 'portraits/bear.png', gold: [35, 50], intents: ['swipe', defend(10), 'maul', 'roar'] },
+  wolf: { id: 'wolf', name: 'Wolf', tier: 'normal', hp: 30, portrait: 'portraits/wolf.png', start: 'random', gold: [25, 40], intents: ['fangs', 'disable', 'rage'] },
+  bear: { id: 'bear', name: 'Bear', tier: 'normal', hp: 45, portrait: 'portraits/bear.png', gold: [35, 50], intents: ['swipe', defend(10), 'maul', 'roar'] },
   // No Spellford spider art (U5): the UI draws a placeholder portrait.
-  spider: { id: 'spider', name: 'Spider', tier: 'elite', hp: 75, gold: [45, 65], intents: ['venom_bite', 'spin_web', 'lunge', 'feed'] },
-  harbinger: { id: 'harbinger', name: 'Harbinger', tier: 'boss', hp: 180, portrait: 'portraits/harbinger.png', gold: [100, 150], intents: ['dark_bolt', 'rally', 'corrupt', 'ward', 'doom'] },
+  spider: { id: 'spider', name: 'Spider', tier: 'elite', hp: 38, gold: [45, 65], intents: ['venom_bite', 'spin_web', 'lunge', 'feed'] },
+  harbinger: { id: 'harbinger', name: 'Harbinger', tier: 'boss', hp: 90, portrait: 'portraits/harbinger.png', gold: [100, 150], intents: ['dark_bolt', 'rally', 'corrupt', 'ward', 'doom'] },
 };
 
 export const encounters: Record<string, EncounterDef> = {

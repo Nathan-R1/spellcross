@@ -74,13 +74,13 @@ export function heal(c: Combatant, amount: number): number {
   return c.hp - before;
 }
 
-/** Owner's turn start: Block clears (D8), then Poisoned deals its value and halves. Returns poison damage. */
+/** Owner's turn start: Block clears (D8), then Poisoned deals its value and drops by 1 (D24). Returns poison damage. */
 export function onTurnStart(c: Combatant): number {
   removeStatus(c, 'block');
   const poison = statusValue(c, 'poisoned');
   if (poison > 0) {
     applyUnblockable(c, poison);
-    setStatus(c, 'poisoned', Math.floor(poison / 2));
+    setStatus(c, 'poisoned', poison - 1);
   }
   return poison;
 }

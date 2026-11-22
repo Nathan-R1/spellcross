@@ -60,7 +60,7 @@ describe('UI smoke', () => {
     await waitFor(() => screen.getByText('End Turn'));
     const visible = screen.getAllByRole('gridcell').filter((t) => (t as HTMLElement).style.visibility !== 'hidden');
     expect(visible).toHaveLength(48);
-    expect(screen.getByLabelText(/Wolf, 60 HP/)).toBeTruthy();
+    expect(screen.getByLabelText(/Wolf, 30 HP/)).toBeTruthy();
     const cursor = useStore.getState().run!.battle!.enemies[0].intentCursor;
     fireEvent.click(screen.getByText('End Turn'));
     await waitFor(() => expect(useStore.getState().run!.battle!.round).toBe(2));
@@ -78,7 +78,7 @@ describe('UI smoke', () => {
     act(() => useStore.getState().continueRun());
     render(<App />);
     await waitFor(() => screen.getByText('End Turn'));
-    expect(screen.getByLabelText(/Bear, 90 HP/)).toBeTruthy();
+    expect(screen.getByLabelText(/Bear, 45 HP/)).toBeTruthy();
   });
 
   it('abandon run clears the save', async () => {

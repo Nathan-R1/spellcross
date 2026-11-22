@@ -41,6 +41,8 @@ Main menu ─New run─▶ Map (Start: Traveller event) ─travel─▶ … ─a
   abilities**. The run opens with the **Traveller** event: pick 1 of 3 random abilities.
 - **Travelling:** tap a stop directly connected to your current stop. The token follows the road's curve
   (1s).
+  - **The first battle of a run is always against a single enemy** (a lone Wolf or Bear, or the Spider if it's
+    a Trail).
   - **Road** trip: a battle triggers at a random 30–70% of the way, drawing a random **normal** encounter
     with **3 loadout slots**.
   - **Trail** trip: the same, but a random **elite** encounter with **4 loadout slots**.
@@ -252,7 +254,7 @@ the longer duration. **All statuses clear after every battle.**
 | **Fortify ‹element›** (all six elements) | whole battle, stacks | On casting that element: gain Block = tiles × value |
 | **Block** | until owner's next turn start | Absorbs incoming damage, then expires. Protects through the opponent's turn (D8) |
 | **Perma Block** | whole battle | Reduces each incoming hit by value |
-| **Poisoned** | until 0 | At the owner's turn start: take value damage, then value halves (floor) |
+| **Poisoned** | until 0 | At the owner's turn start: take value damage, then value **drops by 1** (D24). Poisoned 3 deals 3 + 2 + 1 |
 
 Charge Fire/Lightning/Earth and Fortify Water/Earth/Air come from Spellford. The other element variants are
 new (for Chargestone and Stormstone) and use placeholder icons.

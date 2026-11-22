@@ -424,3 +424,27 @@ describe('gambler payout and rarity-weighted rolls', () => {
     expect(tally.common / (tally.common + tally.uncommon)).toBeGreaterThan(0.7);
   });
 });
+
+describe('first battle', () => {
+  it('the first battle of a run is always a single enemy', () => {
+    for (let seed = 1; seed <= 60; seed++) {
+      const r = pastTraveller(seed);
+      const n = neighbours(r.map, r.currentStopId).find((x) => x.road.type !== 'highway');
+      if (!n) continue;
+      const b = run.triggerRoadBattle(run.travelTo(r, n.stop.id, c), c);
+      expect(c.encounters[b.prep!.encounterId].enemies).toHaveLength(1);
+    }
+  });
+
+  it('later battles can be groups', () => {
+    const sizes = new Set<number>();
+    for (let seed = 1; seed <= 60; seed++) {
+      const r = { ...pastTraveller(seed), battleCount: 1 };
+      const n = neighbours(r.map, r.currentStopId).find((x) => x.road.type !== 'highway');
+      if (!n) continue;
+      const b = run.triggerRoadBattle(run.travelTo(r, n.stop.id, c), c);
+      sizes.add(c.encounters[b.prep!.encounterId].enemies.length);
+    }
+    expect(Math.max(...sizes)).toBeGreaterThan(1);
+  });
+});

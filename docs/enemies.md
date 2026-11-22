@@ -59,18 +59,20 @@ No new art is needed.
 | Strength | buff | +X damage per attack hit, permanent, stacks |
 | Weakness ("Weak") | debuff | Damage dealt ×0.75. Value = turns left, ticks at the owner's turn end |
 | Block | `defend` | Absorbs damage, clears at the owner's next turn start |
-| Poisoned | debuff | X damage at the owner's turn start, then halves |
+| Poisoned | debuff | X damage at the owner's turn start, then drops by 1 (D24) |
 
 ---
 
 ## 2. Enemies
 
+HP was halved on 2026-11-22 (Wolf 60 → 30, Bear 90 → 45, Spider 75 → 38, Harbinger 180 → 90).
+
 | Enemy | Tier | HP | Start | Gold | Portrait |
 |---|---|---|---|---|---|
-| **Wolf** | normal | 60 | random | 25–40 | `portraits/wolf.png` ✓ |
-| **Bear** | normal | 90 | first | 35–50 | `portraits/bear.png` ✓ |
-| **Spider** | elite | 75 | first | 45–65 | **needs art** (no Spellford asset; placeholder until drawn, U5) |
-| **Harbinger** (boss) | boss | 180 | first | 100–150 | `portraits/harbinger.png` ✓ |
+| **Wolf** | normal | 30 | random | 25–40 | `portraits/wolf.png` ✓ |
+| **Bear** | normal | 45 | first | 35–50 | `portraits/bear.png` ✓ |
+| **Spider** | elite | 38 | first | 45–65 | **needs art** (no Spellford asset; placeholder until drawn, U5) |
+| **Harbinger** (boss) | boss | 90 | first | 100–150 | `portraits/harbinger.png` ✓ |
 
 ### Wolf: pack hunter that ramps up
 
@@ -194,22 +196,22 @@ import { defineEnemies, defend } from '../engine/intents/dsl';
 
 export const enemies = defineEnemies({
   wolf: {
-    name: 'Wolf', tier: 'normal', hp: 60, portrait: 'portraits/wolf.png',
+    name: 'Wolf', tier: 'normal', hp: 30, portrait: 'portraits/wolf.png',
     start: 'random', gold: [25, 40],
     intents: ['fangs', 'disable', 'rage'],
   },
   bear: {
-    name: 'Bear', tier: 'normal', hp: 90, portrait: 'portraits/bear.png',
+    name: 'Bear', tier: 'normal', hp: 45, portrait: 'portraits/bear.png',
     gold: [35, 50],
     intents: ['swipe', defend(10), 'maul', 'roar'],   // a generic intent used inline
   },
   spider: {
-    name: 'Spider', tier: 'elite', hp: 75, // no portrait yet (U5)
+    name: 'Spider', tier: 'elite', hp: 38, // no portrait yet (U5)
     gold: [45, 65],
     intents: ['venomBite', 'spinWeb', 'lunge', 'feed'],
   },
   harbinger: {
-    name: 'Harbinger', tier: 'boss', hp: 180, portrait: 'portraits/harbinger.png',
+    name: 'Harbinger', tier: 'boss', hp: 90, portrait: 'portraits/harbinger.png',
     gold: [100, 150],
     intents: ['darkBolt', 'rally', 'corrupt', 'ward', 'doom'],
   },

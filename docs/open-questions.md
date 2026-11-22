@@ -10,7 +10,7 @@ doc it points to.
 |---|---|---|---|
 | **C2** | Player **Strength** value (explained below). *Deferred:* nothing grants the player Strength in v1 | Revisit when something does | Later |
 | **U5** | Spider art: Spellford has no spider portrait or intent icons to pull | Placeholder (generated silhouette) until drawn. Intent icons fall back to the generic category icons | M3 |
-| **B1** | **Difficulty cliff.** Sim (bot, 10 seeds, starting spells, full HP): every normal and elite encounter wins 100% (Wolf in ~2 rounds losing ~2 HP; Pack and Nest lose ~13 HP), but the boss wins **0%** (40% after D22's dud sets, which also made normal fights even easier). | Raise normal/elite HP or damage, lower boss pressure (or make Harbinger two-phase), then add a whole-run sim with HP carry-over and gems before tuning further | M2 / M6 |
+| **B1** | **Everything is too easy now.** After D22 (dud sets), D23 (no swap locks), halved enemy HP and linear poison, the sim bot wins **every** encounter 100%: normal fights in 1–4 rounds losing ~2 HP, the boss in ~7 rounds losing ~24 HP | Raise enemy damage rather than HP (keeps fights short but dangerous), e.g. +50% to attack values; or start the player below full HP. Then add a whole-run sim with HP carry-over | M2 / M6 |
 | **B4** | **Finisher vs Block.** Spellford's Finisher bypasses Block (`takeDamage`); Spellcross lets Block absorb it (relevant against Ward 15 and Bear's Defend 10) | Bypass Block, as Spellford: it's a finisher | M2 |
 | **C1** | (Reopened) Permanent Strength/Charge was decided on the condition that the sim logs damage per round. That logging doesn't exist yet | Add per-round damage logging to `pnpm sim`, then confirm | M2 |
 
@@ -49,6 +49,7 @@ Gaps the adversarial doc review found, which I filled so code and docs agree. Ea
 | G6 | **No cap** on effect types: a spell can do everything. The icon shows the top two, and a "+n" pip marks the rest | spells-and-gems §3.3 |
 | G10 | Gem power is fine as listed | n/a |
 | B2 | Board clog fixed by **dud sets** (D22): 3+ duds of the same type clear with no effect. Boss no-match moves 37% → 10%, boss win rate 0% → 40% | features D22, spec §6.2 |
+| n/a | Enemy HP halved (Wolf 30, Bear 45, Spider 38, Harbinger 90); first battle of a run is always one enemy; Poisoned drops by 1 per turn (D24) | enemies.md, spec §2, §6.6 |
 | B3 | Gamble Big pays gold: Insist gives +601 after a Big win (+201 after Small) | spec §4.3 |
 | B5 | Rolls weighted by rarity: abilities common 3 : uncommon 1; gems Weight 6, Cracked 6, other tier-1 4, Chargestone/Stormstone 2, Darkstone/Sunstone 1; duplicate abilities allowed | spec §4.3, §9.3 |
 | G11 | The gem list's "Lvl" column is ignored (reference only) | spells-and-gems §3.2 |

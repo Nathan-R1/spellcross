@@ -21,7 +21,7 @@ const base: StatusDef[] = [
   { id: 'fortify', name: 'Fortify', description: 'Gain Block per tile whenever you cast', icon: 'status/fortify.png', family: 'fortify' },
   { id: 'block', name: 'Block', description: 'Temporary damage reduction. Clears at the start of your turn', icon: 'status/block.png', family: 'block' },
   { id: 'perma_block', name: 'Perma Block', description: 'Permanent damage reduction per hit', icon: 'status/perma-block.png', family: 'permaBlock' },
-  { id: 'poisoned', name: 'Poisoned', description: 'Takes damage over time. Halves each turn', icon: 'status/poisoned.png', family: 'poisoned' },
+  { id: 'poisoned', name: 'Poisoned', description: 'Takes damage at the start of each turn, then goes down by 1', icon: 'status/poisoned.png', family: 'poisoned' },
 ];
 
 const elemental: StatusDef[] = ELEMENTS.flatMap((e) => [

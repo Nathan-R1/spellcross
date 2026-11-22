@@ -144,7 +144,7 @@ describe('casting (formula, spec §6.5)', () => {
     expect(statusValue(r.state.enemies[0], 'poisoned')).toBe(3);
     const e = endTurn(r.state, content);
     expect(e.state.enemies[0].hp).toBe(57);
-    expect(statusValue(e.state.enemies[0], 'poisoned')).toBe(1);
+    expect(statusValue(e.state.enemies[0], 'poisoned')).toBe(2); // −1 per turn (D24)
   });
 
   it('Restore heals 2 per tile', () => {

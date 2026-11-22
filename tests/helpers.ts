@@ -41,10 +41,17 @@ export function makeBattle({ rows, encounter = 'wolf', player, state, c = conten
   // Duds can match since D22, so a single-dud refill would form sets.
   s.spells.wild = resolveJunk(c.spells.wild);
   s.pool = [{ ref: 'wild', weight: 1 }];
-  for (const e of s.enemies) e.intentCursor = 0;
+  // Battle tests pin enemy HP so they test rules, not balance numbers.
+  for (const e of s.enemies) {
+    e.intentCursor = 0;
+    e.hp = e.maxHp = TEST_HP[e.defId] ?? e.maxHp;
+  }
   state?.(s);
   return s;
 }
+
+/** Fixed enemy HP for battle tests (independent of content tuning). */
+export const TEST_HP: Record<string, number> = { wolf: 60, bear: 90, spider: 75, harbinger: 180 };
 
 /** Visible-row coordinates: (x, row) where row 0 is the top visible row. */
 export const at = (x: number, row: number) => ({ x, y: 6 + row });

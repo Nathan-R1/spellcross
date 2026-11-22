@@ -152,7 +152,9 @@ export function arrive(prev: RunState, c: Content): RunState {
 }
 
 function pickEncounter(run: RunState, tier: Tier, c: Content): string {
-  const pool = Object.values(c.encounters).filter((e) => e.tier === tier);
+  let pool = Object.values(c.encounters).filter((e) => e.tier === tier);
+  // The very first battle of a run is always against a single enemy.
+  if (run.battleCount === 0) pool = pool.filter((e) => e.enemies.length === 1);
   return runRng(run, (r) => r.pick(pool)).id;
 }
 
