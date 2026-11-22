@@ -138,12 +138,13 @@ fixed, visible cycle of intents. The board belongs to the player alone, and enem
 - **The initial fill** has no ready-made matches (re-roll until there are none).
 - **Spell classes:**
   - *player*: matchable.
-  - *dud*: never matches, and blocks lines.
+  - *dud*: 3+ of the **same type** clear as a set, with **no effect** (no cast: no Critical, Fortify or
+    Darkstone). Different duds don't match each other, and duds block spell lines (D22).
   - *nova*: never matches, and blocks lines.
   - *both*: goes in the nova share but can match (Critical).
 - **Linked tiles** (Ash, Slime, Orb, Surge, Charge, Wall): a linked tile orthogonally next to a triggered set is
   pulled in and cleared, but only if it's **available** (not locked or hidden). A pulled **Surge** turns into
-  the adjacent spell and adds +1 power. Other linked tiles just clear (D10).
+  the adjacent spell and adds +1 power (spell sets only, never a dud set). Other linked tiles just clear (D10).
 - **Locks:** both swapped tiles become *pending*. Pending tiles can still be swapped and matched this turn.
   At the end of the player's turn, pending → locked and locked → free. Locked tiles can't be swapped or
   matched. Hidden tiles can't be swapped. A lock belongs to the **tile**, not the cell: it falls with the tile,
@@ -271,7 +272,7 @@ new (for Chargestone and Stormstone) and use placeholder icons.
   same enemy phase (e.g. the Harbinger's Rally before the Bear's Maul), so the badge always matches the hit.
   Long-press shows the whole cycle.
 - **Lock** picks free visible tiles. **Add Tiles** picks visible tiles that aren't locked, keeps their pending
-  state, and only adds junk (so it can't create a set).
+  state, and never places a tile that completes a set (duds can match, D22).
 - **Roster, cycles, encounters and data format:** [enemies.md](enemies.md). Wolf and Bear (normal), Spider
   (elite), Harbinger (boss, with a Wolf and a Bear).
 

@@ -43,7 +43,7 @@ export const spells: Record<string, SpellDef> = {
     statuses: [{ status: 'fortify_air', value: 1, self: true, perTile: false }], color: '#b366b3',
   }),
 
-  // Duds: never match, block lines. Ash, Slime and Orb are linked (pulled into adjacent sets and cleared).
+  // Duds: 3+ of the same type clear as a set with no effect (D22); they block other lines. Ash, Slime and Orb are linked (pulled into adjacent sets and cleared).
   ash: junk({ id: 'ash', name: 'Ash', description: 'A puff of ash', icon: 'spells/dud/ash.png', spellClass: 'dud', linked: true, color: '#8a8580' }),
   rubble: junk({ id: 'rubble', name: 'Rubble', description: 'A pile of rubble', icon: 'spells/dud/rubble.png', spellClass: 'dud', linked: false, color: '#7a6a55' }),
   mist: junk({ id: 'mist', name: 'Mist', description: 'A thick mist', icon: 'spells/dud/mist.png', spellClass: 'dud', linked: false, color: '#9aa3ad' }),

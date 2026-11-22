@@ -3,7 +3,7 @@
 
 import { content, type Content } from '../../src/content';
 import { endTurn, playerMove, previewIntent, setTarget, useAbility, BattleError } from '../../src/engine/battle';
-import { tileAt } from '../../src/engine/board';
+import { findSet, tileAt } from '../../src/engine/board';
 import { statusValue } from '../../src/engine/status';
 import type { BattleState } from '../../src/engine/types';
 import { at, FILL, FILL2, makeBattle } from '../helpers';
@@ -226,7 +226,9 @@ describe('cascades', () => {
     ];
     const r = playerMove(makeBattle({ rows }), at(2, 2), at(2, 3), content);
     // Row 2 after swap: S S S I I → SSS cast (12). Column 2 above (I at row 1) drops to row 2: I I I? x2..x4 = I,I,I.
-    expect(r.events.filter((e) => e.event.type === 'matched')).toHaveLength(2);
+    // Step 1 casts Scorch, step 2 casts Ice Bolt. Later steps may clear dud sets (D22), which cast nothing.
+    expect(castEvents(r).map((e) => (e.type === 'cast' ? r.state.spells[e.ref].name : ''))).toEqual(['Scorch', 'Ice Bolt']);
+    expect(r.events.filter((e) => e.event.type === 'matched').length).toBeGreaterThanOrEqual(2);
     expect(r.state.enemies[0].hp).toBe(60 - 12 - 9);
   });
 });
@@ -476,5 +478,38 @@ describe('review fixes', () => {
     // So Corrupt may hit the formerly locked tiles (now free), never the formerly pending ones (now locked).
     for (const uid of uids) expect(s.board.cells.find((t) => t.uid === uid)!.lock).toBe('locked');
     for (const uid of uids) expect(r.state.board.cells.find((t) => t.uid === uid)!.lock).toBe('free');
+  });
+});
+
+describe('dud sets (D22)', () => {
+  // Swapping (2,0) with (2,1) completes "rrr" on row 0.
+  const RUBBLE_3 = ['rrSmImIm', 'IMrImImI'.replace('M', 'm'), 'mImImImI', 'ImImImIm', 'mImImImI', 'ImImImIm'];
+
+  it('3 Rubble clear with no cast, no damage and no move refund', () => {
+    const s = makeBattle({ rows: RUBBLE_3 });
+    const r = playerMove(s, at(2, 0), at(2, 1), content);
+    expect(castEvents(r)).toHaveLength(0);
+    expect(r.events.some((e) => e.event.type === 'cleared')).toBe(true);
+    expect(r.state.enemies[0].hp).toBe(60);
+    expect(r.state.movesLeft).toBe(2);
+  });
+
+  it('a dud set does not use up Critical or trigger Fortify', () => {
+    const s = makeBattle({ rows: RUBBLE_3, player: (p) => p.statuses.push({ id: 'critical', value: 1 }, { id: 'fortify', value: 2 }) });
+    const r = playerMove(s, at(2, 0), at(2, 1), content);
+    expect(statusValue(r.state.player, 'critical')).toBe(1);
+    expect(statusValue(r.state.player, 'block')).toBe(0);
+  });
+
+  it('Corrupt never places Rubble that completes a set', () => {
+    // A board that's mostly Rubble pairs: almost any placement would complete a set.
+    for (let seed = 0; seed < 20; seed++) {
+      const s = makeBattle({ rows: ['rrIrrIrr', 'IIrIIrII', 'rrIrrIrr', 'IIrIIrII', 'rrIrrIrr', 'IIrIIrII'], encounter: 'boss', state: (x) => { x.enemies[1].intentCursor = 2; x.rng = seed; } });
+      const r = endTurn(s, content).state;
+      for (let y = 6; y < 12; y++) for (let x = 0; x < 8; x++) {
+        const t = tileAt(r.board, x, y);
+        if (t.spell === 'rubble') expect(findSet(r.board, (ref) => r.spells[ref], x, y)).toEqual([]);
+      }
+    }
   });
 });

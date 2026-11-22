@@ -3,7 +3,7 @@
 
 import type { Content } from '../content';
 import {
-  canSwap, clearTiles, collapse, createBoard, endTurnLocks, findSet, findSetsInColumns, groupForTrigger, idx,
+  canSwap, casts, clearTiles, collapse, createBoard, endTurnLocks, findSet, findSetsInColumns, groupForTrigger, idx,
   isAvailable, linkedNeighbours, swap, tileAt, visiblePositions, type SpellLookup,
 } from './board';
 import { createRng, type Rng } from './rng';
@@ -261,6 +261,8 @@ export function playerMove(state: BattleState, a: Pos, b: Pos, c: Content): Batt
       const groups = groupForTrigger(s.board, ctx.lookup, (r) => s.spells[r]?.linkBehaviour, matched, linked);
       for (const g of groups) {
         if (s.player.hp <= 0 || ctx.living().length === 0) break;
+        // Dud sets just clear: no cast, so no Critical, Fortify or Darkstone (D22).
+        if (!casts(ctx.lookup, g.ref)) continue;
         castSpell(ctx, g.ref, g.tiles.length);
       }
       // The battle ends mid-cascade the moment someone wins; the board still settles.
@@ -433,9 +435,18 @@ function resolvePart(ctx: Ctx, enemy: EnemyState, part: GenericIntent) {
       if (!s.spells[part.spell]) s.spells[part.spell] = resolveJunk(ctx.c.spells[part.spell]);
       // Never touches locked tiles (so it can't undo a web), and keeps pending locks. Replacements are
       // junk (validated), so they can't form sets.
-      const open = visiblePositions(s.board).filter((p) => tileAt(s.board, p.x, p.y).lock !== 'locked');
-      const picks = ctx.rng.shuffle(open).slice(0, part.count);
-      for (const p of picks) tileAt(s.board, p.x, p.y).spell = part.spell;
+      // Never touches locked tiles, keeps pending locks, and never places a tile that completes a set (D22:
+      // duds can match now, so Corrupt must not leave a ready-made Rubble set).
+      const open = ctx.rng.shuffle(visiblePositions(s.board).filter((p) => tileAt(s.board, p.x, p.y).lock !== 'locked'));
+      const picks: Pos[] = [];
+      for (const p of open) {
+        if (picks.length >= part.count) break;
+        const t = tileAt(s.board, p.x, p.y);
+        const before = t.spell;
+        t.spell = part.spell;
+        if (findSet(s.board, ctx.lookup, p.x, p.y).length > 0) t.spell = before;
+        else picks.push(p);
+      }
       ctx.emit({ type: 'tilesReplaced', uids: picks.map((p) => tileAt(s.board, p.x, p.y).uid), spell: part.spell });
       break;
     }

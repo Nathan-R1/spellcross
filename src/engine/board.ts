@@ -24,6 +24,13 @@ export function isAvailable(b: Board, x: number, y: number): boolean {
 function matchable(lookup: SpellLookup, ref: SpellRef | null): boolean {
   if (ref === null) return false;
   const cls = lookup(ref)?.spellClass;
+  // D22: duds match too (3+ of the same type clear, with no effect). Novas never match.
+  return cls === 'player' || cls === 'both' || cls === 'enemy' || cls === 'dud';
+}
+
+/** A tile whose set casts a spell (duds clear without casting, D22). */
+export function casts(lookup: SpellLookup, ref: SpellRef): boolean {
+  const cls = lookup(ref)?.spellClass;
   return cls === 'player' || cls === 'both' || cls === 'enemy';
 }
 
@@ -160,14 +167,14 @@ export function groupForTrigger(b: Board, lookup: SpellLookup, linkBehaviourOf: 
     if (linkBehaviourOf(ref) !== 'mimicNeighbour') continue;
     for (const d of DIRS) {
       const n = normalIdx.get(idx(b, l.x + d.x, l.y + d.y));
-      if (n) {
+      // Surge only joins spell sets, never dud sets (D22).
+      if (n && casts(lookup, tileAt(b, n.x, n.y).spell!)) {
         const target = tileAt(b, n.x, n.y).spell!;
         groups.get(target)!.tiles.push(l);
         break;
       }
     }
   }
-  void lookup;
   return [...groups.values()];
 }
 

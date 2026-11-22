@@ -4,6 +4,7 @@ import { content, type Content } from '../src/content';
 import { createBattle } from '../src/engine/battle';
 import { boardFromAscii } from '../src/engine/board';
 import { createPlayer } from '../src/engine/run';
+import { resolveJunk } from '../src/engine/spells';
 import type { BattleState, Player } from '../src/engine/types';
 
 /**
@@ -36,8 +37,10 @@ export function makeBattle({ rows, encounter = 'wolf', player, state, c = conten
     if (!ref) throw new Error(`Unknown board letter ${ch}`);
     return ref;
   }, 6);
-  // Refills are pure Mist: never matches, so tests see exactly the cascades they draw.
-  s.pool = [{ ref: 'mist', weight: 1 }];
+  // Refills are pure Wild (a nova: never matches, not linked), so tests see exactly the cascades they draw.
+  // Duds can match since D22, so a single-dud refill would form sets.
+  s.spells.wild = resolveJunk(c.spells.wild);
+  s.pool = [{ ref: 'wild', weight: 1 }];
   for (const e of s.enemies) e.intentCursor = 0;
   state?.(s);
   return s;

@@ -50,8 +50,9 @@ describe('findSet (Spellford BoardSetTest)', () => {
     expect(findSet(make(['BAAAAAAB']), lookup, 4, 0)).toHaveLength(6);
   });
 
-  it('duds and novas never match and block lines', () => {
-    expect(findSet(make(['ddd']), lookup, 1, 0)).toEqual([]);
+  it('duds of the same type match (D22); novas never do; both block other lines', () => {
+    expect(findSet(make(['ddd']), lookup, 1, 0)).toHaveLength(3);
+    expect(findSet(make(['dkd']), lookup, 1, 0)).toEqual([]); // different dud types
     expect(findSet(make(['nnn']), lookup, 1, 0)).toEqual([]);
     expect(findSet(make(['AAdAA']), lookup, 0, 0)).toEqual([]);
   });
@@ -159,7 +160,7 @@ describe('gravity and refill', () => {
     tileAt(b, 1, 0).spell = null;
     tileAt(b, 2, 0).spell = null;
     clearTiles(b, [{ x: 0, y: 1 }]);
-    collapse(b, [{ ref: 'd', weight: 1 }], createRng(1));
+    collapse(b, [{ ref: 'n', weight: 1 }], createRng(1));
     expect(findSetsInColumns(b, lookup, [0])).toHaveLength(3);
   });
 });
@@ -189,6 +190,13 @@ describe('linked tiles and grouping (D10)', () => {
     tileAt(b, 4, 0).lock = 'locked';
     const set = findSet(b, lookup, 1, 0);
     expect(coords(linkedNeighbours(b, lookup, set))).toEqual(['0,0', '1,1']);
+  });
+
+  it('Surge does not join a dud set (D22)', () => {
+    const b = make(['udddA']);
+    const set = findSet(b, lookup, 1, 0);
+    const groups = groupForTrigger(b, lookup, mimic, set, linkedNeighbours(b, lookup, set));
+    expect(groups.map((g) => [g.ref, g.tiles.length])).toEqual([['d', 3]]);
   });
 
   it('Surge joins the adjacent set and adds power; other linked tiles cast nothing', () => {

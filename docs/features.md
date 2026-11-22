@@ -193,7 +193,7 @@ Set events reference `town/town.png`, but the asset is `town/town.jpg`.
 | 5.2.4 | Initial fill has **no pre-existing matches** (re-roll until no set) | Done | |
 | 5.2.5 | Swap two orthogonally adjacent, *available* tiles | Done | Swaps are allowed even if no match forms |
 | 5.2.6 | Match detection: 3+ in a row, horizontal or vertical. L/T shapes merge at the shared tile | Done | `getSetTiles` |
-| 5.2.7 | Dud and Nova tiles never form sets and block lines | Done | |
+| 5.2.7 | Dud and Nova tiles never form sets and block lines | Done | **→ D22**: duds of the same type now clear as sets |
 | 5.2.8 | **Spell power = number of tiles in the group** (grouped by spell name across all sets this step) | Done | |
 | 5.2.9 | **Linked tiles**: tiles with `linkedTile=true` orthogonally adjacent to a triggered set are pulled in and cleared, 🆕 but only if **available** (a locked or hidden linked tile stays). A linked **Surge** turns into the adjacent spell and adds to its power | Partial | Only Surge converts (TODO in code). Ash and others are cleared but have no effect |
 | 5.2.10 | **Cascade**: cleared tiles drop down column by column, the buffer refills from the top, new sets trigger, repeat until stable | Done | Each cascade step currently runs on a 1s timer |
@@ -452,6 +452,7 @@ Fix gets a unit test that names this entry (e.g. `// features.md D1`).
 | D19 | Fight for Loot never shows its options or grants Wind Wall (4.2) | **Fix** | Show Leave / Explore. Explore grants Wind Wall, then a normal battle (3 slots) |
 | D20 | Small event-flow quirks: Shrine *Ignore* does nothing; Market *Train* and Salesman *Weapon* take gold at 5 abilities and give nothing | **Fix** | *Ignore* ends the event. Paid ability options are disabled at 5 abilities. Free grants (Chest, Traveller) give nothing at 5 |
 | D21 | Weakness and resistance pools match by **spell name** (`Spell.kt:89-93`) | **Change** (design) | They match by **element** (×2 / ×0.5), so gems, the Alchemist and Sunstone interact with them. No v1 enemy has any; the hook is there for future content |
+| D22 | Duds never match (5.2.7), so non-linked Rubble and Mist can never leave the board; long fights clog (37% of boss-fight moves had no match in the sim) | **Change** (design) | **Duds of the same type clear as sets** (3+ Rubble, Mist, Ash, Orb or Slime) with no effect: no cast, so no Critical, Fortify or Darkstone. Mixed duds don't match. Surge never joins a dud set. Linked tiles next to a dud set are still pulled in. Starting boards have no dud sets either, and Corrupt never places Rubble that completes a set. Novas still never match. Sim: boss win rate 0% → 40%, boss no-match moves 37% → 10% |
 Decisions D1 and D14 change combat balance (see open-questions B1–B3 for the current sim results). After M2, run the 500-seed headless sim over every
 starter encounter (combat §5) and record the win rate, average turns and average HP lost per encounter in
 `05-migration-plan.md` as the balance baseline.
