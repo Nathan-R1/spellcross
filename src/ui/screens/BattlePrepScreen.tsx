@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { content } from '../../content';
-import { resolvedPlayerSpells } from '../../engine/run';
+import { resolvedPlayerSpells, suggestedLoadout } from '../../engine/run';
 import { resolveJunk } from '../../engine/spells';
 import { useStore } from '../../state/store';
 import { Asset, PlayerStats, TopBar, useLongPress } from '../components/common';
@@ -15,7 +15,8 @@ export function BattlePrepScreen() {
   const prep = run.prep!;
   const spells = useMemo(() => resolvedPlayerSpells(run.player, content), [run.player]);
   const slots = Math.min(prep.slots, spells.length);
-  const [loadout, setLoadout] = useState<string[]>(() => spells.slice(0, slots).map((s) => s.ref));
+  // Preselect the spells used last battle (D26).
+  const [loadout, setLoadout] = useState<string[]>(() => suggestedLoadout(run, slots));
   // Junk starts empty: the player opts in.
   const [junk, setJunk] = useState<string[]>([]);
   const [info, setInfo] = useState<string | null>(null);

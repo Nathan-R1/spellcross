@@ -470,3 +470,17 @@ describe('first battle', () => {
     expect(Math.max(...sizes)).toBeGreaterThan(1);
   });
 });
+
+describe('remembered loadout', () => {
+  it('preselects the last battle\'s spells, topping up from the list when needed', () => {
+    const r = pastTraveller();
+    expect(run.suggestedLoadout(r, 3)).toEqual(['s1', 's2', 's3']); // first battle: first three spells
+    const prepped = { ...r, screen: 'prep' as const, prep: { encounterId: 'wolf', slots: 3, source: 'debug' as const } };
+    const { run: inBattle } = run.startBattle(prepped, ['s5', 's2', 's6'], [], c);
+    expect(inBattle.lastLoadout).toEqual(['s5', 's2', 's6']);
+    expect(run.suggestedLoadout(inBattle, 3)).toEqual(['s5', 's2', 's6']);
+    // A spell no longer owned is dropped and the gap is filled in list order.
+    const fewer = { ...inBattle, player: { ...inBattle.player, spells: inBattle.player.spells.filter((x) => x.uid !== 's5') } };
+    expect(run.suggestedLoadout(fewer, 3)).toEqual(['s2', 's6', 's1']);
+  });
+});

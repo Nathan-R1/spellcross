@@ -48,6 +48,8 @@ export interface RunState {
   prep: PrepState | null;
   battle: BattleState | null;
   result: null | { outcome: 'victory' | 'defeat'; gold: number; gem: GemId | null; boss: boolean };
+  /** Spell uids from the last battle's loadout, preselected at the next battle prep. */
+  lastLoadout?: string[];
   /** Message shown at defeat ("Your journey ends"), or run victory. */
   endMessage?: string;
 }
@@ -337,6 +339,7 @@ export function startBattle(prev: RunState, loadout: string[], junk: SpellId[], 
   if (new Set(loadout).size !== loadout.length) throw new Error('Duplicate loadout spell');
   if (junk.length > c.config.junkSlots || junk.some((j) => !run.player.junkPool.includes(j))) throw new Error('Invalid junk');
   run.battleCount += 1;
+  run.lastLoadout = [...loadout];
   const setup: BattleSetup = { player: run.player, encounter: c.encounters[prep.encounterId], loadout, junk, seed: forkSeed(run.seed, `battle:${run.battleCount}`) };
   const { state, events } = createBattle(setup, c);
   run.battle = state;
@@ -399,6 +402,17 @@ function defeat(run: RunState): RunState {
 
 export function resolvedPlayerSpells(player: Player, c: Content): ResolvedSpell[] {
   return player.spells.map((s) => resolveInstance(s, c.spells[s.spellId], c.gems, c.assetExists));
+}
+
+/**
+ * The loadout to preselect: the last battle's spells (still owned), topped up from the spell list in order,
+ * trimmed to the slot count.
+ */
+export function suggestedLoadout(run: RunState, slots: number): string[] {
+  const owned = run.player.spells.map((s) => s.uid);
+  const picked = (run.lastLoadout ?? []).filter((uid) => owned.includes(uid)).slice(0, slots);
+  for (const uid of owned) if (picked.length < Math.min(slots, owned.length) && !picked.includes(uid)) picked.push(uid);
+  return picked;
 }
 
 export function atTown(run: RunState): boolean {

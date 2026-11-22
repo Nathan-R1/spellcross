@@ -98,6 +98,16 @@ describe('UI smoke', () => {
     expect(screen.getByText(/elite · 38 HP/)).toBeTruthy();
   });
 
+  it('battle prep preselects the spells used last battle', async () => {
+    act(() => useStore.getState().newRun(42));
+    act(() => useStore.getState().chooseOption(0));
+    act(() => useStore.getState().apply((r) => ({ ...r, lastLoadout: ['s4', 's5', 's6'] })));
+    act(() => useStore.getState().debugBattle('wolf'));
+    render(<App />);
+    const selected = screen.getAllByRole('button').filter((b) => b.className.includes('spell-card') && b.className.includes('selected')).map((b) => b.textContent);
+    expect(selected.join(' ')).toMatch(/Ice Bolt.*Venom.*Shield/);
+  });
+
   it('continue run restores a mid-battle save', async () => {
     act(() => useStore.getState().newRun(42));
     act(() => useStore.getState().chooseOption(0));

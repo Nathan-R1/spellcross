@@ -120,6 +120,8 @@ Before every battle:
 
 - **Loadout:** fill **3** slots from your spells, in every battle (Spellford gave Trail battles 4).
   FIGHT is enabled only when every slot is filled.
+- **Remembered loadout:** the spells you used last battle are preselected (any you no longer own are
+  swapped for the next spells in your list). Change them freely before FIGHT.
 - **Junk:** fill up to **2** junk slots from your junk pool (starting pool: Orb, Slime). Junk starts
   **unselected**; empty is allowed. Hold any spell, junk tile or enemy to see its description (enemies show
   their intent cycle).
