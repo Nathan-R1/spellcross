@@ -484,3 +484,47 @@ describe('remembered loadout', () => {
     expect(run.suggestedLoadout(fewer, 3)).toEqual(['s2', 's6', 's1']);
   });
 });
+
+describe('Campfire Meditate', () => {
+  const camp = (mutate?: (r: RunState) => void) => {
+    const r = run.debugEvent(pastTraveller(), 'campfire', c);
+    r.player.abilities = [{ id: 'finisher', uses: 1 }];
+    r.player.hp = 50;
+    mutate?.(r);
+    return r;
+  };
+  const idx = (r: RunState, label: string) => run.eventView(r, c)!.options.findIndex((o) => o.label === label);
+
+  it('levels up the chosen spell, and Patch up and Rest are then unavailable (either/or)', () => {
+    let r = camp();
+    r = run.chooseOption(r, idx(r, '[Meditate]'), c);
+    expect(r.event!.levelUpPick).toBe(true);
+    r = run.pickLevelUp(r, 's3', c);
+    expect(r.player.spells[2].level).toBe(2);
+    const view = run.eventView(r, c)!;
+    expect(view.options[idx(r, '[Patch up]')].enabled).toBe(false);
+    expect(view.options[idx(r, '[Resting]')].enabled).toBe(false);
+    expect(view.options[idx(r, '[Meditate]')].enabled).toBe(false);
+    expect(view.options[idx(r, '[Leave]')].enabled).toBe(true);
+  });
+
+  it('Patch up or Rest also rules out Meditate', () => {
+    let r = camp();
+    r = run.chooseOption(r, idx(r, '[Patch up]'), c);
+    expect(run.eventView(r, c)!.options[idx(r, '[Meditate]')].enabled).toBe(false);
+  });
+
+  it('cancelling the pick gives all three choices back', () => {
+    let r = camp();
+    r = run.chooseOption(r, idx(r, '[Meditate]'), c);
+    r = run.pickLevelUp(r, null, c);
+    const view = run.eventView(r, c)!;
+    for (const label of ['[Patch up]', '[Resting]', '[Meditate]']) expect(view.options[idx(r, label)].enabled).toBe(true);
+    expect(r.player.spells.every((s) => s.level === 1)).toBe(true);
+  });
+
+  it('is disabled when every spell is level 5', () => {
+    const r = camp((x) => x.player.spells.forEach((s) => (s.level = 5)));
+    expect(run.eventView(r, c)!.options[idx(r, '[Meditate]')].enabled).toBe(false);
+  });
+});

@@ -162,7 +162,7 @@ can do several things in one visit.
 | Stop | Event | Options |
 |---|---|---|
 | Start | **A Fellow Traveller** | Choose 1 of 3 random abilities (no duplicates). This replaces the old "start with 4 random abilities". Image `portraits/traveller.png` is missing |
-| Campfire | **Campfire** | Heal *or* Rest (either one ends the event). **→ D25**: Patch up +20%, Rest, Leave |
+| Campfire | **Campfire** | Heal *or* Rest (either one ends the event). **→ D25**: one of Patch up +20%, Rest or Meditate (+1 spell level), then Leave |
 | Village | **Village** | Heal, Rest, Purchase (−100gp, +Gemstone), Leave. All `→ stay` |
 | Town | **Town** | Heal, Rest, Purchase (−100gp, +Gemstone), Train (−100gp, +"Spellupgrade"), Leave. All `→ stay` |
 | Market | **Market** | Train (−200gp, +random Ability), Purchase (−100gp, +Gemstone), Study (−100gp, +"Spellupgrade"), Leave. All `→ stay` |

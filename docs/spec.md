@@ -91,7 +91,7 @@ Main menu ─New run─▶ Map (Start: Traveller event) ─travel─▶ … ─a
 | Stop | Event | Options |
 |---|---|---|
 | Start | Traveller | Pick 1 of 3 random abilities |
-| Campfire | Campfire | Patch up (+20%), Rest, Leave (all *stay*) |
+| Campfire | Campfire | **One of:** Patch up (+20% HP), Rest (ability recharges) or **Meditate** (pick a spell: +1 level, free). Then Leave |
 | Village | Village | Patch up (+20%) *or* Healer (+50%, 50gp), Rest, Buy gem (100gp: pick 1 of 3 random gems), Leave (all *stay*) |
 | Town | Town | Patch up (+20%) *or* Healer (+50%, 50gp), Rest, Buy gem (100gp, pick 1 of 3), Train (100gp, +1 Spell Upgrade), Leave (all *stay*). While at a Town, the Spellbook also offers Unsocket (50gp) |
 | Market | Market | Train (200gp, +random ability), Buy gem (100gp, pick 1 of 3), Study (100gp, +1 Spell Upgrade), Leave (all *stay*) |

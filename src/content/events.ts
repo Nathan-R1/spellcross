@@ -18,6 +18,8 @@ export type Effect =
   | { type: 'gem'; id?: GemId }
   | { type: 'gemOffer'; price: number }
   | { type: 'spellUpgrade'; count: number }
+  /** Pick a spell and raise its level now (Campfire Meditate). */
+  | { type: 'levelUpSpell' }
   | { type: 'recharge'; count: number | 'perAbility' }
   | { type: 'addSpell'; id: SpellId }
   | { type: 'changeElement'; element: Element }
@@ -74,7 +76,16 @@ export const events: Record<string, EventNode> = {
   }),
   campfire: node({
     id: 'campfire', title: 'Campfire', text: '', image: TOWN_IMG,
-    options: () => [PATCH_UP, REST, LEAVE],
+    // Campfire: choose one of Patch up, Rest or Meditate.
+    options: () => [
+      { ...PATCH_UP, group: 'campfire' },
+      { ...REST, group: 'campfire' },
+      {
+        label: '[Meditate]', reward: 'Level up a spell', group: 'campfire', next: 'stay',
+        available: (p) => p.spells.some((s) => s.level < 5), effects: [{ type: 'levelUpSpell' }],
+      },
+      LEAVE,
+    ],
   }),
   village: node({ id: 'village', title: 'Village', text: '', image: TOWN_IMG, options: () => [PATCH_UP, HEAL, REST, BUY_GEM, LEAVE] }),
   town: node({ id: 'town', title: 'Town', text: '', image: TOWN_IMG, options: () => [PATCH_UP, HEAL, REST, BUY_GEM, TRAIN_UPGRADE('[Train]'), LEAVE] }),

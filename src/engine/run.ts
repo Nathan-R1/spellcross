@@ -22,6 +22,8 @@ export interface EventState {
   pendingRecharges: number;
   gemOffer: GemId[] | null;
   gemOfferPrice: number;
+  /** Waiting for the player to pick a spell to level up (Campfire Meditate). */
+  levelUpPick?: boolean;
   /** A battle the event started (Fight for Loot), run once the event closes. */
   battleAfter: Tier | null;
 }
@@ -201,7 +203,7 @@ export function eventView(run: RunState, c: Content): EventView | null {
         label: ability ? `[${ability.name}]` : o.label,
         cost: o.cost,
         reward: ability ? abilitySummary(ability.id) : o.reward,
-        enabled: !ev.used.includes(i) && (o.available ? o.available(run.player) : true) && ev.pendingRecharges === 0 && !ev.gemOffer,
+        enabled: !ev.used.includes(i) && (o.available ? o.available(run.player) : true) && ev.pendingRecharges === 0 && !ev.gemOffer && !ev.levelUpPick,
       };
     }),
   };
@@ -225,6 +227,7 @@ function applyEffect(run: RunState, e: Effect, c: Content) {
       run.event!.gemOfferPrice = e.price;
       break;
     case 'spellUpgrade': p.spellUpgrades += e.count; break;
+    case 'levelUpSpell': run.event!.levelUpPick = true; break;
     case 'recharge': run.event!.pendingRecharges += e.count === 'perAbility' ? p.abilities.length : e.count; break;
     case 'addSpell': p.spells.push(newSpellInstance(p, c.spells[e.id])); break;
     case 'changeElement': {
@@ -264,7 +267,7 @@ export function chooseOption(prev: RunState, index: number, c: Content): RunStat
   }
   if (next === 'end') {
     // Wait for pending popups (recharge, gem offer) before closing.
-    if (ev.pendingRecharges > 0 || ev.gemOffer) {
+    if (ev.pendingRecharges > 0 || ev.gemOffer || ev.levelUpPick) {
       ev.used = nodeOptions(ev).map((_, i) => i);
       ev.params = { ...ev.params, closeAfterPopup: 1 };
       return touch(run);
@@ -318,9 +321,30 @@ export function pickGemOffer(prev: RunState, gem: GemId | null, c: Content): Run
   return touch(afterPopup(run, c));
 }
 
+/**
+ * Campfire Meditate: raise one spell's level by 1 (max 5), or cancel (null) to get the option, and the
+ * rest of its either/or group, back.
+ */
+export function pickLevelUp(prev: RunState, spellUid: string | null, c: Content): RunState {
+  const run = clone(prev);
+  const ev = run.event;
+  if (!ev?.levelUpPick) return prev;
+  const inst = spellUid ? run.player.spells.find((s) => s.uid === spellUid) : undefined;
+  if (inst && inst.level < c.config.maxSpellLevel) {
+    inst.level = (inst.level + 1) as 1 | 2 | 3 | 4 | 5;
+  } else {
+    const opts = nodeOptions(ev);
+    const idx = opts.findIndex((o) => o.effects?.some((x) => x.type === 'levelUpSpell'));
+    const group = opts[idx]?.group;
+    ev.used = ev.used.filter((i) => i !== idx && !(group && opts[i]?.group === group));
+  }
+  ev.levelUpPick = false;
+  return touch(afterPopup(run, c));
+}
+
 function afterPopup(run: RunState, c: Content): RunState {
   const ev = run.event;
-  if (ev && ev.params.closeAfterPopup && ev.pendingRecharges === 0 && !ev.gemOffer) return closeEvent(run, c);
+  if (ev && ev.params.closeAfterPopup && ev.pendingRecharges === 0 && !ev.gemOffer && !ev.levelUpPick) return closeEvent(run, c);
   return run;
 }
 

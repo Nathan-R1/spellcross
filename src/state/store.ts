@@ -44,6 +44,7 @@ interface Store {
   assignRecharge(i: number): void;
   skipRecharges(): void;
   pickGem(gem: GemId | null): void;
+  pickLevelUp(spellUid: string | null): void;
   startBattle(loadout: string[], junk: string[]): void;
   selectTile(p: Pos): void;
   target(slot: number): void;
@@ -128,6 +129,7 @@ export const useStore = create<Store>((set, get) => {
     assignRecharge(i) { get().apply((r) => run.assignRecharge(r, i, content)); },
     skipRecharges() { get().apply((r) => run.skipRecharges(r, content)); },
     pickGem(gem) { get().apply((r) => run.pickGemOffer(r, gem, content)); },
+    pickLevelUp(uid) { get().apply((r) => run.pickLevelUp(r, uid, content)); },
 
     startBattle(loadout, junk) {
       const r = get().run;

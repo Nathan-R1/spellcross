@@ -2,14 +2,14 @@
 
 import { content } from '../../content';
 import { abilitySummary } from '../../content/describe';
-import { eventView } from '../../engine/run';
+import { eventView, resolvedPlayerSpells } from '../../engine/run';
 import type { GemId } from '../../engine/types';
 import { useStore } from '../../state/store';
 import { AbilityBar, Asset, GemIcon, Modal, PlayerStats, TopBar } from '../components/common';
 
 export function EventScreen() {
   const run = useStore((s) => s.run)!;
-  const { chooseOption, assignRecharge, skipRecharges, pickGem } = useStore.getState();
+  const { chooseOption, assignRecharge, skipRecharges, pickGem, pickLevelUp } = useStore.getState();
   const view = eventView(run, content);
   if (!view) return null;
   const ev = run.event!;
@@ -58,6 +58,23 @@ export function EventScreen() {
             })}
           </div>
           <div className="actions"><button className="btn" onClick={skipRecharges}>Done</button></div>
+        </Modal>
+      )}
+
+      {ev.levelUpPick && (
+        <Modal onClose={() => pickLevelUp(null)}>
+          <h2>Meditate</h2>
+          <div className="dim">Choose a spell to level up. A spell's level sets how strong its gems are.</div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+            {resolvedPlayerSpells(run.player, content).map((sp) => (
+              <button key={sp.ref} className="btn" disabled={sp.level >= 5} onClick={() => pickLevelUp(sp.ref)} style={{ flexDirection: 'column', minWidth: 92 }}>
+                <Asset path={sp.icon} alt={sp.name} size={32} color={sp.color} />
+                <span style={{ fontSize: 12 }}>{sp.name}</span>
+                <span className="dim" style={{ fontSize: 12 }}>Lv {sp.level}{sp.level < 5 ? ` → ${sp.level + 1}` : ' (max)'}</span>
+              </button>
+            ))}
+          </div>
+          <div className="actions"><button className="btn" onClick={() => pickLevelUp(null)}>Cancel</button></div>
         </Modal>
       )}
 
