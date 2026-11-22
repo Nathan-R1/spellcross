@@ -95,7 +95,7 @@ describe('UI smoke', () => {
     fireEvent.pointerDown(screen.getByLabelText('Spider: hold for details'));
     await waitFor(() => screen.getByText('Repeats this cycle:'), { timeout: 2000 });
     expect(screen.getByText('Venom Bite')).toBeTruthy();
-    expect(screen.getByText(/elite · 38 HP/)).toBeTruthy();
+    expect(screen.getByText(/elite · 76 HP/)).toBeTruthy();
   });
 
   it('battle prep preselects the spells used last battle', async () => {

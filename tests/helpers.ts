@@ -59,3 +59,10 @@ export const at = (x: number, row: number) => ({ x, y: 6 + row });
 /** A neutral filler row with no matches. */
 export const FILL = 'mrmrmrmr';
 export const FILL2 = 'rmrmrmrm';
+
+/** Cycle position of a named intent, so tests survive cycle reordering. */
+export function cursorOf(enemyId: string, intentName: string, c: Content = content): number {
+  const i = c.enemyIntents[enemyId].findIndex((x) => x.name === intentName);
+  if (i < 0) throw new Error(`${enemyId} has no intent ${intentName}`);
+  return i;
+}

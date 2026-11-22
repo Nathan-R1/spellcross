@@ -269,7 +269,7 @@ new (for Chargestone and Stormstone) and use placeholder icons.
 
 - Each enemy has a tier (normal, elite, boss), HP, a gold reward range, and an **ordered list of intents** it
   cycles through forever. There's no AI and no conditions (D14).
-- An **intent** is generic (Attack X, Defend X, Defend Allies X, Heal X, Heal Ally X, Heal Allies X, Buff, Buff
+- An **intent** is generic (Attack X, Attack scaled by HP (Stone Giant), Defend X, Defend Allies X, Heal X, Heal Ally X, Heal Allies X, Buff, Buff
   Allies, Debuff, Steal X, Lock N, Add Tiles) or **named**: a name and icon around any number of intents, run
   in order.
 - **Allies** = living enemies, including the one acting. *Heal Ally* picks the lowest HP fraction (ties go to
@@ -281,8 +281,8 @@ new (for Chargestone and Stormstone) and use placeholder icons.
   Long-press shows the whole cycle.
 - **Lock** picks free visible tiles. **Add Tiles** picks visible tiles that aren't locked and never places a tile
   that completes a set (duds can match, D22).
-- **Roster, cycles, encounters and data format:** [enemies.md](enemies.md). Wolf and Bear (normal), Spider
-  (elite), Harbinger (boss, with a Wolf and a Bear).
+- **Roster, cycles, encounters and data format:** [enemies.md](enemies.md). Wolf and Bear (normal), Spider and
+  Stone Giant (elite), Harbinger (boss, with a Wolf and a Bear).
 
 ### 6.8 Battle end
 

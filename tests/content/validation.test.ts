@@ -42,7 +42,7 @@ describe('content validation', () => {
   });
 
   it('every fixed icon and portrait exists in the asset manifest (except known art gaps)', () => {
-    const known = new Set(['spider']); // U5: no Spellford spider art
+    const known = new Set(['spider', 'stone_giant']); // U5: no Spellford art for these
     for (const s of Object.values(c.spells)) if (s.icon) expect(c.assetExists(s.icon), s.icon).toBe(true);
     for (const a of Object.values(c.abilities)) expect(c.assetExists(a.icon), a.icon).toBe(true);
     for (const e of Object.values(c.enemies)) if (!known.has(e.id)) expect(c.assetExists(e.portrait!), e.id).toBe(true);

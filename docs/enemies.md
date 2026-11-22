@@ -22,6 +22,7 @@ to each hit separately.
 
 | Generic intent | Effect | Badge | Board? |
 |---|---|---|---|
+| `attackScaled(X)` | Deal up to X damage, scaled by the attacker's HP fraction (rounded up, at least 1). X at full HP | ⚔ current value | |
 | `attack(X)` | Deal X damage to the player (+Strength, ×0.75 if Weak, then absorbed by the player's Block). The badge shows the number before Block | ⚔ X | |
 | `defend(X)` | Gain X Block | 🛡 X | |
 | `defendAllies(X)` | Every living ally (including self) gains X Block | 🛡 X all | |
@@ -65,14 +66,16 @@ No new art is needed.
 
 ## 2. Enemies
 
-HP was halved on 2026-11-22 (Wolf 60 → 30, Bear 90 → 45, Spider 75 → 38, Harbinger 180 → 90).
+On 2026-11-22 normal enemies' HP was halved (Wolf 60 → 30, Bear 90 → 45). Elites and the boss kept their original HP
+(Spider 76, Harbinger 180), and the Stone Giant was added.
 
 | Enemy | Tier | HP | Start | Gold | Portrait |
 |---|---|---|---|---|---|
 | **Wolf** | normal | 30 | random | 25–40 | `portraits/wolf.png` ✓ |
 | **Bear** | normal | 45 | first | 35–50 | `portraits/bear.png` ✓ |
-| **Spider** | elite | 38 | first | 45–65 | **needs art** (no Spellford asset; placeholder until drawn, U5) |
-| **Harbinger** (boss) | boss | 90 | first | 100–150 | `portraits/harbinger.png` ✓ |
+| **Spider** | elite | 76 | first (Spin Web) | 45–65 | **needs art** (no Spellford asset; placeholder until drawn, U5) |
+| **Stone Giant** | elite | 100 | first | 50–70 | **needs art** (placeholder) |
+| **Harbinger** (boss) | boss | 180 | first (Rally) | 100–150 | `portraits/harbinger.png` ✓ |
 
 ### Wolf: pack hunter that ramps up
 
@@ -97,10 +100,16 @@ HP was halved on 2026-11-22 (Wolf 60 → 30, Bear 90 → 45, Spider 75 → 38, H
 
 | # | Intent | Made of | Notes |
 |---|---|---|---|
-| 1 | **Venom Bite** | Attack 4, Poison 3 | |
-| 2 | **Spin Web** | Lock 4, Defend 6 | Board effect (elite only) |
-| 3 | **Lunge** | Attack 4, Attack 4 | Shows `⚔ 4×2` |
-| 4 | **Feed** | Attack 6, Heal 6 | |
+| 1 | **Spin Web** | Lock 8, Defend 6 | Board effect (elite only). Opens the fight |
+| 2 | **Lunge** | Attack 4, Attack 4 | Shows `⚔ 4×2` |
+| 3 | **Feed** | Attack 6, Heal 6 | |
+| 4 | **Venom Bite** | Attack 4, Poison 3 | |
+
+### Stone Giant (elite): hits hardest first, alone
+
+| # | Intent | Made of | Notes |
+|---|---|---|---|
+| 1 | **Crush** | Attack scaled by HP: 30 at full health, proportionally less (rounded up) | Its only move, every turn. Kill it fast or block |
 
 ### Harbinger (boss): commander that heals and buffs its pack, then corrupts the board
 
@@ -108,11 +117,11 @@ Always fought with allies (see encounters), so the ally heals and buffs matter.
 
 | # | Intent | Made of | Notes |
 |---|---|---|---|
-| 1 | **Dark Bolt** | Attack 12 | |
-| 2 | **Rally** | Heal Allies 10, Buff Allies Strength 1 | Heals and enrages the whole pack |
-| 3 | **Corrupt** | Add 4 Rubble, Weaken 2 | Board effect (boss only) |
-| 4 | **Ward** | Defend 15, Heal 10 | |
-| 5 | **Doom** | Attack 6, Attack 6, Attack 6 | Shows `⚔ 6×3`. Telegraphed big hit |
+| 1 | **Rally** | Heal Allies 10, Buff Allies Strength 2 | Heals and enrages the whole pack. Opens the fight, so scaling starts on turn 1 |
+| 2 | **Corrupt** | Add 4 Rubble, Weaken 2 | Board effect (boss only) |
+| 3 | **Ward** | Defend 15, Heal 10 | |
+| 4 | **Doom** | Attack 6, Attack 6, Attack 6 | Shows `⚔ 6×3`. Telegraphed big hit |
+| 5 | **Dark Bolt** | Attack 12 | |
 
 ## 3. Encounters
 
@@ -125,6 +134,7 @@ Always fought with allies (see encounters), so the ally heals and buffs matter.
 | `hunting_party` | normal | Wolf, Bear, Wolf |
 | `pack` | normal | Wolf, Wolf, Wolf, Wolf |
 | `spider` | elite | Spider |
+| `stone_giant` | elite | Stone Giant |
 | `nest` | elite | Wolf, Spider |
 | `boss` | boss | Wolf, Harbinger, Bear |
 

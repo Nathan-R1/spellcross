@@ -12,6 +12,7 @@ import type { EnemyDef, GenericIntent, IntentRef, NamedIntentDef, ResolvedIntent
 export function describeGeneric(g: GenericIntent): string {
   switch (g.type) {
     case 'attack': return `Attack ${g.amount}`;
+    case 'attackScaled': return `Attack up to ${g.max} (less when hurt)`;
     case 'defend': return `Defend ${g.amount}`;
     case 'defendAllies': return `Defend allies ${g.amount}`;
     case 'heal': return `Heal ${g.amount}`;

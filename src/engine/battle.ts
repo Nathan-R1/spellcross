@@ -376,8 +376,10 @@ function lowestAlly(ctx: Ctx): EnemyState {
 function resolvePart(ctx: Ctx, enemy: EnemyState, part: GenericIntent) {
   const s = ctx.s;
   switch (part.type) {
-    case 'attack': {
-      const amount = weakAdjust(enemy, part.amount + statusValue(enemy, 'strength'));
+    case 'attack':
+    case 'attackScaled': {
+      const base = part.type === 'attack' ? part.amount : scaledAmount(part.max, enemy);
+      const amount = weakAdjust(enemy, base + statusValue(enemy, 'strength'));
       const out = applyHit(s.player, amount);
       ctx.emit({ type: 'damage', target: 'player', amount: out.dealt, blocked: out.blocked, source: 'intent' });
       break;
@@ -483,13 +485,20 @@ export function pendingAllyStrength(enemies: Pick<EnemyState, 'slot' | 'alive' |
   return total;
 }
 
-export function previewParts(parts: GenericIntent[], enemy: Pick<EnemyState, 'statuses'>, allyStrength = 0): IntentPreviewPart[] {
+/** Stone Giant: full damage at full HP, proportionally less, rounded up (at least 1 while alive). */
+export function scaledAmount(max: number, enemy: Pick<EnemyState, 'hp' | 'maxHp'>): number {
+  return Math.max(1, Math.ceil((max * Math.max(0, enemy.hp)) / enemy.maxHp));
+}
+
+export function previewParts(parts: GenericIntent[], enemy: Pick<EnemyState, 'statuses' | 'hp' | 'maxHp'>, allyStrength = 0): IntentPreviewPart[] {
   const out: IntentPreviewPart[] = [];
   let strength = statusValue(enemy as EnemyState, 'strength') + allyStrength;
   for (const p of parts) {
     switch (p.type) {
-      case 'attack': {
-        const amount = weakAdjust(enemy as EnemyState, p.amount + strength);
+      case 'attack':
+      case 'attackScaled': {
+        const base = p.type === 'attack' ? p.amount : scaledAmount(p.max, enemy);
+        const amount = weakAdjust(enemy as EnemyState, base + strength);
         const last = out[out.length - 1];
         if (last && last.kind === 'attack' && last.amount === amount) last.hits = (last.hits ?? 1) + 1;
         else out.push({ kind: 'attack', amount, label: `${amount}` });

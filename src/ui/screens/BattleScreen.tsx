@@ -191,10 +191,10 @@ function shade(hex: string) {
   return `rgb(${f(n >> 16)}, ${f((n >> 8) & 255)}, ${f(n & 255)})`;
 }
 
-function intentParts(enemy: EnemyState, statuses: StatusInstance[], cursor: number, allyStrength: number) {
+function intentParts(enemy: EnemyState, statuses: StatusInstance[], cursor: number, allyStrength: number, hp: number) {
   const cycle = content.enemyIntents[enemy.defId];
   const intent = cycle[cursor % cycle.length];
-  return { intent, parts: previewParts(intent.parts, { statuses }, allyStrength) };
+  return { intent, parts: previewParts(intent.parts, { statuses, hp, maxHp: enemy.maxHp }, allyStrength) };
 }
 
 function EnemySlot({ enemy, hp, statuses, alive, cursor, allyStrength, targeted, acting, anchor, onTap, onLong }: {
@@ -202,7 +202,7 @@ function EnemySlot({ enemy, hp, statuses, alive, cursor, allyStrength, targeted,
   anchor: (el: HTMLElement | null) => void; onTap: () => void; onLong: () => void;
 }) {
   const press = useLongPress(onTap, onLong);
-  const { parts } = useMemo(() => intentParts(enemy, statuses, cursor, allyStrength), [enemy, statuses, cursor, allyStrength]);
+  const { parts } = useMemo(() => intentParts(enemy, statuses, cursor, allyStrength, hp), [enemy, statuses, cursor, allyStrength, hp]);
   const def = content.enemies[enemy.defId];
   const block = statuses.find((s) => s.id === 'block')?.value ?? 0;
   return (

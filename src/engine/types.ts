@@ -103,6 +103,8 @@ export interface GemDef {
 
 export type GenericIntent =
   | { type: 'attack'; amount: number }
+  /** Damage scaled by the attacker's HP fraction: `max` at full HP, rounded up (Stone Giant). */
+  | { type: 'attackScaled'; max: number }
   | { type: 'defend' | 'defendAllies'; amount: number }
   | { type: 'heal' | 'healAlly' | 'healAllies'; amount: number }
   | { type: 'buff' | 'buffAllies' | 'debuff'; status: StatusId; value: number }

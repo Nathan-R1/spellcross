@@ -6,7 +6,7 @@ import { endTurn, playerMove, previewIntent, setTarget, useAbility, BattleError 
 import { findSet, tileAt } from '../../src/engine/board';
 import { statusValue } from '../../src/engine/status';
 import type { BattleState } from '../../src/engine/types';
-import { at, FILL, FILL2, makeBattle } from '../helpers';
+import { at, cursorOf, FILL, FILL2, makeBattle } from '../helpers';
 
 // Swapping (2,0) with (2,1) completes "SSS" on row 0.
 const SCORCH_3 = ['SSImrmrm', 'rmSrmrmr', FILL, FILL2, FILL, FILL2];
@@ -272,22 +272,22 @@ describe('enemy phase (intents, combat §3)', () => {
   });
 
   it('a multi-hit attack applies Strength to each hit', () => {
-    const s = makeBattle({ rows: [FILL, FILL2, FILL, FILL2, FILL, FILL2], encounter: 'spider', state: (x) => { x.enemies[0].intentCursor = 2; x.enemies[0].statuses.push({ id: 'strength', value: 1 }); } });
+    const s = makeBattle({ rows: [FILL, FILL2, FILL, FILL2, FILL, FILL2], encounter: 'spider', state: (x) => { x.enemies[0].intentCursor = cursorOf('spider', 'Lunge'); x.enemies[0].statuses.push({ id: 'strength', value: 1 }); } });
     expect(endTurn(s, content).state.player.hp).toBe(90);
   });
 
-  it('Spin Web locks 4 free tiles; they free up after the next player turn', () => {
-    const s = makeBattle({ rows: [FILL, FILL2, FILL, FILL2, FILL, FILL2], encounter: 'spider', state: (x) => (x.enemies[0].intentCursor = 1) });
+  it('Spin Web locks 8 free tiles; they free up after the next player turn', () => {
+    const s = makeBattle({ rows: [FILL, FILL2, FILL, FILL2, FILL, FILL2], encounter: 'spider', state: (x) => (x.enemies[0].intentCursor = cursorOf('spider', 'Spin Web')) });
     const r = endTurn(s, content);
     const locked = r.state.board.cells.filter((t) => t.lock === 'locked');
-    expect(locked).toHaveLength(4);
+    expect(locked).toHaveLength(8);
     expect(statusValue(r.state.enemies[0], 'block')).toBe(6);
     const next = endTurn(r.state, content).state;
     for (const t of locked) expect(next.board.cells.find((c) => c.uid === t.uid)!.lock).toBe('free');
   });
 
   it('Corrupt turns 4 visible tiles into Rubble and Weakens 2', () => {
-    const s = makeBattle({ rows: [FILL, FILL2, FILL, FILL2, FILL, FILL2], encounter: 'boss', state: (x) => (x.enemies[1].intentCursor = 2) });
+    const s = makeBattle({ rows: [FILL, FILL2, FILL, FILL2, FILL, FILL2], encounter: 'boss', state: (x) => (x.enemies[1].intentCursor = cursorOf('harbinger', 'Corrupt')) });
     const r = endTurn(s, content);
     const ev = r.events.find((e) => e.event.type === 'tilesReplaced')!.event;
     expect(ev.type === 'tilesReplaced' && ev.uids.length).toBe(4);
@@ -297,14 +297,14 @@ describe('enemy phase (intents, combat §3)', () => {
   it('Rally heals and enrages every living ally, and cannot revive', () => {
     const s = makeBattle({ rows: [FILL, FILL2, FILL, FILL2, FILL, FILL2], encounter: 'boss', state: (x) => {
       x.enemies[0].hp = 0; x.enemies[0].alive = false;
-      x.enemies[1].intentCursor = 1; x.enemies[1].hp = 100;
+      x.enemies[1].intentCursor = cursorOf('harbinger', 'Rally'); x.enemies[1].hp = 100;
       x.enemies[2].hp = 50; x.enemies[2].intentCursor = 1; // Bear defends
     } });
     const r = endTurn(s, content).state;
     expect(r.enemies[0].hp).toBe(0);
     expect(r.enemies[1].hp).toBe(110);
     expect(r.enemies[2].hp).toBe(60);
-    expect(statusValue(r.enemies[2], 'strength')).toBe(1);
+    expect(statusValue(r.enemies[2], 'strength')).toBe(2);
   });
 
   it('defeat stops the enemy phase immediately', () => {
@@ -425,7 +425,7 @@ describe('intent previews (badge numbers)', () => {
   });
 
   it('collapse identical hits ("4×2")', () => {
-    const s = makeBattle({ rows: SCORCH_3, encounter: 'spider', state: (x) => (x.enemies[0].intentCursor = 2) });
+    const s = makeBattle({ rows: SCORCH_3, encounter: 'spider', state: (x) => (x.enemies[0].intentCursor = cursorOf('spider', 'Lunge')) });
     expect(previewIntent(s, 0, content)!.parts).toEqual([{ kind: 'attack', amount: 4, label: '4×2', hits: 2 }]);
   });
 
@@ -456,12 +456,12 @@ describe('review fixes', () => {
   });
 
   it("B4: badges include Strength from allies acting earlier (Rally before the Bear's Maul)", () => {
-    const s = makeBattle({ rows: [FILL, FILL2, FILL, FILL2, FILL, FILL2], encounter: 'boss', state: (x) => { x.enemies[1].intentCursor = 1; x.enemies[2].intentCursor = 2; } });
+    const s = makeBattle({ rows: [FILL, FILL2, FILL, FILL2, FILL, FILL2], encounter: 'boss', state: (x) => { x.enemies[1].intentCursor = cursorOf('harbinger', 'Rally'); x.enemies[2].intentCursor = 2; } });
     const preview = previewIntent(s, 2, content)!.parts.find((p) => p.kind === 'attack')!.amount;
-    expect(preview).toBe(13);
+    expect(preview).toBe(14); // Maul 12 + Rally's 2
     const r = endTurn(s, content);
     const bearHit = r.events.map((e) => e.event).filter((e) => e.type === 'damage' && e.source === 'intent').at(-1)!;
-    expect(bearHit.type === 'damage' && bearHit.amount).toBe(13);
+    expect(bearHit.type === 'damage' && bearHit.amount).toBe(14);
     // The wolf (slot 0) acts before the Rally, so it gets no bonus.
     expect(previewIntent(s, 0, content)!.parts[0].amount).toBe(5);
   });
@@ -470,8 +470,8 @@ describe('review fixes', () => {
     // The Spider webs tiles first (slot 0), then the Harbinger corrupts (slot 1) in the same enemy phase.
     for (let seed = 0; seed < 20; seed++) {
       const s = makeBattle({ rows: [FILL, FILL2, FILL, FILL2, FILL, FILL2], encounter: 'boss', state: (x) => {
-        x.enemies[0].defId = 'spider'; x.enemies[0].intentCursor = 1; // Spin Web
-        x.enemies[1].intentCursor = 2; // Corrupt
+        x.enemies[0].defId = 'spider'; x.enemies[0].intentCursor = cursorOf('spider', 'Spin Web');
+        x.enemies[1].intentCursor = cursorOf('harbinger', 'Corrupt');
         x.rng = seed;
       } });
       const r = endTurn(s, content);
@@ -506,12 +506,25 @@ describe('dud sets (D22)', () => {
   it('Corrupt never places Rubble that completes a set', () => {
     // A board that's mostly Rubble pairs: almost any placement would complete a set.
     for (let seed = 0; seed < 20; seed++) {
-      const s = makeBattle({ rows: ['rrIrrIrr', 'IIrIIrII', 'rrIrrIrr', 'IIrIIrII', 'rrIrrIrr', 'IIrIIrII'], encounter: 'boss', state: (x) => { x.enemies[1].intentCursor = 2; x.rng = seed; } });
+      const s = makeBattle({ rows: ['rrIrrIrr', 'IIrIIrII', 'rrIrrIrr', 'IIrIIrII', 'rrIrrIrr', 'IIrIIrII'], encounter: 'boss', state: (x) => { x.enemies[1].intentCursor = cursorOf('harbinger', 'Corrupt'); x.rng = seed; } });
       const r = endTurn(s, content).state;
       for (let y = 6; y < 12; y++) for (let x = 0; x < 8; x++) {
         const t = tileAt(r.board, x, y);
         if (t.spell === 'rubble') expect(findSet(r.board, (ref) => r.spells[ref], x, y)).toEqual([]);
       }
+    }
+  });
+});
+
+describe('Stone Giant (elite)', () => {
+  it('Crush hits 30 at full HP and proportionally less, rounded up', () => {
+    const s = makeBattle({ rows: [FILL, FILL2, FILL, FILL2, FILL, FILL2], encounter: 'stone_giant', state: (x) => { x.enemies[0].hp = x.enemies[0].maxHp = 100; } });
+    expect(previewIntent(s, 0, content)!.parts[0].amount).toBe(30);
+    expect(endTurn(s, content).state.player.hp).toBe(70);
+    for (const [hp, dmg] of [[50, 15], [34, 11], [1, 1]] as const) {
+      const hurt = makeBattle({ rows: [FILL, FILL2, FILL, FILL2, FILL, FILL2], encounter: 'stone_giant', state: (x) => { x.enemies[0].maxHp = 100; x.enemies[0].hp = hp; } });
+      expect(previewIntent(hurt, 0, content)!.parts[0].amount).toBe(dmg);
+      expect(100 - endTurn(hurt, content).state.player.hp).toBe(dmg);
     }
   });
 });
