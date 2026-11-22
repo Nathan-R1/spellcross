@@ -63,8 +63,8 @@ export function EventScreen() {
 
       {ev.levelUpPick && (
         <Modal onClose={() => pickLevelUp(null)}>
-          <h2>Meditate</h2>
-          <div className="dim">Choose a spell to level up. A spell's level sets how strong its gems are.</div>
+          <h2>Reflect</h2>
+          <div className="dim">Choose a tool to level up. A tool's level sets how strong its virtues are.</div>
           <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
             {resolvedPlayerSpells(run.player, content).map((sp) => (
               <button key={sp.ref} className="btn" disabled={sp.level >= 5} onClick={() => pickLevelUp(sp.ref)} style={{ flexDirection: 'column', minWidth: 92 }}>
@@ -80,8 +80,8 @@ export function EventScreen() {
 
       {ev.gemOffer && (
         <Modal onClose={() => pickGem(null)}>
-          <h2>Choose a gem</h2>
-          <div className="dim">Pick 1 of 3 for {ev.gemOfferPrice}gp. Values grow with the level of the spell you socket it into.</div>
+          <h2>Choose a virtue</h2>
+          <div className="dim">Pick 1 of 3 for {ev.gemOfferPrice} Talents. Values grow with the level of the tool you add it to.</div>
           <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
             {ev.gemOffer.map((g: GemId) => {
               const def = content.gems[g];

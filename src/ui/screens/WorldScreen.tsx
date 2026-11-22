@@ -80,7 +80,7 @@ export function WorldScreen() {
         <PlayerStats />
         <span className="spacer" />
         <AbilityBar />
-        <button className="btn" onClick={() => setSpellbook(true)}>Spellbook</button>
+        <button className="btn" onClick={() => setSpellbook(true)}>Toolbox</button>
         <button className="btn" onClick={() => setLegend((v) => !v)}>Legend</button>
       </TopBar>
       <div className="world-scroll" ref={scroller}>
@@ -208,7 +208,7 @@ function Legend({ open }: { open: boolean }) {
       {STOP_TYPES.filter((s) => s.id !== 'start').map((s) => (
         <div key={s.id} className="item">
           <Asset path={s.id === 'finish' ? undefined : `maps/stops/${s.id}1.png`} alt={s.name} size={30} color={BASE_COLOR[s.id]} />
-          <span><b>{s.name}</b> <span className="dim">{s.id === 'finish' ? 'The Harbinger awaits' : s.desc}</span></span>
+          <span><b>{s.name}</b> <span className="dim">{s.id === 'finish' ? 'Pride awaits' : s.desc}</span></span>
         </div>
       ))}
     </div>

@@ -13,12 +13,12 @@ describe('ability descriptions', () => {
 
   it('says exactly what each kind of ability does', () => {
     expect(describeAbility(abilities.low_blow).lines[0]).toContain('6 damage at the start of its turn, then 1 less each turn (21 damage in total)');
-    expect(describeAbility(abilities.crane_stance).summary).toBe('+20 Block');
-    expect(describeAbility(abilities.finisher).lines[0]).toBe('Deal 15 Fire damage to your target. Its Block absorbs damage first.');
-    expect(describeAbility(abilities.fuel_of_stone).lines[0]).toContain('your Earth spells deal +2 damage per tile matched');
-    expect(describeAbility(abilities.bulwark_of_ice).lines[0]).toContain('every time you cast a Water spell, gain 1 Block per tile matched');
-    expect(describeAbility(abilities.sicken).summary).toBe("Triple target's Poison");
-    expect(describeAbility(abilities.bulwark_of_stone).lines[0]).toContain('every time you cast an Earth spell');
+    expect(describeAbility(abilities.crane_stance).summary).toBe('+20 Shield of Faith');
+    expect(describeAbility(abilities.finisher).lines[0]).toBe('Deal 15 Faith damage to your target. Its Shield of Faith absorbs damage first.');
+    expect(describeAbility(abilities.fuel_of_stone).lines[0]).toContain('your Unity tools deal +2 damage per tile matched');
+    expect(describeAbility(abilities.bulwark_of_ice).lines[0]).toContain('every time you use a Love tool, gain 1 Shield of Faith per tile matched');
+    expect(describeAbility(abilities.sicken).summary).toBe("Triple target's Withering");
+    expect(describeAbility(abilities.bulwark_of_stone).lines[0]).toContain('every time you use a Unity tool');
     expect(poisonTotal(18)).toBe(171);
   });
 });

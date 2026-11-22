@@ -7,23 +7,26 @@ import { encounters, enemies, intents } from './enemies';
 import { gems } from './gems';
 import { spells } from './spells';
 import { statuses } from './statuses';
+
+const statusName = (id: string) => statuses[id]?.name ?? id;
+const spellName = (id: string) => spells[id]?.name ?? id;
 import type { EnemyDef, GenericIntent, IntentRef, NamedIntentDef, ResolvedIntent } from '../engine/types';
 
 export function describeGeneric(g: GenericIntent): string {
   switch (g.type) {
     case 'attack': return `Attack ${g.amount}`;
     case 'attackScaled': return `Attack up to ${g.max} (less when hurt)`;
-    case 'defend': return `Defend ${g.amount}`;
-    case 'defendAllies': return `Defend allies ${g.amount}`;
+    case 'defend': return `Shield ${g.amount}`;
+    case 'defendAllies': return `Shield allies ${g.amount}`;
     case 'heal': return `Heal ${g.amount}`;
     case 'healAlly': return `Heal ally ${g.amount}`;
     case 'healAllies': return `Heal allies ${g.amount}`;
-    case 'buff': return `Gain ${g.status} ${g.value}`;
-    case 'buffAllies': return `Allies gain ${g.status} ${g.value}`;
-    case 'debuff': return `Apply ${g.status} ${g.value}`;
-    case 'steal': return `Steal ${g.amount} gold`;
+    case 'buff': return `Gain ${statusName(g.status)} ${g.value}`;
+    case 'buffAllies': return `Allies gain ${statusName(g.status)} ${g.value}`;
+    case 'debuff': return `Apply ${statusName(g.status)} ${g.value}`;
+    case 'steal': return `Steal ${g.amount} Talents`;
     case 'lock': return `Lock ${g.count} tiles`;
-    case 'addTiles': return `Add ${g.count} ${g.spell}`;
+    case 'addTiles': return `Add ${g.count} ${spellName(g.spell)}`;
   }
 }
 

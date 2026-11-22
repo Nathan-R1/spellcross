@@ -78,7 +78,7 @@ export function BattleScreen() {
       if (current.healing > 0) add('player', `+${current.healing}`, 'heal');
     } else if (current.type === 'damage') add(current.target, current.amount > 0 ? `-${current.amount}` : `🛡${current.blocked}`, current.amount > 0 ? 'dmg' : 'block');
     else if (current.type === 'healed' && current.amount > 0) add(current.target, `+${current.amount}`, 'heal');
-    else if (current.type === 'goldStolen') add('player', `-${current.amount}g`, 'dmg');
+    else if (current.type === 'goldStolen') add('player', `-${current.amount} Talents`, 'dmg');
   }, [current]);
 
   const matched = new Set(current?.type === 'matched' ? current.uids : current?.type === 'tilesLocked' || current?.type === 'tilesReplaced' ? current.uids : []);
@@ -150,7 +150,7 @@ function Board({ view, tile, matched, selection, spells, onTap, onLong }: {
   const b = view.board;
   const rows = b.height - b.visibleFrom;
   return (
-    <div className="board" style={{ width: b.width * tile + 6, height: rows * tile + 6, overflow: 'hidden' }} role="grid" aria-label="Spell board">
+    <div className="board" style={{ width: b.width * tile + 6, height: rows * tile + 6, overflow: 'hidden' }} role="grid" aria-label="Tool board">
       {b.cells.map((t, i) => {
         const x = i % b.width;
         const y = Math.floor(i / b.width);

@@ -22,38 +22,38 @@ export const enrage = (value: number) => buff('strength', value);
 const named = (d: NamedIntentDef) => d;
 
 export const intents: Record<string, NamedIntentDef> = {
-  fangs: named({ id: 'fangs', name: 'Fangs', description: 'Bites for 5.', do: [attack(5)] }),
-  disable: named({ id: 'disable', name: 'Disable', description: 'Hits for 5 and leaves you Weak.', do: [attack(5), weaken(1)] }),
-  rage: named({ id: 'rage', name: 'Rage', description: 'Gains 1 Strength.', do: [enrage(1)] }),
+  fangs: named({ id: 'fangs', name: 'Bitter Words', description: 'Hits for 5.', do: [attack(5)] }),
+  disable: named({ id: 'disable', name: 'Accusation', description: 'Hits for 5 and leaves you Discouraged.', do: [attack(5), weaken(1)] }),
+  rage: named({ id: 'rage', name: 'Escalate', description: 'Gains 1 Zeal.', do: [enrage(1)] }),
 
-  swipe: named({ id: 'swipe', name: 'Swipe', description: 'Hits for 6.', do: [attack(6)] }),
-  maul: named({ id: 'maul', name: 'Maul', description: 'Hits for 12.', do: [attack(12)] }),
-  roar: named({ id: 'roar', name: 'Roar', description: 'Gains 1 Strength and leaves you Weak.', do: [enrage(1), weaken(1)] }),
+  swipe: named({ id: 'swipe', name: 'Grab', description: 'Hits for 6.', do: [attack(6)] }),
+  maul: named({ id: 'maul', name: 'Devour', description: 'Hits for 12.', do: [attack(12)] }),
+  roar: named({ id: 'roar', name: 'Covet', description: 'Gains 1 Zeal and leaves you Discouraged.', do: [enrage(1), weaken(1)] }),
 
-  venom_bite: named({ id: 'venom_bite', name: 'Venom Bite', description: 'Hits for 4 and poisons you.', do: [attack(4), poison(3)] }),
-  spin_web: named({ id: 'spin_web', name: 'Spin Web', description: 'Webs 8 of your tiles and gains 6 Block.', do: [lock(8), defend(6)] }),
-  lunge: named({ id: 'lunge', name: 'Lunge', description: 'Hits twice for 4.', do: [attack(4), attack(4)] }),
-  feed: named({ id: 'feed', name: 'Feed', description: 'Hits for 6 and heals 6.', do: [attack(6), heal(6)] }),
+  venom_bite: named({ id: 'venom_bite', name: 'Temptation', description: 'Hits for 4 and leaves you Withering.', do: [attack(4), poison(3)] }),
+  spin_web: named({ id: 'spin_web', name: 'Ensnare', description: 'Snares 8 of your tiles and gains 6 Shield.', do: [lock(8), defend(6)] }),
+  lunge: named({ id: 'lunge', name: 'Pounce', description: 'Hits twice for 4.', do: [attack(4), attack(4)] }),
+  feed: named({ id: 'feed', name: 'Indulge', description: 'Hits for 6 and heals 6.', do: [attack(6), heal(6)] }),
 
-  dark_bolt: named({ id: 'dark_bolt', name: 'Dark Bolt', description: 'Hits for 12.', do: [attack(12)] }),
-  rally: named({ id: 'rally', name: 'Rally', description: 'Heals all allies 10 and gives them 2 Strength.', do: [healAllies(10), buffAllies('strength', 2)] }),
+  dark_bolt: named({ id: 'dark_bolt', name: 'Scorn', description: 'Hits for 12.', do: [attack(12)] }),
+  rally: named({ id: 'rally', name: 'Puffed Up', description: 'Heals all allies 10 and gives them 2 Zeal.', do: [healAllies(10), buffAllies('strength', 2)] }),
 
-  crush: named({ id: 'crush', name: 'Crush', description: 'Hits for 30 at full health, less the more it is hurt.', do: [attackScaled(30)] }),
-  corrupt: named({ id: 'corrupt', name: 'Corrupt', description: 'Turns 4 tiles to Rubble and leaves you Weak.', do: [addTiles('rubble', 4), weaken(2)] }),
-  ward: named({ id: 'ward', name: 'Ward', description: 'Gains 15 Block and heals 10.', do: [defend(15), heal(10)] }),
-  doom: named({ id: 'doom', name: 'Doom', description: 'Hits three times for 6.', do: [attack(6), attack(6), attack(6)] }),
+  crush: named({ id: 'crush', name: 'Inertia', description: 'Hits for 30 at full health, less the more it is hurt.', do: [attackScaled(30)] }),
+  corrupt: named({ id: 'corrupt', name: 'Deceive', description: 'Turns 4 tiles to Clutter and leaves you Discouraged.', do: [addTiles('rubble', 4), weaken(2)] }),
+  ward: named({ id: 'ward', name: 'Self-Justify', description: 'Gains 15 Shield and heals 10.', do: [defend(15), heal(10)] }),
+  doom: named({ id: 'doom', name: 'Contempt', description: 'Hits three times for 6.', do: [attack(6), attack(6), attack(6)] }),
 };
 
 export const enemies: Record<string, EnemyDef> = {
-  wolf: { id: 'wolf', name: 'Wolf', tier: 'normal', hp: 30, portrait: 'portraits/wolf.png', start: 'random', gold: [25, 40], intents: ['fangs', 'disable', 'rage'] },
-  bear: { id: 'bear', name: 'Bear', tier: 'normal', hp: 45, portrait: 'portraits/bear.png', gold: [35, 50], intents: ['swipe', defend(10), 'maul', 'roar'] },
+  wolf: { id: 'wolf', name: 'Strife', tier: 'normal', hp: 30, portrait: 'portraits/wolf.png', start: 'random', gold: [25, 40], intents: ['fangs', 'disable', 'rage'] },
+  bear: { id: 'bear', name: 'Greed', tier: 'normal', hp: 45, portrait: 'portraits/bear.png', gold: [35, 50], intents: ['swipe', defend(10), 'maul', 'roar'] },
   // No Spellford spider art (U5): the UI draws a placeholder portrait.
   // Elites and the boss have double the normal-enemy halving (2026-11-22). The Spider opens with Spin Web.
-  spider: { id: 'spider', name: 'Spider', tier: 'elite', hp: 76, gold: [45, 65], intents: ['spin_web', 'lunge', 'feed', 'venom_bite'] },
+  spider: { id: 'spider', name: 'Lust', tier: 'elite', hp: 76, gold: [45, 65], intents: ['spin_web', 'lunge', 'feed', 'venom_bite'] },
   // No Spellford art: placeholder portrait. One move, no allies.
-  stone_giant: { id: 'stone_giant', name: 'Stone Giant', tier: 'elite', hp: 100, gold: [50, 70], intents: ['crush'] },
+  stone_giant: { id: 'stone_giant', name: 'Sloth', tier: 'elite', hp: 100, gold: [50, 70], intents: ['crush'] },
   // Opens with Rally so its pack scales from turn 1.
-  harbinger: { id: 'harbinger', name: 'Harbinger', tier: 'boss', hp: 180, portrait: 'portraits/harbinger.png', gold: [100, 150], intents: ['rally', 'corrupt', 'ward', 'doom', 'dark_bolt'] },
+  harbinger: { id: 'harbinger', name: 'Pride', tier: 'boss', hp: 180, portrait: 'portraits/harbinger.png', gold: [100, 150], intents: ['rally', 'corrupt', 'ward', 'doom', 'dark_bolt'] },
 };
 
 export const encounters: Record<string, EncounterDef> = {

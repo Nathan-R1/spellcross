@@ -43,7 +43,7 @@ describe('new run', () => {
     expect(r.event!.nodeId).toBe('traveller');
     expect(new Set(r.event!.offer).size).toBe(3);
     expect(r.player.abilities).toEqual([]);
-    expect(r.player.spells.map((s) => s.spellId)).toEqual(['scorch', 'restore', 'strike', 'ice_bolt', 'venom', 'shield']);
+    expect(r.player.spells.map((s) => s.spellId)).toEqual(['scorch', 'strike', 'ice_bolt', 'venom', 'shield']);
     expect(r.player.hp).toBe(100);
     expect(r.map.stops[r.currentStopId].type).toBe('start');
   });
@@ -242,10 +242,10 @@ describe('events', () => {
     expect(bought.player.gems).toEqual([gem]);
   });
 
-  it('Villages, Towns and Markets sell a random ability for 200gp; only the Market sells Spell Upgrades', () => {
+  it('Villages, Towns and Markets sell a random ability for 200 Talents; only the Market sells Spell Upgrades', () => {
     for (const stop of ['village', 'town', 'market']) {
       let r = at(stop, 200);
-      r = run.chooseOption(r, optionIndex(r, '[Train]'), c);
+      r = run.chooseOption(r, optionIndex(r, '[Discipleship]'), c);
       expect(r.player.abilities).toHaveLength(2); // Traveller's pick + the new one
       expect(r.player.gold).toBe(0);
       expect(r.player.spellUpgrades).toBe(0);
@@ -379,11 +379,11 @@ describe('spellbook (D16)', () => {
   });
 
   it('upgrading raises the level (max 5) and gem values with it', () => {
-    let r = run.socketGem(withGems(), 's3', 0, 0, undefined, c); // Strike + Strikecut
-    r = run.upgradeSpell(run.upgradeSpell(r, 's3', c), 's3', c);
-    expect(r.player.spells[2].level).toBe(3);
-    expect(run.resolvedPlayerSpells(r.player, c)[2].damage).toBe(5);
-    expect(() => run.upgradeSpell(r, 's3', c)).toThrow(); // no upgrades left
+    let r = run.socketGem(withGems(), 's2', 0, 0, undefined, c); // Bible Reading + Courageous
+    r = run.upgradeSpell(run.upgradeSpell(r, 's2', c), 's2', c);
+    expect(r.player.spells[1].level).toBe(3);
+    expect(run.resolvedPlayerSpells(r.player, c)[1].damage).toBe(5);
+    expect(() => run.upgradeSpell(r, 's2', c)).toThrow(); // no upgrades left
   });
 
   it('unsocketing only works in a Town and costs 50', () => {
@@ -484,16 +484,16 @@ describe('remembered loadout', () => {
     const r = pastTraveller();
     expect(run.suggestedLoadout(r, 3)).toEqual(['s1', 's2', 's3']); // first battle: first three spells
     const prepped = { ...r, screen: 'prep' as const, prep: { encounterId: 'wolf', slots: 3, source: 'debug' as const } };
-    const { run: inBattle } = run.startBattle(prepped, ['s5', 's2', 's6'], [], c);
-    expect(inBattle.lastLoadout).toEqual(['s5', 's2', 's6']);
-    expect(run.suggestedLoadout(inBattle, 3)).toEqual(['s5', 's2', 's6']);
+    const { run: inBattle } = run.startBattle(prepped, ['s5', 's2', 's4'], [], c);
+    expect(inBattle.lastLoadout).toEqual(['s5', 's2', 's4']);
+    expect(run.suggestedLoadout(inBattle, 3)).toEqual(['s5', 's2', 's4']);
     // A spell no longer owned is dropped and the gap is filled in list order.
     const fewer = { ...inBattle, player: { ...inBattle.player, spells: inBattle.player.spells.filter((x) => x.uid !== 's5') } };
-    expect(run.suggestedLoadout(fewer, 3)).toEqual(['s2', 's6', 's1']);
+    expect(run.suggestedLoadout(fewer, 3)).toEqual(['s2', 's4', 's1']);
   });
 });
 
-describe('Campfire Meditate', () => {
+describe('Campfire Reflect', () => {
   const camp = (mutate?: (r: RunState) => void) => {
     const r = run.debugEvent(pastTraveller(), 'campfire', c);
     r.player.abilities = [{ id: 'finisher', uses: 1 }];
@@ -505,34 +505,34 @@ describe('Campfire Meditate', () => {
 
   it('levels up the chosen spell, and Patch up and Rest are then unavailable (either/or)', () => {
     let r = camp();
-    r = run.chooseOption(r, idx(r, '[Meditate]'), c);
+    r = run.chooseOption(r, idx(r, '[Reflect]'), c);
     expect(r.event!.levelUpPick).toBe(true);
-    r = run.pickLevelUp(r, 's3', c);
-    expect(r.player.spells[2].level).toBe(2);
+    r = run.pickLevelUp(r, 's2', c);
+    expect(r.player.spells[1].level).toBe(2);
     const view = run.eventView(r, c)!;
     expect(view.options[idx(r, '[Patch up]')].enabled).toBe(false);
     expect(view.options[idx(r, '[Resting]')].enabled).toBe(false);
-    expect(view.options[idx(r, '[Meditate]')].enabled).toBe(false);
+    expect(view.options[idx(r, '[Reflect]')].enabled).toBe(false);
     expect(view.options[idx(r, '[Leave]')].enabled).toBe(true);
   });
 
-  it('Patch up or Rest also rules out Meditate', () => {
+  it('Patch up or Rest also rules out Reflect', () => {
     let r = camp();
     r = run.chooseOption(r, idx(r, '[Patch up]'), c);
-    expect(run.eventView(r, c)!.options[idx(r, '[Meditate]')].enabled).toBe(false);
+    expect(run.eventView(r, c)!.options[idx(r, '[Reflect]')].enabled).toBe(false);
   });
 
   it('cancelling the pick gives all three choices back', () => {
     let r = camp();
-    r = run.chooseOption(r, idx(r, '[Meditate]'), c);
+    r = run.chooseOption(r, idx(r, '[Reflect]'), c);
     r = run.pickLevelUp(r, null, c);
     const view = run.eventView(r, c)!;
-    for (const label of ['[Patch up]', '[Resting]', '[Meditate]']) expect(view.options[idx(r, label)].enabled).toBe(true);
+    for (const label of ['[Patch up]', '[Resting]', '[Reflect]']) expect(view.options[idx(r, label)].enabled).toBe(true);
     expect(r.player.spells.every((s) => s.level === 1)).toBe(true);
   });
 
   it('is disabled when every spell is level 5', () => {
     const r = camp((x) => x.player.spells.forEach((s) => (s.level = 5)));
-    expect(run.eventView(r, c)!.options[idx(r, '[Meditate]')].enabled).toBe(false);
+    expect(run.eventView(r, c)!.options[idx(r, '[Reflect]')].enabled).toBe(false);
   });
 });

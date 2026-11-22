@@ -38,12 +38,12 @@ export function SpellbookScreen() {
     <div className="modal-back" style={{ alignItems: 'stretch', padding: 0, background: 'var(--wood-dark)' }}>
       <div className="screen">
         <div className="topbar">
-          <button className="btn icon" onClick={() => setSpellbook(false)} aria-label="Close spellbook">←</button>
-          <span className="title" style={{ fontSize: 20 }}>Spellbook</span>
+          <button className="btn icon" onClick={() => setSpellbook(false)} aria-label="Close toolbox">←</button>
+          <span className="title" style={{ fontSize: 20 }}>Toolbox</span>
           <span className="spacer" />
-          <span className="chip"><Asset path="icons/gem.png" alt="Gems" size={20} /> {run.player.gems.length}</span>
+          <span className="chip"><Asset path="icons/gem.png" alt="Virtues" size={20} /> {run.player.gems.length}</span>
           <span className="chip">⬆ {run.player.spellUpgrades}</span>
-          <span className="chip"><Asset path="icons/gold.png" alt="Gold" size={20} /> {run.player.gold}</span>
+          <span className="chip"><Asset path="icons/gold.png" alt="Talents" size={20} /> {run.player.gold}</span>
         </div>
         <div className="prep-body">
           <div className="prep-col panel" style={{ flex: '0 0 34%', overflowY: 'auto' }}>
@@ -73,19 +73,19 @@ export function SpellbookScreen() {
                       <>
                         <GemIcon gem={sock.gem} size={16} />
                         <span>{content.gems[sock.gem].name}{sock.secondElement ? ` (${ELEMENT_NAME[sock.secondElement]})` : ''}</span>
-                        {town && canEdit && <button className="btn" style={{ minHeight: 24, fontSize: 11 }} disabled={run.player.gold < content.config.prices.unsocket} onClick={() => unsocket(inst.uid, i)}>Unsocket −{content.config.prices.unsocket}g</button>}
+                        {town && canEdit && <button className="btn" style={{ minHeight: 24, fontSize: 11 }} disabled={run.player.gold < content.config.prices.unsocket} onClick={() => unsocket(inst.uid, i)}>Remove −{content.config.prices.unsocket} Talents</button>}
                       </>
                     ) : (
-                      <button className="btn" disabled={!canEdit || run.player.gems.length === 0} onClick={() => setSocketing(i)}>+ gem</button>
+                      <button className="btn" disabled={!canEdit || run.player.gems.length === 0} onClick={() => setSocketing(i)}>+ virtue</button>
                     )}
                   </div>
                 ))}
               </div>
-              {!town && <div className="dim" style={{ fontSize: 12 }}>Socketing is permanent. Gems can be removed at a Town for {content.config.prices.unsocket}g.</div>}
+              {!town && <div className="dim" style={{ fontSize: 12 }}>Adding a virtue is permanent. Virtues can be removed at a Town for {content.config.prices.unsocket} Talents.</div>}
               <button className="btn" disabled={!canEdit || run.player.spellUpgrades <= 0 || inst.level >= 5} onClick={() => setPreview({ kind: 'upgrade' })}>
                 Upgrade ⬆ (Lv {inst.level} → {Math.min(5, inst.level + 1)})
               </button>
-              <div className="dim" style={{ fontSize: 12 }}>A spell's level sets the value of every gem socketed in it.</div>
+              <div className="dim" style={{ fontSize: 12 }}>A tool's level sets the value of every virtue added to it.</div>
             </div>
           )}
         </div>
@@ -93,7 +93,7 @@ export function SpellbookScreen() {
 
       {socketing !== null && !preview && inst && (
         <Modal onClose={() => setSocketing(null)}>
-          <h2>Socket a gem</h2>
+          <h2>Add a virtue</h2>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
             {run.player.gems.map((g: GemId, i) => {
               const def = content.gems[g];
@@ -112,7 +112,7 @@ export function SpellbookScreen() {
 
       {preview && spell && after && inst && (
         <Modal onClose={() => setPreview(null)}>
-          <h2>{preview.kind === 'upgrade' ? 'Upgrade spell?' : 'Socket gem? (permanent)'}</h2>
+          <h2>{preview.kind === 'upgrade' ? 'Upgrade tool?' : 'Add virtue? (permanent)'}</h2>
           {preview.kind === 'socket' && run.player.gems[preview.gemIndex] === 'sunstone' && (
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
               <span className="dim">Second element:</span>
@@ -147,7 +147,7 @@ export function SpellbookScreen() {
 
 /** Spell info popup, used by battle prep and the board's long-press. */
 export function SpellDetails({ spell, onClose }: { spell: ResolvedSpell; onClose: () => void }) {
-  const cats = [spell.damage && `Damage ${spell.damage}/tile`, spell.healing && `Healing ${spell.healing}/tile`, spell.chaos && `Chaos ${spell.chaos}/tile (damage, Block or healing)`].filter(Boolean);
+  const cats = [spell.damage && `Damage ${spell.damage}/tile`, spell.healing && `Healing ${spell.healing}/tile`, spell.chaos && `Chaos ${spell.chaos}/tile (damage, Shield of Faith or healing)`].filter(Boolean);
   return (
     <Modal onClose={onClose}>
       <div className="row">
@@ -159,8 +159,8 @@ export function SpellDetails({ spell, onClose }: { spell: ResolvedSpell; onClose
           {spell.statuses.map((s, i) => (
             <div key={i}>{content.statuses[s.status]?.name ?? s.status} {s.value}{s.perTile ? '/tile' : ''} → {s.self ? 'you' : 'target'}</div>
           ))}
-          {spell.gems.length > 0 && <div className="dim">Gems: {spell.gems.map((g) => content.gems[g].name).join(', ')}</div>}
-          {spell.spellClass !== 'player' && <div className="dim">{spell.spellClass === 'dud' ? 'Junk: not much use. Line up 3 of the same to clear them away, but they do nothing.' : spell.spellClass === 'nova' ? 'Special: never matches.' : ''}{spell.linked ? ' Linked: cleared when next to a match.' : ''}</div>}
+          {spell.gems.length > 0 && <div className="dim">Virtues: {spell.gems.map((g) => content.gems[g].name).join(', ')}</div>}
+          {spell.spellClass !== 'player' && <div className="dim">{spell.spellClass === 'dud' ? 'Distraction: not much use. Line up 3 of the same to clear them away, but they do nothing.' : spell.spellClass === 'nova' ? 'Special: never matches.' : ''}{spell.linked ? ' Linked: cleared when next to a match.' : ''}</div>}
         </div>
       </div>
       <div className="actions"><button className="btn" onClick={onClose}>OK</button></div>

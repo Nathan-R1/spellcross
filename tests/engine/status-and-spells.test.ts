@@ -2,7 +2,7 @@
 
 import { content } from '../../src/content';
 import { createPlayer } from '../../src/engine/run';
-import { iconPathFromStats, resolveInstance, resolveJunk } from '../../src/engine/spells';
+import { iconPathFromStats, newSpellInstance, resolveInstance, resolveJunk } from '../../src/engine/spells';
 import { addStatus, applyHit, familyBonus, onTurnEnd, onTurnStart, statusValue } from '../../src/engine/status';
 import type { Combatant, GemId, SpellInstance } from '../../src/engine/types';
 
@@ -96,11 +96,13 @@ describe('spell instances and gems', () => {
   it('starting spells resolve to their base stats', () => {
     const p = createPlayer(content);
     const r = p.spells.map(resolve);
-    expect(r.map((s) => s.name)).toEqual(['Scorch', 'Restore', 'Strike', 'Ice Bolt', 'Venom', 'Shield']);
+    expect(r.map((s) => s.name)).toEqual(['Prayer', 'Bible Reading', 'Serving', 'Fasting', 'Fellowship']);
     expect(r[0].damage).toBe(4);
-    expect(r[1].healing).toBe(2);
-    expect(r[1].elements).toEqual(['water']); // D3
-    expect(r[5].statuses).toEqual([{ status: 'block', value: 2, self: true, perTile: true }]);
+    const healing = resolve(newSpellInstance(p, content.spells.restore));
+    expect(healing.name).toBe('Healing');
+    expect(healing.healing).toBe(2);
+    expect(healing.elements).toEqual(['water']); // D3
+    expect(r[4].statuses).toEqual([{ status: 'block', value: 2, self: true, perTile: true }]);
   });
 
   it('gem values come from the spell level (G1): Strikecut +2 at Lv1, +4 at Lv4', () => {
@@ -165,7 +167,6 @@ describe('icons from stats (Spellford getIconPathFromStats)', () => {
     const p = createPlayer(content);
     expect(p.spells.map((x) => resolve(x).icon)).toEqual([
       'spells/fire/dmg-2.png',
-      'spells/water/healing-1.png',
       'spells/lightning/dmg-1.png',
       'spells/water/dmg-1.png',
       'spells/acid/poison-1.png',

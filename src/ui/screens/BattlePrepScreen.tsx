@@ -38,9 +38,9 @@ export function BattlePrepScreen() {
       <TopBar><PlayerStats /></TopBar>
       <div className="prep-body">
         <div className="prep-col panel" style={{ flex: 2, minWidth: 0 }}>
-          <div className="banner">{prep.source === 'boss' ? 'The Harbinger' : encounter.tier === 'elite' ? 'A dangerous foe!' : 'Enemy Encounter!'}</div>
+          <div className="banner">{prep.source === 'boss' ? 'Pride' : encounter.tier === 'elite' ? 'A dangerous foe!' : 'Enemy Encounter!'}</div>
           <div className="dim" style={{ fontSize: 13 }}>
-            Choose {slots} spells ({loadout.length}/{slots}). Hold any tile for details.
+            Choose {slots} tools ({loadout.length}/{slots}). Hold any tile for details.
           </div>
           <div className="spell-grid">
             {spells.map((s) => (
@@ -53,7 +53,7 @@ export function BattlePrepScreen() {
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {encounter.enemies.map((id, i) => <EnemyCard key={i} id={id} onLong={() => setEnemyInfo(id)} />)}
           </div>
-          <b>Junk ({junk.length}/{content.config.junkSlots})</b>
+          <b>Distractions ({junk.length}/{content.config.junkSlots})</b>
           <div style={{ display: 'flex', gap: 6 }}>
             {run.player.junkPool.map((id) => (
               <JunkCard key={id} id={id} selected={junk.includes(id)} onTap={() => toggleJunk(id)} onLong={() => setInfo(id)} />

@@ -4,16 +4,17 @@ import { content, type Content } from '../src/content';
 import { createBattle } from '../src/engine/battle';
 import { boardFromAscii } from '../src/engine/board';
 import { createPlayer } from '../src/engine/run';
-import { resolveJunk } from '../src/engine/spells';
+import { newSpellInstance, resolveJunk } from '../src/engine/spells';
 import type { BattleState, Player } from '../src/engine/types';
 
 /**
- * Board letters. Player spells use createPlayer()'s instance uids (s1..s6 in starting order).
- *   S Scorch  R Restore  T Strike  I Ice Bolt  V Venom  H Shield
+ * Board letters. Player tools use createPlayer()'s instance uids (s1..s5 in starting order),
+ * plus Healing (not a starting tool) added by makeBattle as s6.
+ *   S Prayer  R Healing  T Bible Reading  I Serving  V Fasting  H Fellowship
  *   a Ash  r Rubble  m Mist  o Orb  l Slime  u Surge  c Critical
  */
 export const REF: Record<string, string> = {
-  S: 's1', R: 's2', T: 's3', I: 's4', V: 's5', H: 's6',
+  S: 's1', T: 's2', I: 's3', V: 's4', H: 's5', R: 's6',
   a: 'ash', r: 'rubble', m: 'mist', o: 'orb', l: 'slime', u: 'surge', c: 'critical',
 };
 
@@ -30,6 +31,7 @@ export interface MakeBattle {
 
 export function makeBattle({ rows, encounter = 'wolf', player, state, c = content }: MakeBattle): BattleState {
   const p = createPlayer(c);
+  p.spells.push(newSpellInstance(p, c.spells.restore));
   player?.(p);
   const { state: s } = createBattle({ player: p, encounter: c.encounters[encounter], loadout: p.spells.map((x) => x.uid), junk: ['orb', 'slime'], seed: 1 }, c);
   s.board = boardFromAscii([...BUFFER, ...rows], (ch) => {

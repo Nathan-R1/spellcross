@@ -11,8 +11,8 @@ export function ResultScreen() {
       <div className="centered">
         <h1 className="title">Victory!</h1>
         <div className="panel" style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <div className="reward">+{r.gold} gold</div>
-          {r.gem && <div className="reward"><GemIcon gem={r.gem} /> {content.gems[r.gem].name} gem</div>}
+          <div className="reward">+{r.gold} Talents</div>
+          {r.gem && <div className="reward"><GemIcon gem={r.gem} /> {content.gems[r.gem].name} virtue</div>}
           <div className="dim">HP {run.player.hp}/{run.player.maxHp}</div>
         </div>
         <button className="btn primary big" onClick={continueResult}>{r.boss ? 'Finish the journey' : 'Continue'}</button>

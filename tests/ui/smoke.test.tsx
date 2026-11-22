@@ -31,7 +31,7 @@ describe('UI smoke', () => {
     render(<App />);
     expect(screen.getByText('Spellcross')).toBeTruthy();
     tap(screen.getByText('Begin your journey'));
-    await waitFor(() => screen.getByText('A Fellow Traveller'));
+    await waitFor(() => screen.getByText('A Fellow Pilgrim'));
     const option = screen.getAllByRole('button').find((b) => b.className.includes('option'))!;
     fireEvent.click(option);
     await waitFor(() => screen.getByText('Legend'));
@@ -39,14 +39,14 @@ describe('UI smoke', () => {
     expect(localStorage.getItem(SAVE_KEY)).toContain('"screen":"map"');
   });
 
-  it('spellbook lists the starting spells', async () => {
+  it('toolbox lists the starting tools', async () => {
     act(() => useStore.getState().newRun(42));
     act(() => useStore.getState().chooseOption(0));
     render(<App />);
-    fireEvent.click(screen.getByText('Spellbook'));
-    await waitFor(() => screen.getAllByText('Scorch'));
-    expect(screen.getAllByText('Ice Bolt').length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByLabelText('Close spellbook'));
+    fireEvent.click(screen.getByText('Toolbox'));
+    await waitFor(() => screen.getAllByText('Prayer'));
+    expect(screen.getAllByText('Serving').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByLabelText('Close toolbox'));
     await waitFor(() => expect(useStore.getState().spellbookOpen).toBe(false));
   });
 
@@ -60,7 +60,7 @@ describe('UI smoke', () => {
     await waitFor(() => screen.getByText('End Turn'));
     const visible = screen.getAllByRole('gridcell').filter((t) => (t as HTMLElement).style.visibility !== 'hidden');
     expect(visible).toHaveLength(48);
-    expect(screen.getByLabelText(/Wolf, 30 HP/)).toBeTruthy();
+    expect(screen.getByLabelText(/Strife, 30 HP/)).toBeTruthy();
     const cursor = useStore.getState().run!.battle!.enemies[0].intentCursor;
     fireEvent.click(screen.getByText('End Turn'));
     await waitFor(() => expect(useStore.getState().run!.battle!.round).toBe(2));
@@ -74,17 +74,17 @@ describe('UI smoke', () => {
     act(() => useStore.getState().chooseOption(0));
     act(() => useStore.getState().debugBattle('wolf'));
     render(<App />);
-    expect(screen.getByText('Junk (0/2)')).toBeTruthy();
-    const orb = screen.getByText('Orb').closest('button')!;
+    expect(screen.getByText('Distractions (0/2)')).toBeTruthy();
+    const orb = screen.getByText('Idol').closest('button')!;
     expect(orb.getAttribute('aria-pressed')).toBe('false');
     fireEvent.pointerDown(orb);
-    await waitFor(() => screen.getByText(/Junk: not much use/), { timeout: 2000 });
-    expect(screen.getByText('A glowing orb')).toBeTruthy();
-    expect(screen.getByText('Junk (0/2)')).toBeTruthy(); // holding doesn't select it
+    await waitFor(() => screen.getByText(/Distraction: not much use/), { timeout: 2000 });
+    expect(screen.getByText('A shiny idol')).toBeTruthy();
+    expect(screen.getByText('Distractions (0/2)')).toBeTruthy(); // holding doesn't select it
     fireEvent.pointerUp(orb);
     fireEvent.click(screen.getByText('OK'));
-    tap(screen.getByText('Orb').closest('button')!);
-    await waitFor(() => screen.getByText('Junk (1/2)'));
+    tap(screen.getByText('Idol').closest('button')!);
+    await waitFor(() => screen.getByText('Distractions (1/2)'));
   });
 
   it('battle prep: holding an enemy shows its intent cycle', async () => {
@@ -92,20 +92,20 @@ describe('UI smoke', () => {
     act(() => useStore.getState().chooseOption(0));
     act(() => useStore.getState().debugBattle('spider'));
     render(<App />);
-    fireEvent.pointerDown(screen.getByLabelText('Spider: hold for details'));
+    fireEvent.pointerDown(screen.getByLabelText('Lust: hold for details'));
     await waitFor(() => screen.getByText('Repeats this cycle:'), { timeout: 2000 });
-    expect(screen.getByText('Venom Bite')).toBeTruthy();
+    expect(screen.getByText('Temptation')).toBeTruthy();
     expect(screen.getByText(/elite · 76 HP/)).toBeTruthy();
   });
 
   it('battle prep preselects the spells used last battle', async () => {
     act(() => useStore.getState().newRun(42));
     act(() => useStore.getState().chooseOption(0));
-    act(() => useStore.getState().apply((r) => ({ ...r, lastLoadout: ['s4', 's5', 's6'] })));
+    act(() => useStore.getState().apply((r) => ({ ...r, lastLoadout: ['s3', 's4', 's5'] })));
     act(() => useStore.getState().debugBattle('wolf'));
     render(<App />);
     const selected = screen.getAllByRole('button').filter((b) => b.className.includes('spell-card') && b.className.includes('selected')).map((b) => b.textContent);
-    expect(selected.join(' ')).toMatch(/Ice Bolt.*Venom.*Shield/);
+    expect(selected.join(' ')).toMatch(/Serving.*Fasting.*Fellowship/);
   });
 
   it('continue run restores a mid-battle save', async () => {
@@ -117,7 +117,7 @@ describe('UI smoke', () => {
     act(() => useStore.getState().continueRun());
     render(<App />);
     await waitFor(() => screen.getByText('End Turn'));
-    expect(screen.getByLabelText(/Bear, 45 HP/)).toBeTruthy();
+    expect(screen.getByLabelText(/Greed, 45 HP/)).toBeTruthy();
   });
 
   it('abandon run clears the save', async () => {

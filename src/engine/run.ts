@@ -65,7 +65,7 @@ export function createPlayer(c: Content, seedUid = 1): Player {
     movesPerTurn: c.config.player.movesPerTurn, spells: [], junkPool: ['orb', 'slime'], gold: c.config.player.startingGold,
     gems: [], spellUpgrades: 0, abilities: [], maxAbilities: c.config.player.maxAbilities, nextSpellUid: seedUid,
   };
-  for (const id of ['scorch', 'restore', 'strike', 'ice_bolt', 'venom', 'shield']) p.spells.push(newSpellInstance(p, c.spells[id]));
+  for (const id of ['scorch', 'strike', 'ice_bolt', 'venom', 'shield']) p.spells.push(newSpellInstance(p, c.spells[id]));
   return p;
 }
 
@@ -407,7 +407,7 @@ export function continueAfterResult(prev: RunState): RunState {
   run.prep = null;
   if (boss) {
     run.screen = 'victory';
-    run.endMessage = 'The Harbinger falls. Your journey is complete.';
+    run.endMessage = 'Pride falls. Your journey is complete.';
     return touch(run);
   }
   run.screen = 'map';
@@ -466,7 +466,7 @@ export function unsocketGem(prev: RunState, spellUid: string, socket: number, c:
   const inst = p.spells.find((s) => s.uid === spellUid);
   const sock = inst?.sockets[socket];
   if (!inst || !sock) throw new Error('Nothing to unsocket');
-  if (p.gold < c.config.prices.unsocket) throw new Error('Not enough gold');
+  if (p.gold < c.config.prices.unsocket) throw new Error('Not enough Talents');
   p.gold -= c.config.prices.unsocket;
   p.gems.push(sock.gem);
   inst.sockets[socket] = null;

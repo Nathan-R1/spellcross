@@ -123,8 +123,8 @@ export function PlayerStats() {
   return (
     <>
       <span className="chip"><Asset path="icons/heart.png" alt="HP" size={20} /> {p.hp}/{p.maxHp}</span>
-      <span className="chip"><Asset path="icons/gold.png" alt="Gold" size={20} /> {p.gold}</span>
-      <span className="chip"><Asset path="icons/gem.png" alt="Gems" size={20} /> {p.gems.length}</span>
+      <span className="chip"><Asset path="icons/gold.png" alt="Talents" size={20} /> {p.gold}</span>
+      <span className="chip"><Asset path="icons/gem.png" alt="Virtues" size={20} /> {p.gems.length}</span>
       {p.spellUpgrades > 0 && <span className="chip">⬆ {p.spellUpgrades}</span>}
     </>
   );

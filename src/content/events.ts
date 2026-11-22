@@ -60,14 +60,14 @@ const hasAbilities = (p: Player) => p.abilities.length > 0;
 // One heal per visit (D25): a free +20% at Campfires, Villages and Towns, or a paid +50% at Villages and Towns.
 // Spellford healed +50% for free at Campfires, Villages and Towns.
 const PATCH_UP: EventOption = { label: '[Patch up]', reward: '+20% HP', effects: [{ type: 'healPctMax', pct: 0.2 }], next: 'stay', group: 'heal' };
-const HEAL: EventOption = { label: '[Healer]', reward: '+50% HP', cost: '-50gp', available: gold(50), effects: [{ type: 'gold', amount: -50 }, { type: 'healPctMax', pct: 0.5 }], next: 'stay', group: 'heal' };
+const HEAL: EventOption = { label: '[Healer]', reward: '+50% HP', cost: '-50 Talents', available: gold(50), effects: [{ type: 'gold', amount: -50 }, { type: 'healPctMax', pct: 0.5 }], next: 'stay', group: 'heal' };
 const REST: EventOption = { label: '[Resting]', reward: '+1 Recharge per ability', available: hasAbilities, effects: [{ type: 'recharge', count: 'perAbility' }], next: 'stay' };
-const BUY_GEM: EventOption = { label: '[Purchase]', reward: '+Gem (pick 1 of 3)', cost: '-100gp', available: gold(100), effects: [{ type: 'gemOffer', price: 100 }], next: 'stay' };
-const TRAIN_UPGRADE = (label: string): EventOption => ({ label, reward: '+Spell Upgrade', cost: '-100gp', available: gold(100), effects: [{ type: 'gold', amount: -100 }, { type: 'spellUpgrade', count: 1 }], next: 'stay' });
+const BUY_GEM: EventOption = { label: '[Purchase]', reward: '+Virtue (pick 1 of 3)', cost: '-100 Talents', available: gold(100), effects: [{ type: 'gemOffer', price: 100 }], next: 'stay' };
+const TRAIN_UPGRADE = (label: string): EventOption => ({ label, reward: '+Upgrade', cost: '-100 Talents', available: gold(100), effects: [{ type: 'gold', amount: -100 }, { type: 'spellUpgrade', count: 1 }], next: 'stay' });
 
 /** A random ability (rarity-weighted) for 200gp: Villages, Towns and Markets. Disabled at 5 abilities (D20). */
 const BUY_ABILITY: EventOption = {
-  label: '[Train]', reward: '+1 random ability', cost: '-200gp', available: (p) => p.gold >= 200 && p.abilities.length < p.maxAbilities,
+  label: '[Discipleship]', reward: '+1 random ability', cost: '-200 Talents', available: (p) => p.gold >= 200 && p.abilities.length < p.maxAbilities,
   effects: [{ type: 'gold', amount: -200 }, { type: 'addAbility' }], next: 'stay',
 };
 
@@ -76,8 +76,8 @@ const node = (n: EventNode) => n;
 export const events: Record<string, EventNode> = {
   // ---------------------------------------------------------------- stop events
   traveller: node({
-    id: 'traveller', title: 'A Fellow Traveller', image: 'portraits/player.png', offer: 'abilities',
-    text: 'You meet a fellow traveller on the road. They offer to teach you one of their techniques.',
+    id: 'traveller', title: 'A Fellow Pilgrim', image: 'portraits/player.png', offer: 'abilities',
+    text: 'You meet a fellow pilgrim on the road. They offer to teach you one of their practices.',
     options: (_p, offer) => offer.map((id) => ({ label: `[${id}]`, reward: id, effects: [{ type: 'addAbility', id }], next: 'end' as const })),
   }),
   campfire: node({
@@ -87,7 +87,7 @@ export const events: Record<string, EventNode> = {
       { ...PATCH_UP, group: 'campfire' },
       { ...REST, group: 'campfire' },
       {
-        label: '[Meditate]', reward: 'Level up a spell', group: 'campfire', next: 'stay',
+        label: '[Reflect]', reward: 'Level up a tool', group: 'campfire', next: 'stay',
         available: (p) => p.spells.some((s) => s.level < 5), effects: [{ type: 'levelUpSpell' }],
       },
       LEAVE,
@@ -110,18 +110,18 @@ export const events: Record<string, EventNode> = {
     id: 'gambler', title: 'Gambling in the Wilderness', image: IMG,
     text: "Hey there young man. How about a game of chance? Got anything you'd like to wager?",
     options: () => [
-      { label: '[Gamble Small]', cost: '-50gp', available: gold(50), effects: [{ type: 'gold', amount: -50 }], next: { chance: 0.5, pass: { node: 'gambler_win', params: { wager: 50 } }, fail: { node: 'gambler_lose' } } },
-      { label: '[Gamble Big]', cost: '-200gp', available: gold(200), effects: [{ type: 'gold', amount: -200 }], next: { chance: 0.5, pass: { node: 'gambler_win', params: { wager: 200 } }, fail: { node: 'gambler_lose' } } },
+      { label: '[Gamble Small]', cost: '-50 Talents', available: gold(50), effects: [{ type: 'gold', amount: -50 }], next: { chance: 0.5, pass: { node: 'gambler_win', params: { wager: 50 } }, fail: { node: 'gambler_lose' } } },
+      { label: '[Gamble Big]', cost: '-200 Talents', available: gold(200), effects: [{ type: 'gold', amount: -200 }], next: { chance: 0.5, pass: { node: 'gambler_win', params: { wager: 200 } }, fail: { node: 'gambler_lose' } } },
       LEAVE,
     ],
   }),
   gambler_win: node({
     id: 'gambler_win', title: 'Gambling in the Wilderness', image: IMG,
-    text: "Rats! I'm so unlucky I lose my house, my wagon, my job... and now I'm losing in the wilderness! This is my last gold, surely I have something else I can give you instead?",
+    text: "Rats! I'm so unlucky I lose my house, my wagon, my job... and now I'm losing in the wilderness! These are my last Talents, surely I have something else I can give you instead?",
     options: (p) => [
       // Spellford pays a flat 201, which made Gamble Big a trap. Big now pays 601 (tune); Small keeps 201.
-      { label: '[Insist]', reward: `+${insistGold(p.wager)} Gold`, effects: [{ type: 'gold', amount: insistGold(p.wager) }], next: 'end' },
-      { label: '[Take some junk]', reward: '+Gem', effects: [{ type: 'gem' }], next: 'end' },
+      { label: '[Insist]', reward: `+${insistGold(p.wager)} Talents`, effects: [{ type: 'gold', amount: insistGold(p.wager) }], next: 'end' },
+      { label: '[Take some junk]', reward: '+Virtue', effects: [{ type: 'gem' }], next: 'end' },
     ],
   }),
   gambler_lose: node({
@@ -130,40 +130,40 @@ export const events: Record<string, EventNode> = {
     options: () => [LEAVE],
   }),
   salesman: node({
-    id: 'salesman', title: 'A Salesman of Sorts', image: IMG,
+    id: 'salesman', title: 'A Peddler of Sorts', image: IMG,
     text: 'Times are changing good friend. There is word of havoc and death. The watchmen have been called off to war. The roads are no longer safe for the likes of you and I. Who will defend us when thugs and robbers attack?',
     options: () => [
-      { label: '[Pay for a Weapon]', reward: '+Ability', cost: '-100gp', available: (p) => p.gold >= 100 && p.abilities.length < p.maxAbilities, effects: [{ type: 'gold', amount: -100 }, { type: 'addAbility' }], next: 'stay' },
-      { label: '[Pay for Healing]', reward: '+50% HP', cost: '-50gp', available: gold(50), effects: [{ type: 'gold', amount: -50 }, { type: 'healPctMax', pct: 0.5 }], next: 'stay' },
+      { label: '[Pay for a Tool]', reward: '+Ability', cost: '-100 Talents', available: (p) => p.gold >= 100 && p.abilities.length < p.maxAbilities, effects: [{ type: 'gold', amount: -100 }, { type: 'addAbility' }], next: 'stay' },
+      { label: '[Pay for Healing]', reward: '+50% HP', cost: '-50 Talents', available: gold(50), effects: [{ type: 'gold', amount: -50 }, { type: 'healPctMax', pct: 0.5 }], next: 'stay' },
       LEAVE,
     ],
   }),
   warlock: node({
-    id: 'warlock', title: 'Wandering Warlock', image: IMG, text: 'Leave me be. I have business in these parts.',
+    id: 'warlock', title: 'Wandering Hermit', image: IMG, text: 'Leave me be. I have business in these parts.',
     options: () => [LEAVE, { label: '[Harass]', next: { node: 'warlock_harass' } }],
   }),
   warlock_harass: node({
-    id: 'warlock_harass', title: 'Wandering Warlock', image: IMG,
-    text: 'What do you want?! Never seen a Warlock before! I am on sacred business.',
+    id: 'warlock_harass', title: 'Wandering Hermit', image: IMG,
+    text: 'What do you want?! Never seen a Hermit before! I am on sacred business.',
     options: () => [
       { label: '[Ask for Wisdom]', next: { node: 'warlock_wisdom' } },
       { label: '[Ask for Stuff]', next: { node: 'warlock_stuff' } },
     ],
   }),
   warlock_wisdom: node({
-    id: 'warlock_wisdom', title: 'Wandering Warlock', image: IMG,
-    text: 'Hmmmmph. Well fine then. ... I shall tell you about the most useful wisdom of all, the wisdom of the power. The wisdom of death. The wisdom of how to shoot your enemies while they sleep.',
-    options: () => [{ label: '[Listen]', reward: '+Spell Upgrade', effects: [{ type: 'spellUpgrade', count: 1 }], next: 'end' }],
+    id: 'warlock_wisdom', title: 'Wandering Hermit', image: IMG,
+    text: 'Hmmmmph. Well fine then. ... I shall tell you the most useful wisdom of all. Rise early, pray often, and never let the sun go down on your anger.',
+    options: () => [{ label: '[Listen]', reward: '+Upgrade', effects: [{ type: 'spellUpgrade', count: 1 }], next: 'end' }],
   }),
   warlock_stuff: node({
-    id: 'warlock_stuff', title: 'Wandering Warlock', image: IMG,
+    id: 'warlock_stuff', title: 'Wandering Hermit', image: IMG,
     text: 'Greedy fool, see a man better off than you and think you can get something from him. Well fine... but only because I am on a religious journey of kindness you jerk.',
-    options: () => [{ label: '[Take]', reward: '+Weight Gem', effects: [{ type: 'gem', id: 'weight' }], next: 'end' }], // D5
+    options: () => [{ label: '[Take]', reward: '+Devoted Virtue', effects: [{ type: 'gem', id: 'weight' }], next: 'end' }], // D5
   }),
   shrine: node({
     id: 'shrine', title: 'Fallen Shrine', image: IMG, text: "You discover a cracked old stone that must once have served as someone's god. ",
     // Spellford's Ignore is single-use and leaves you stuck on the event; Spellcross ends it.
-    options: () => [{ label: '[Ignore]', next: 'end' }, { label: '[Scorn]', next: { node: 'shrine_scorn' } }, { label: '[Pray]', next: { node: 'shrine_pray' } }],
+    options: () => [{ label: '[Ignore]', next: 'end' }, { label: '[Tear it Down]', next: { node: 'shrine_scorn' } }, { label: '[Pray]', next: { node: 'shrine_pray' } }],
   }),
   shrine_scorn: node({
     id: 'shrine_scorn', title: 'Fallen Shrine', image: IMG,
@@ -172,7 +172,7 @@ export const events: Record<string, EventNode> = {
   }),
   shrine_pray: node({
     id: 'shrine_pray', title: 'Fallen Shrine', image: IMG,
-    text: 'As you pray you see the face of your father for a moment. He looks old. How long have you been at this journey... nevertheless it gives you courage.',
+    text: 'You kneel beside the broken idol and pray to the living God. As you pray you see the face of your father for a moment. He looks old. How long have you been at this journey... nevertheless it gives you courage.',
     options: () => [LEAVE, { label: '[Courage]', reward: '3 Ability Recharges', available: hasAbilities, effects: [{ type: 'recharge', count: 3 }], next: 'end' }],
   }),
   chest: node({
@@ -208,7 +208,7 @@ export const events: Record<string, EventNode> = {
       const last = take >= 4;
       const options: EventOption[] = [
         {
-          label: '[Take Stuff]', reward: `+${amount} Gold`, effects: [{ type: 'gold', amount }],
+          label: '[Take Stuff]', reward: `+${amount} Talents`, effects: [{ type: 'gold', amount }],
           // 1% ambush per take, rolled when chosen (D7).
           next: { chance: 0.01, pass: { node: 'tavern_ambush' }, fail: last ? { node: 'tavern_inside', params: { take: 5 } } : { node: 'tavern_inside', params: { take: take + 1 } } },
         },
@@ -224,15 +224,15 @@ export const events: Record<string, EventNode> = {
   fight_for_loot: node({
     id: 'fight_for_loot', title: 'A Dangerous Situation', image: IMG,
     text: 'Behold before you a crooked path leading off into the mountains. The path has the markings of some great beast. ',
-    options: () => [LEAVE, { label: '[Explore]', reward: '+Spell', cost: 'Fight', effects: [{ type: 'addSpell', id: 'wind_wall' }, { type: 'battle', tier: 'normal' }], next: 'end' }],
+    options: () => [LEAVE, { label: '[Explore]', reward: '+Tool', cost: 'Fight', effects: [{ type: 'addSpell', id: 'wind_wall' }, { type: 'battle', tier: 'normal' }], next: 'end' }],
   }),
   alchemist: node({
-    id: 'alchemist', title: 'Alchemical Shop', image: IMG, text: 'A wisened woman looks over at you. She says nothing but the options are clear.',
+    id: 'alchemist', title: 'The Mentor', image: IMG, text: 'A wise old woman looks over at you. She says nothing but the options are clear.',
     options: () => [
       LEAVE,
-      { label: '[Pay for Fire]', cost: '-100gp', available: (p) => p.gold >= 100 && p.spells.some((s) => s.element !== 'fire'), effects: [{ type: 'gold', amount: -100 }, { type: 'changeElement', element: 'fire' }], next: 'end' },
-      { label: '[Sacrifice for Lightning]', cost: '-Ability', available: (p) => hasAbilities(p) && p.spells.some((s) => s.element !== 'lightning'), effects: [{ type: 'removeLastAbility' }, { type: 'changeElement', element: 'lightning' }], next: 'end' },
-      { label: '[Sacrifice for Earth]', cost: '-Ability', available: (p) => hasAbilities(p) && p.spells.some((s) => s.element !== 'earth'), effects: [{ type: 'removeLastAbility' }, { type: 'changeElement', element: 'earth' }], next: 'end' },
+      { label: '[Pay to grow in Faith]', cost: '-100 Talents', available: (p) => p.gold >= 100 && p.spells.some((s) => s.element !== 'fire'), effects: [{ type: 'gold', amount: -100 }, { type: 'changeElement', element: 'fire' }], next: 'end' },
+      { label: '[Sacrifice to grow in Truth]', cost: '-Ability', available: (p) => hasAbilities(p) && p.spells.some((s) => s.element !== 'lightning'), effects: [{ type: 'removeLastAbility' }, { type: 'changeElement', element: 'lightning' }], next: 'end' },
+      { label: '[Sacrifice to grow in Unity]', cost: '-Ability', available: (p) => hasAbilities(p) && p.spells.some((s) => s.element !== 'earth'), effects: [{ type: 'removeLastAbility' }, { type: 'changeElement', element: 'earth' }], next: 'end' },
     ],
   }),
 };
