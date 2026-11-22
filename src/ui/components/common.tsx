@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { content, assetExists } from '../../content';
+import { describeAbility } from '../../content/describe';
 import type { StatusInstance } from '../../engine/types';
 import { useStore } from '../../state/store';
 import { enterFullscreen, exitFullscreen, fullscreenSupport, isFullscreen, onFullscreenChange } from '../fullscreen';
@@ -187,8 +188,11 @@ export function AbilityBar({ onTrigger }: { onTrigger?: (i: number) => void }) {
             <Asset path={def.icon} alt={def.name} size={56} />
             <div>
               <h2>{def.name}</h2>
-              <div>{def.description}</div>
-              <div className="dim">Uses: {openAbility.uses}/{def.maxUses} · {def.rarity}</div>
+              <div className="dim" style={{ fontStyle: 'italic' }}>{def.description}</div>
+              <ul style={{ margin: '6px 0', paddingLeft: 18 }}>
+                {describeAbility(def).lines.map((l) => <li key={l}>{l}</li>)}
+              </ul>
+              <div className="dim">Uses left: {openAbility.uses}/{def.maxUses} · {def.rarity}</div>
             </div>
           </div>
           <div className="actions">

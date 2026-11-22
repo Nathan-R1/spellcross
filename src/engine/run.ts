@@ -2,6 +2,7 @@
 // Pure functions over a serialisable RunState. Randomness comes from streams forked off the run seed.
 
 import type { Content } from '../content';
+import { abilitySummary } from '../content/describe';
 import { events as eventNodes, RANDOM_EVENTS, STOP_EVENTS, TAVERN_TEXT, type Effect, type EventOption, type Next } from '../content/events';
 import { createBattle, type BattleSetup } from './battle';
 import { createRng, forkSeed, withRng, type RngState } from './rng';
@@ -199,7 +200,7 @@ export function eventView(run: RunState, c: Content): EventView | null {
       return {
         label: ability ? `[${ability.name}]` : o.label,
         cost: o.cost,
-        reward: ability ? ability.description : o.reward,
+        reward: ability ? abilitySummary(ability.id) : o.reward,
         enabled: !ev.used.includes(i) && (o.available ? o.available(run.player) : true) && ev.pendingRecharges === 0 && !ev.gemOffer,
       };
     }),

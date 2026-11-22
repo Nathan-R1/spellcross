@@ -1,6 +1,7 @@
 // Event screen (spec §4, doc 03): framed image left, text right, options pinned below.
 
 import { content } from '../../content';
+import { abilitySummary } from '../../content/describe';
 import { eventView } from '../../engine/run';
 import type { GemId } from '../../engine/types';
 import { useStore } from '../../state/store';
@@ -50,6 +51,7 @@ export function EventScreen() {
                 <button key={i} className="btn" disabled={full} onClick={() => assignRecharge(i)} style={{ flexDirection: 'column', minWidth: 80 }}>
                   <Asset path={def.icon} alt={def.name} size={36} />
                   <span style={{ fontSize: 12 }}>{def.name}</span>
+                  <span className="dim" style={{ fontSize: 11 }}>{abilitySummary(a.id)}</span>
                   <span className="dim" style={{ fontSize: 12 }}>{a.uses}/{def.maxUses}</span>
                 </button>
               );
