@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { content, assetExists } from '../../content';
 import type { StatusInstance } from '../../engine/types';
 import { useStore } from '../../state/store';
+import { enterFullscreen, exitFullscreen, fullscreenSupport, isFullscreen, onFullscreenChange } from '../fullscreen';
 
 /** Image from public/assets with a generated placeholder (coloured circle + initial) when missing (doc 04). */
 export function Asset({ path, alt, size, color = '#6b4523', className, style }: { path?: string; alt: string; size?: number; color?: string; className?: string; style?: React.CSSProperties }) {
@@ -124,6 +125,29 @@ export function PlayerStats() {
       <span className="chip"><Asset path="icons/gold.png" alt="Gold" size={20} /> {p.gold}</span>
       <span className="chip"><Asset path="icons/gem.png" alt="Gems" size={20} /> {p.gems.length}</span>
       {p.spellUpgrades > 0 && <span className="chip">⬆ {p.spellUpgrades}</span>}
+    </>
+  );
+}
+
+/** Full screen toggle (main menu). On iPhone it explains Add to Home Screen instead. Hidden when there's nothing to do. */
+export function FullscreenButton() {
+  const [support] = useState(fullscreenSupport);
+  const [on, setOn] = useState(() => support === 'api' && isFullscreen());
+  const [tip, setTip] = useState(false);
+  useEffect(() => (support === 'api' ? onFullscreenChange(() => setOn(isFullscreen())) : undefined), [support]);
+  if (support === 'none' || support === 'installed') return null;
+  return (
+    <>
+      <button className="btn fullscreen-btn" aria-pressed={on} onClick={() => (support === 'api' ? (on ? exitFullscreen() : enterFullscreen()) : setTip(true))}>
+        {on ? '⤡ Exit full screen' : '⤢ Full screen'}
+      </button>
+      {tip && (
+        <Modal onClose={() => setTip(false)}>
+          <h2>Play full screen</h2>
+          <div>Safari on iPhone can't hide its bars for web pages. To play full screen, tap <b>Share</b>, then <b>Add to Home Screen</b>, and open Spellcross from your home screen.</div>
+          <div className="actions"><button className="btn" onClick={() => setTip(false)}>OK</button></div>
+        </Modal>
+      )}
     </>
   );
 }

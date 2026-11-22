@@ -110,6 +110,10 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 .twinkle { animation: tw 3s ease-in-out infinite; }
 @keyframes tw { 0%,100% { opacity: 0.2; } 50% { opacity: 1; } }
 
+/* Menu corner: full screen toggle, kept clear of the notch. */
+.menu-corner { position: absolute; top: calc(8px + env(safe-area-inset-top, 0px)); right: calc(8px + var(--safe-r)); z-index: 5; }
+.fullscreen-btn { min-height: 40px; font-size: 14px; }
+
 /* ---------------------------------------------------------------- world */
 .world-scroll { flex: 1; overflow-x: auto; overflow-y: hidden; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .world-scroll::-webkit-scrollbar { display: none; }

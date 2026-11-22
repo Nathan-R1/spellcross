@@ -190,8 +190,11 @@ at the bottom.
 
 - `@media (orientation: portrait)` shows a full-screen **"Rotate your device"** overlay over the paused
   app. No state is lost and no portrait layout exists (D13).
-- On Android Chrome, the first tap on New run / Continue run requests fullscreen and then
-  `screen.orientation.lock('landscape')`. This is best effort, and failures are ignored.
+- **Full screen button** (main menu, top right): on Android Chrome and desktop browsers it calls
+  `requestFullscreen({ navigationUI: 'hide' })`, hiding the browser bars, then tries
+  `screen.orientation.lock('landscape')` (best effort). It toggles back with *Exit full screen*. On iPhone,
+  where Safari only allows fullscreen for video, it explains *Share → Add to Home Screen* instead. It's
+  hidden when the game already runs from the home screen.
 - iOS Safari supports neither the orientation lock nor the manifest `orientation` key, so iOS always
   relies on the overlay.
 - Desktop or any viewport wider than 932px: the app renders at the large size, centred and letterboxed, so

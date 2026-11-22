@@ -21,6 +21,8 @@ Numbers marked *(tune)* are starting values for playtesting.
 - A React web app for **phone browsers held in landscape** (iOS Safari, Android Chrome), installable as a
   PWA. Touch only. Desktop shows the same layout, letterboxed (D13).
 - Portrait shows a full-screen "Rotate your device" overlay. Nothing is lost.
+- A **Full screen** button on the main menu hides the browser bars (Android Chrome, desktop). On iPhone,
+  where Safari can't do this for web pages, it explains *Add to Home Screen* instead.
 - Layout, safe areas and touch rules: [03-frontend § Phone landscape layout](architecture/03-frontend.md#phone-landscape-layout).
 
 ## 2. The run

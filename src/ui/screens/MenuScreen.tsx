@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { createRng } from '../../engine/rng';
 import { useStore } from '../../state/store';
-import { Modal } from '../components/common';
+import { FullscreenButton, Modal } from '../components/common';
 
 type ObjId = 'pathway' | 'hut' | 'chasm' | 'tree';
 
@@ -104,6 +104,7 @@ export function MenuScreen() {
         <text x="500" y="90" textAnchor="middle" fontSize="64" className="label" style={{ letterSpacing: '0.06em' }}>Spellcross</text>
       </svg>
 
+      <div className="menu-corner"><FullscreenButton /></div>
       {confirmAbandon && (
         <Modal onClose={() => setConfirmAbandon(false)}>
           <h2>Abandon this run?</h2>

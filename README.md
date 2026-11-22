@@ -44,6 +44,10 @@ computer's firewall is probably blocking the port (5173 or 4173).
 layout, letterboxed. For a realistic view, open DevTools' device toolbar (`Ctrl+Shift+M` in Chrome) and pick a
 phone in landscape (for example iPhone 14, rotated).
 
+**Full screen:** the main menu has a **Full screen** button (top right) that hides the browser bars on Android
+Chrome and desktop browsers. iPhone Safari doesn't allow this for web pages; there, *Share → Add to Home
+Screen* gives a full-screen app (needs HTTPS, see below).
+
 **Ports in use?** Use another: `pnpm dev --port 3000` or `pnpm preview --port 3001`.
 
 **Installing as an app** (*Add to Home Screen*, offline play) needs the production build served over
