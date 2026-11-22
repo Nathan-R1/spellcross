@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { content } from '../../content';
 import { resolvedPlayerSpells } from '../../engine/run';
+import { resolveJunk } from '../../engine/spells';
 import { useStore } from '../../state/store';
 import { Asset, PlayerStats, TopBar, useLongPress } from '../components/common';
 import { SpellDetails } from './SpellbookScreen';
@@ -14,7 +15,8 @@ export function BattlePrepScreen() {
   const spells = useMemo(() => resolvedPlayerSpells(run.player, content), [run.player]);
   const slots = Math.min(prep.slots, spells.length);
   const [loadout, setLoadout] = useState<string[]>(() => spells.slice(0, slots).map((s) => s.ref));
-  const [junk, setJunk] = useState<string[]>(() => run.player.junkPool.slice(0, content.config.junkSlots));
+  // Junk starts empty: the player opts in.
+  const [junk, setJunk] = useState<string[]>([]);
   const [info, setInfo] = useState<string | null>(null);
   const encounter = content.encounters[prep.encounterId];
 
@@ -26,7 +28,7 @@ export function BattlePrepScreen() {
     if (junk.includes(id)) setJunk(junk.filter((j) => j !== id));
     else if (junk.length < content.config.junkSlots) setJunk([...junk, id]);
   };
-  const infoSpell = spells.find((s) => s.ref === info);
+  const infoSpell = spells.find((s) => s.ref === info) ?? (info && content.spells[info] ? resolveJunk(content.spells[info]) : undefined);
 
   return (
     <div className="screen">
@@ -35,7 +37,7 @@ export function BattlePrepScreen() {
         <div className="prep-col panel" style={{ flex: 2, minWidth: 0 }}>
           <div className="banner">{prep.source === 'boss' ? 'The Harbinger' : encounter.tier === 'elite' ? 'A dangerous foe!' : 'Enemy Encounter!'}</div>
           <div className="dim" style={{ fontSize: 13 }}>
-            Choose {slots} spells ({loadout.length}/{slots}). Long-press for details.
+            Choose {slots} spells ({loadout.length}/{slots}). Hold any tile for details.
           </div>
           <div className="spell-grid">
             {spells.map((s) => (
@@ -55,15 +57,9 @@ export function BattlePrepScreen() {
           </div>
           <b>Junk ({junk.length}/{content.config.junkSlots})</b>
           <div style={{ display: 'flex', gap: 6 }}>
-            {run.player.junkPool.map((id) => {
-              const def = content.spells[id];
-              return (
-                <button key={id} className={`spell-card ${junk.includes(id) ? 'selected' : ''}`} onClick={() => toggleJunk(id)} style={{ width: 64 }}>
-                  <Asset path={def.icon} alt={def.name} size={32} />
-                  <span>{def.name}</span>
-                </button>
-              );
-            })}
+            {run.player.junkPool.map((id) => (
+              <JunkCard key={id} id={id} selected={junk.includes(id)} onTap={() => toggleJunk(id)} onLong={() => setInfo(id)} />
+            ))}
           </div>
           <span className="spacer" style={{ flex: 1 }} />
           <button className="btn primary big" disabled={loadout.length !== slots} onClick={() => startBattle(loadout, junk)}>FIGHT!</button>
@@ -71,6 +67,17 @@ export function BattlePrepScreen() {
       </div>
       {infoSpell && <SpellDetails spell={infoSpell} onClose={() => setInfo(null)} />}
     </div>
+  );
+}
+
+function JunkCard({ id, selected, onTap, onLong }: { id: string; selected: boolean; onTap: () => void; onLong: () => void }) {
+  const press = useLongPress(onTap, onLong);
+  const def = content.spells[id];
+  return (
+    <button className={`spell-card ${selected ? 'selected' : ''}`} style={{ width: 64 }} aria-pressed={selected} {...press}>
+      <Asset path={def.icon} alt={def.name} size={32} />
+      <span>{def.name}</span>
+    </button>
   );
 }
 

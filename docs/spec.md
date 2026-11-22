@@ -120,7 +120,8 @@ Before every battle:
 
 - **Loadout:** fill **3** slots (Road, Fight for Loot) or **4** slots (Trail, boss *(tune)*) from your spells.
   FIGHT is enabled only when every slot is filled.
-- **Junk:** fill up to **2** junk slots from your junk pool (starting pool: Orb, Slime). Empty is allowed.
+- **Junk:** fill up to **2** junk slots from your junk pool (starting pool: Orb, Slime). Junk starts
+  **unselected**; empty is allowed. Hold any spell or junk tile to see its description.
 - Spells show their final stats and icons (§9).
 
 ## 6. Battle

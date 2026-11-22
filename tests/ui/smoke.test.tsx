@@ -69,6 +69,24 @@ describe('UI smoke', () => {
     expect(useStore.getState().run!.player.hp).toBe(100); // run HP updates only when the battle ends
   });
 
+  it('battle prep: junk starts unselected; holding a junk tile shows its description', async () => {
+    act(() => useStore.getState().newRun(42));
+    act(() => useStore.getState().chooseOption(0));
+    act(() => useStore.getState().debugBattle('wolf'));
+    render(<App />);
+    expect(screen.getByText('Junk (0/2)')).toBeTruthy();
+    const orb = screen.getByText('Orb').closest('button')!;
+    expect(orb.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.pointerDown(orb);
+    await waitFor(() => screen.getByText(/Junk: not much use/), { timeout: 2000 });
+    expect(screen.getByText('A glowing orb')).toBeTruthy();
+    expect(screen.getByText('Junk (0/2)')).toBeTruthy(); // holding doesn't select it
+    fireEvent.pointerUp(orb);
+    fireEvent.click(screen.getByText('OK'));
+    tap(screen.getByText('Orb').closest('button')!);
+    await waitFor(() => screen.getByText('Junk (1/2)'));
+  });
+
   it('continue run restores a mid-battle save', async () => {
     act(() => useStore.getState().newRun(42));
     act(() => useStore.getState().chooseOption(0));
