@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "assets:manifest": "node scripts/build-asset-manifest.mjs",
-    "sim": "vitest run tests/sim --silent=false"
+    "sim": "vitest run tests/sim --silent=false",
+    "coverage": "vitest run --exclude \"tests/sim/**\" --coverage --coverage.include=\"src/**\" --coverage.reporter=text"
   },
   "dependencies": {
     "react": "19",
@@ -28,6 +29,7 @@
     "@types/react": "19",
     "@types/react-dom": "19",
     "@vitejs/plugin-react": "^6.3.0",
+    "@vitest/coverage-v8": "^5",
     "eslint": "^10.15.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.14.0",

@@ -62,6 +62,7 @@ or an HTTPS tunnel for that.
 | `pnpm preview` | Serve the `dist/` build locally (also on your LAN) |
 | `pnpm test` | All unit, integration and UI tests (Vitest) |
 | `pnpm test:watch` | Tests in watch mode |
+| `pnpm coverage` | Tests plus a line/branch coverage report for `src/` |
 | `pnpm sim` | Headless combat sim: a bot plays every encounter and prints win rates (`SIM_SEEDS=100 pnpm sim` for more seeds) |
 | `pnpm lint` / `pnpm typecheck` | ESLint (with the engine/UI boundary rule) and TypeScript |
 | `pnpm assets:manifest` | Regenerate `src/content/assets.manifest.json` after adding files to `public/assets/` |
