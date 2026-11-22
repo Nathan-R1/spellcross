@@ -94,6 +94,8 @@ export interface GemDef {
   description: string;
   /** Value by spell level 1–5. */
   values?: [number, number, number, number, number];
+  /** Relative drop / shop weight (Weight and Cracked are the most common). */
+  dropWeight: number;
   color: string;
 }
 

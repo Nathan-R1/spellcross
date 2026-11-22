@@ -98,16 +98,17 @@ The pool, in full: **Gambler, Salesman, Wandering Warlock, Fallen Shrine, Myster
 Fight for Loot, Alchemist**. The flows are in [features §4.2](features.md#42-event-content-must-port-verbatim),
 with the text ported word for word from Spellford's `EventLibrary.kt`. Spellcross changes:
 
-- **Gambler:** the wager is deducted, and the outcome is rolled 50/50 on choosing. On a win, *Insist* = +201
-  gold, and *Take some junk* = a random gem.
+- **Gambler:** the wager is deducted, and the outcome is rolled 50/50 on choosing. On a win, *Insist* pays
+  **+201** gold after Gamble Small and **+601** after Gamble Big *(tune)*; *Take some junk* = a random gem.
 - **Salesman:** Pay for Healing restores 50% of **max** HP (D6).
 - **Wandering Warlock:** *Listen* = +1 Spell Upgrade. *Take* = a **Weight** gem (D5).
 - **Mysterious Chest:** success gives a random ability.
 - **Fight for Loot:** *Explore* gives the Wind Wall spell, then a normal-encounter battle (3 slots).
 - **Alchemist:** changes the **first element** of the first spell in your collection that isn't already that element.
 - **Holding 5 abilities:** paid ability options (Market Train, Salesman Weapon) are disabled. Free grants (Chest,
-  Traveller) give nothing. Spellford instead took the gold and gave nothing (D20). Ability and gem rolls are
-  uniform, and duplicate abilities are allowed (open-questions B5).
+  Traveller) give nothing. Spellford instead took the gold and gave nothing (D20). Duplicate abilities are
+  allowed. **Random rolls are weighted by rarity:** abilities common 3 : uncommon 1 (rare 0.5, legendary 0.2);
+  gems by drop weight (§9.3).
 
 ## 5. Battle preparation
 
@@ -355,7 +356,9 @@ Gems have no level of their own. Each value is read from the spell's level (1 / 
 
 - **Sockets:** all 3 open. Any gem in any socket. The same gem can repeat (values add). **No cap on effect
   types.**
-- **Sources:** battle drops (§6.8), shops (pick 1 of 3 for 100gp), and the Gambler (random).
+- **Sources:** battle drops (§6.8), shops (pick 1 of 3 distinct gems for 100gp), and the Gambler. Every roll is
+  weighted *(tune)*: **Weight 6, Cracked 6** (most common), Strikecut / Lifelink / Walled / Toxicut 4,
+  Chargestone / Stormstone 2, Darkstone / Sunstone 1.
 - **Unsocket:** in the Spellbook while at a Town, 50gp, gem returned.
 - **Sunstone details:** a second Sunstone on the same spell adds nothing. If the Alchemist later makes the
   first element equal the second, the spell simply has one element. Chargestone and Stormstone grant their

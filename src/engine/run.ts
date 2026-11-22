@@ -82,6 +82,21 @@ export const terrainFor = (run: RunState) => generateTerrain(run.terrainSeed, ru
 
 const clone = <T>(x: T): T => structuredClone(x);
 
+const gemIds = (c: Content) => Object.keys(c.gems) as GemId[];
+export const abilityWeight = (c: Content, id: string) => c.config.abilityRarityWeight[c.abilities[id].rarity];
+
+/** Draw `count` distinct items, each draw weighted (without replacement). */
+export function weightedSample<T>(r: ReturnType<typeof createRng>, items: T[], weightOf: (t: T) => number, count: number): T[] {
+  const pool = [...items];
+  const out: T[] = [];
+  while (out.length < count && pool.length > 0) {
+    const pick = r.weighted(pool, weightOf);
+    out.push(pick);
+    pool.splice(pool.indexOf(pick), 1);
+  }
+  return out;
+}
+
 function eventsRng<T>(run: RunState, fn: (r: ReturnType<typeof createRng>) => T): T {
   const [out, st] = withRng(run.rng.events, fn);
   run.rng.events = st;
@@ -154,7 +169,7 @@ function openEvent(run: RunState, nodeId: string, params: Record<string, number>
   const node = eventNodes[nodeId];
   if (!node) throw new Error(`Unknown event ${nodeId}`);
   let offer: string[] = [];
-  if (node.offer === 'abilities') offer = eventsRng(run, (r) => r.shuffle(Object.keys(c.abilities)).slice(0, c.config.travellerChoices));
+  if (node.offer === 'abilities') offer = eventsRng(run, (r) => weightedSample(r, Object.keys(c.abilities), (id) => abilityWeight(c, id), c.config.travellerChoices));
   const battleAfter = run.event?.battleAfter ?? null;
   run.event = { nodeId, params, offer, used: [], pendingRecharges: 0, gemOffer: null, gemOfferPrice: 0, battleAfter };
   run.screen = 'event';
@@ -195,13 +210,13 @@ function applyEffect(run: RunState, e: Effect, c: Content) {
     case 'healPctMax': heal(p, Math.floor(p.maxHp * e.pct)); break;
     case 'addAbility': {
       if (p.abilities.length >= p.maxAbilities) break;
-      const id = e.id ?? eventsRng(run, (r) => r.pick(Object.keys(c.abilities)));
+      const id = e.id ?? eventsRng(run, (r) => r.weighted(Object.keys(c.abilities), (a) => abilityWeight(c, a)));
       p.abilities.push({ id, uses: c.abilities[id].maxUses });
       break;
     }
-    case 'gem': p.gems.push(e.id ?? eventsRng(run, (r) => r.pick(Object.keys(c.gems) as GemId[]))); break;
+    case 'gem': p.gems.push(e.id ?? eventsRng(run, (r) => r.weighted(gemIds(c), (g) => c.gems[g].dropWeight))); break;
     case 'gemOffer':
-      run.event!.gemOffer = eventsRng(run, (r) => r.shuffle(Object.keys(c.gems) as GemId[]).slice(0, c.config.shopGemChoices));
+      run.event!.gemOffer = eventsRng(run, (r) => weightedSample(r, gemIds(c), (g) => c.gems[g].dropWeight, c.config.shopGemChoices));
       run.event!.gemOfferPrice = e.price;
       break;
     case 'spellUpgrade': p.spellUpgrades += e.count; break;
@@ -344,7 +359,7 @@ export function finishBattle(prev: RunState, c: Content): RunState {
     gold += runRng(run, (r) => r.int(lo, hi + 1));
   }
   const dropChance = c.config.gemDrop[battle.tier];
-  const gem = runRng(run, (r) => (r.next() < dropChance ? r.pick(Object.keys(c.gems) as GemId[]) : null));
+  const gem = runRng(run, (r) => (r.next() < dropChance ? r.weighted(gemIds(c), (g) => c.gems[g].dropWeight) : null));
   run.player.gold += gold;
   if (gem) run.player.gems.push(gem);
   run.result = { outcome: 'victory', gold, gem, boss: prep.source === 'boss' };

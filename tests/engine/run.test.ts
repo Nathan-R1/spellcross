@@ -7,6 +7,7 @@ import * as run from '../../src/engine/run';
 import type { RunState } from '../../src/engine/run';
 import { neighbours, type RoadType } from '../../src/engine/world';
 import { playBattle } from '../sim/bot';
+import { createRng } from '../../src/engine/rng';
 
 const c = content;
 const fresh = (seed = 11) => run.newRun(seed, c);
@@ -371,5 +372,55 @@ describe('review fixes (events)', () => {
   it('N6: the Chest caps at 100% (guaranteed from attempt 8)', () => {
     const opts = eventNodes.chest.options({ attempt: 8 }, []);
     expect(opts[0].reward).toBe('100% Relic');
+  });
+});
+
+describe('gambler payout and rarity-weighted rolls', () => {
+  it('Gamble Big pays 601 on a win, Small keeps 201', () => {
+    const { insistGold } = { insistGold: (w: number) => eventNodes.gambler_win.options({ wager: w }, [])[0].effects![0] };
+    expect(insistGold(50)).toEqual({ type: 'gold', amount: 201 });
+    expect(insistGold(200)).toEqual({ type: 'gold', amount: 601 });
+  });
+
+  it('a Gamble Big win nets +401 gold after the wager', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      let r = run.debugEvent(run.chooseOption(fresh(seed), 0, c), 'gambler', c);
+      r.player.gold = 200;
+      r = run.chooseOption(r, 1, c);
+      if (r.event!.nodeId !== 'gambler_win') continue;
+      expect(run.chooseOption(r, 0, c).player.gold).toBe(601);
+      return;
+    }
+    throw new Error('no win in 40 seeds');
+  });
+
+  it('gem rolls follow drop weights: Weight and Cracked most common, Darkstone and Sunstone rarest', () => {
+    const r = createRng(9);
+    const ids = Object.keys(c.gems) as (keyof typeof c.gems)[];
+    const counts: Record<string, number> = {};
+    for (let i = 0; i < 20000; i++) { const g = r.weighted(ids, (x) => c.gems[x].dropWeight); counts[g] = (counts[g] ?? 0) + 1; }
+    const top = Object.entries(counts).sort((x, y) => y[1] - x[1]).slice(0, 2).map(([g]) => g).sort();
+    expect(top).toEqual(['cracked', 'weight']);
+    expect(counts.sunstone).toBeLessThan(counts.strikecut / 2);
+    expect(counts.darkstone).toBeLessThan(counts.chargestone);
+    // Integration: the Gambler's junk really rolls a gem.
+    const won = run.chooseOption(run.debugEvent(pastTraveller(3), 'gambler_win', c), 1, c);
+    expect(won.player.gems).toHaveLength(1);
+  });
+
+  it('shop offers are 3 distinct gems', () => {
+    for (let seed = 1; seed <= 30; seed++) {
+      let r = run.debugEvent(pastTraveller(seed), 'market', c);
+      r.player.gold = 100;
+      r = run.chooseOption(r, 1, c);
+      expect(new Set(r.event!.gemOffer).size).toBe(3);
+    }
+  });
+
+  it('ability rolls favour commons (3:1 over uncommons)', () => {
+    const tally = { common: 0, uncommon: 0 };
+    for (let seed = 1; seed <= 300; seed++) for (const id of fresh(seed).event!.offer) tally[c.abilities[id].rarity as 'common' | 'uncommon']++;
+    // 6 commons × 3 vs 4 uncommons × 1 → commons ≈ 82% of single draws; slightly less without replacement.
+    expect(tally.common / (tally.common + tally.uncommon)).toBeGreaterThan(0.7);
   });
 });

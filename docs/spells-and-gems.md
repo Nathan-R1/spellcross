@@ -162,7 +162,9 @@ What the effects do:
   - **Combat rewards:** winning a battle can drop a random gem, shown on the ResultScreen. Starting rates
     *(tune)*: normal encounters 25%, elite encounters 100%.
   - **Shops:** Spellford's "Purchase (−100gp, +Gemstone)" at Village, Town and Market becomes **pick 1 of 3
-    random gems** for 100gp.
+    random gems** (distinct) for 100gp.
+  - **Drop weights** *(tune)*, used by every roll: **Weight 6, Cracked 6** (most common), Strikecut, Lifelink,
+    Walled, Toxicut 4, Chargestone, Stormstone 2, Darkstone, Sunstone 1.
   - Spellford's other "+Gemstone" source, the Gambler's *Take some junk*, gives a random gem.
   - All rolls use the run RNG.
 

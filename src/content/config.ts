@@ -12,6 +12,8 @@ export const config = {
   gemDrop: { normal: 0.25, elite: 1, boss: 0 },
   prices: { gem: 100, spellUpgrade: 100, ability: 200, unsocket: 50, salesmanAbility: 100, salesmanHeal: 50, alchemistFire: 100 },
   healPct: 0.5,
+  /** Relative chance of rolling an ability of each rarity. */
+  abilityRarityWeight: { common: 3, uncommon: 1, rare: 0.5, legendary: 0.2 },
   shopGemChoices: 3,
   travellerChoices: 3,
   worldHeight: 1080,

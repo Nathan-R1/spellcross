@@ -46,6 +46,9 @@ export interface EventNode {
 const IMG = 'portraits/wolf.png'; // Spellford uses this as the placeholder for every random event.
 const TOWN_IMG = 'town/town.jpg'; // Spellford references town.png; the asset is town.jpg.
 
+/** Gambler win payout by wager: Small 201 (Spellford), Big 601. */
+export const insistGold = (wager = 50) => (wager >= 200 ? 601 : 201);
+
 const LEAVE: EventOption = { label: '[Leave]', next: 'end' };
 const gold = (n: number) => (p: Player) => p.gold >= n;
 const hasAbilities = (p: Player) => p.abilities.length > 0;
@@ -85,16 +88,17 @@ export const events: Record<string, EventNode> = {
     id: 'gambler', title: 'Gambling in the Wilderness', image: IMG,
     text: "Hey there young man. How about a game of chance? Got anything you'd like to wager?",
     options: () => [
-      { label: '[Gamble Small]', cost: '-50gp', available: gold(50), effects: [{ type: 'gold', amount: -50 }], next: { chance: 0.5, pass: { node: 'gambler_win' }, fail: { node: 'gambler_lose' } } },
-      { label: '[Gamble Big]', cost: '-200gp', available: gold(200), effects: [{ type: 'gold', amount: -200 }], next: { chance: 0.5, pass: { node: 'gambler_win' }, fail: { node: 'gambler_lose' } } },
+      { label: '[Gamble Small]', cost: '-50gp', available: gold(50), effects: [{ type: 'gold', amount: -50 }], next: { chance: 0.5, pass: { node: 'gambler_win', params: { wager: 50 } }, fail: { node: 'gambler_lose' } } },
+      { label: '[Gamble Big]', cost: '-200gp', available: gold(200), effects: [{ type: 'gold', amount: -200 }], next: { chance: 0.5, pass: { node: 'gambler_win', params: { wager: 200 } }, fail: { node: 'gambler_lose' } } },
       LEAVE,
     ],
   }),
   gambler_win: node({
     id: 'gambler_win', title: 'Gambling in the Wilderness', image: IMG,
     text: "Rats! I'm so unlucky I lose my house, my wagon, my job... and now I'm losing in the wilderness! This is my last gold, surely I have something else I can give you instead?",
-    options: () => [
-      { label: '[Insist]', reward: '+201 Gold', effects: [{ type: 'gold', amount: 201 }], next: 'end' },
+    options: (p) => [
+      // Spellford pays a flat 201, which made Gamble Big a trap. Big now pays 601 (tune); Small keeps 201.
+      { label: '[Insist]', reward: `+${insistGold(p.wager)} Gold`, effects: [{ type: 'gold', amount: insistGold(p.wager) }], next: 'end' },
       { label: '[Take some junk]', reward: '+Gem', effects: [{ type: 'gem' }], next: 'end' },
     ],
   }),
