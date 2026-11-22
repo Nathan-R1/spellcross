@@ -6,7 +6,8 @@ export const config = {
   /** Tile pool shares (combat §2.4). */
   pool: { loadout: 0.6, duds: 0.25, novas: 0.15, weightPerGem: 0.2 },
   junkSlots: 2,
-  loadoutSlots: { normal: 3, elite: 4, boss: 4 },
+  /** Every battle uses a 3-spell loadout (Spellford gave Trail battles 4). */
+  loadoutSlots: { normal: 3, elite: 3, boss: 3 },
   maxSpellLevel: 5,
   roadBattleAt: [0.3, 0.7] as [number, number],
   gemDrop: { normal: 0.25, elite: 1, boss: 0 },

@@ -94,7 +94,7 @@ describe('travel and road battles (D17)', () => {
     expect(c.encounters[b.prep!.encounterId].tier).toBe('normal');
   });
 
-  it('Trails draw an elite encounter with 4 slots', () => {
+  it('Trails draw an elite encounter, still with 3 slots', () => {
     // Trails can't leave Start, so look one step further.
     for (let seed = 1; seed < 300; seed++) {
       let r = pastTraveller(seed);
@@ -105,7 +105,7 @@ describe('travel and road battles (D17)', () => {
       const trail = findRoad(r, 'trail');
       if (!trail) continue;
       const b = run.triggerRoadBattle(run.travelTo(r, trail.stop.id, c), c);
-      expect(b.prep!.slots).toBe(4);
+      expect(b.prep!.slots).toBe(3);
       expect(c.encounters[b.prep!.encounterId].tier).toBe('elite');
       return;
     }
@@ -123,7 +123,7 @@ describe('travel and road battles (D17)', () => {
     const back = neighbours(r.map, atFinish.currentStopId)[0];
     const boss = run.arrive({ ...atFinish, currentStopId: back.stop.id, travel: { from: back.stop.id, to: atFinish.currentStopId, roadId: back.road.id, battleAt: null, battleDone: false } }, c);
     expect(boss.screen).toBe('prep');
-    expect(boss.prep).toMatchObject({ encounterId: 'boss', slots: 4, source: 'boss' });
+    expect(boss.prep).toMatchObject({ encounterId: 'boss', slots: 3, source: 'boss' });
   });
 });
 
@@ -169,7 +169,7 @@ describe('battles in the run', () => {
   });
 
   it('beating the boss wins the run', () => {
-    const r = { ...pastTraveller(), screen: 'prep' as const, prep: { encounterId: 'boss', slots: 4, source: 'boss' as const } };
+    const r = { ...pastTraveller(), screen: 'prep' as const, prep: { encounterId: 'boss', slots: 3, source: 'boss' as const } };
     const done = winBattle(r);
     expect(done.result!.boss).toBe(true);
     expect(run.continueAfterResult(done).screen).toBe('victory');

@@ -45,7 +45,7 @@ Main menu ─New run─▶ Map (Start: Traveller event) ─travel─▶ … ─a
     a Trail).
   - **Road** trip: a battle triggers at a random 30–70% of the way, drawing a random **normal** encounter
     with **3 loadout slots**.
-  - **Trail** trip: the same, but a random **elite** encounter with **4 loadout slots**.
+  - **Trail** trip: the same, but a random **elite** encounter (still 3 loadout slots).
   - **Highway** trip: safe.
   - After the battle, travel resumes to the stop.
 - **Arriving at a stop** opens its event (§4.2). **Finish** starts the **boss** encounter.
@@ -118,7 +118,7 @@ with the text ported word for word from Spellford's `EventLibrary.kt`. Spellcros
 
 Before every battle:
 
-- **Loadout:** fill **3** slots (Road, Fight for Loot) or **4** slots (Trail, boss *(tune)*) from your spells.
+- **Loadout:** fill **3** slots from your spells, in every battle (Spellford gave Trail battles 4).
   FIGHT is enabled only when every slot is filled.
 - **Junk:** fill up to **2** junk slots from your junk pool (starting pool: Orb, Slime). Junk starts
   **unselected**; empty is allowed. Hold any spell, junk tile or enemy to see its description (enemies show

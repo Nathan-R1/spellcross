@@ -95,7 +95,7 @@ The board is the player's alone. Enemies never swap on it.
   (base duds and selected dud junk, shared equally), **novas 15%** (same rule).
 - **Size: 8 columns × 6 visible rows** (D15), so 48 tiles. The hidden refill buffer above it is also 6
   rows.
-- **Loadout slots: 3 for Road battles, 4 for Trail battles** (Spellford 3.3.7). FIGHT needs every slot
+- **Loadout slots: 3 in every battle** (Spellford gave Trail battles 4). FIGHT needs every slot
   filled (Spellford requires ≥3).
 - **No reshuffle** (C4). Any swap of two adjacent available tiles is legal even without a match, so the
   player is never stuck. A board with no matching move just means setup swaps.

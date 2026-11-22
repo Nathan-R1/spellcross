@@ -17,7 +17,7 @@ links can't skip game state and a reloaded save opens on the right screen.
 | `result` / `victory` / `defeat` | `ResultScreen` / `EndScreen` | *(new)* | `continueResult`, `toTitle` |
 
 `BattlePrepScreen` is its own screen in Spellcross. In Spellford it's a mode of `EventScreen`. In landscape:
-spell pool and loadout slots (3 or 4) on the left, junk pool and 2 junk slots on the right, FIGHT pinned
+spell pool and loadout slots (3) on the left, junk pool and 2 junk slots on the right, FIGHT pinned
 bottom-right and disabled until the loadout is full.
 It reuses the event layout components (banner, framed pane, wood background).
 

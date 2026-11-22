@@ -94,7 +94,7 @@ boss 0% win / 37% no-match moves (original), 40% / 10% (D22), 70% / 7% (D23).
 
 - sessionStore + save/load, continue run from the menu.
 - **Parity (Spellford `3f7b1a0`):** set events on arrival (Traveller at Start, Campfire, Village, Town, Market,
-  Encounter → random event), road battles on every Road and Trail trip (3 or 4 loadout slots), return to the
+  Encounter → random event), road battles on every Road and Trail trip (3 loadout slots), return to the
   map after battles.
 - **Beyond parity** (D17, decided): Road battles draw normal encounters and Trail battles elite ones.
   Arriving at Finish starts the Harbinger boss fight, and winning it shows a victory screen and ends the run.

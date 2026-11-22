@@ -56,7 +56,7 @@ Gaps the adversarial doc review found, which I filled so code and docs agree. Ea
 | G11 | The gem list's "Lvl" column is ignored (reference only) | spells-and-gems §3.2 |
 | G12 | Gems **drop as combat rewards** (normal 25%, elite 100%, *tune*) or are **sold**: pick 1 of 3 random gems for 100gp at Village, Town and Market | spells-and-gems §3.2, D17 |
 | Q12 | Darkstone's extra move is at most once per turn | spells-and-gems §3.2 |
-| R1 | Road battles draw **normal** encounters, Trail battles draw **elite** encounters (4 loadout slots kept) | enemies.md §3, D17 |
+| R1 | Road battles draw **normal** encounters, Trail battles draw **elite** encounters (3 loadout slots, like every battle) | enemies.md §3, D17 |
 | R2 | The **boss** (Harbinger) is fought on arriving at **Finish**. Winning it wins the run | enemies.md §3, D17 |
 | R3 | Run length of about 4–6 battles plus the boss is right | n/a |
 | R4 | Battle gold is the sum of each enemy's reward roll, not a flat +50 | D9 |
@@ -71,4 +71,4 @@ Gaps the adversarial doc review found, which I filled so code and docs agree. Ea
 | U3 | Boss name: **Harbinger** | enemies.md |
 | U4 | **Art comes from Spellford's assets.** Gaps get placeholders (see U5) | doc 04 |
 | P1 | Consolidated game spec written | [spec.md](spec.md) |
-| n/a | Boss fight uses 4 loadout slots *(tune; assumed in spec.md §5)* | spec.md |
+| n/a | Every battle uses 3 loadout slots, including Trails and the boss | spec.md §5 |

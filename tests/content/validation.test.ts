@@ -73,7 +73,7 @@ describe('content validation', () => {
   it('config matches the spec', () => {
     expect(c.config.player).toMatchObject({ hp: 100, movesPerTurn: 3, maxAbilities: 5 });
     expect(c.config.board).toEqual({ width: 8, visibleRows: 6, bufferRows: 6 });
-    expect(c.config.loadoutSlots).toEqual({ normal: 3, elite: 4, boss: 4 });
+    expect(c.config.loadoutSlots).toEqual({ normal: 3, elite: 3, boss: 3 });
     expect(c.config.pool.loadout + c.config.pool.duds + c.config.pool.novas).toBeCloseTo(1);
   });
 });

@@ -130,7 +130,7 @@ Always fought with allies (see encounters), so the ally heals and buffs matter.
 
 **How encounters are picked (D17):**
 - A **Road** battle draws a random **normal** encounter, with 3 loadout slots.
-- A **Trail** battle draws a random **elite** encounter, with 4 loadout slots.
+- A **Trail** battle draws a random **elite** encounter, with 3 loadout slots like every battle.
 - Arriving at **Finish** starts the **boss** encounter. Winning it wins the run.
 
 All picks use the run RNG. Weighting normal encounters by distance from Start is a tuning option, not v1.

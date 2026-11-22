@@ -44,7 +44,7 @@ interface Combatant {               // shared by player and enemies
 interface Player extends Combatant {
   movesPerTurn: number;              // 3
   spells: SpellInstance[];           // owned spells, customised (spells-and-gems §5). From M2, so no save migration
-  loadout: string[];                 // SpellInstance uids, 3 or 4 per battle
+  loadout: string[];                 // SpellInstance uids, 3 per battle
   junkPool: SpellId[]; junk: SpellId[];   // owned dud/nova junk, up to 2 selected (features 5.1.6)
   inventory: {
     gold: number;
@@ -212,7 +212,7 @@ fixed cycle (combat §3).
 - `neighbours(map, stopId)`, `travel(session, toStopId)`.
 - `planTravel(session, toStopId, rng)`: if the road is a **Road** or **Trail**, schedules a road battle at a
   random 30–70% of the way (run RNG, D7): a random normal encounter with 3 loadout slots on Roads, and a random
-  elite encounter with 4 on Trails (D17). Highways are safe
+  elite encounter on Trails, always with 3 loadout slots (D17). Highways are safe
   (features 3.3.7). Travel pauses for the battle and resumes after it.
 - `onArrive(session, stop)`: opens the stop type's set event (Start → Traveller, Campfire, Village, Town,
   Market, Encounter → random event; features §4.3). Finish → the Harbinger boss encounter, then victory (D17).
