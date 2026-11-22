@@ -50,7 +50,7 @@ Gaps the adversarial doc review found, which I filled so code and docs agree. Ea
 | G10 | Gem power is fine as listed | n/a |
 | B2 | Board clog fixed by **dud sets** (D22): 3+ duds of the same type clear with no effect. Boss no-match moves 37% → 10%, boss win rate 0% → 40% | features D22, spec §6.2 |
 | n/a | Enemy HP halved (Wolf 30, Bear 45, Spider 38, Harbinger 90); first battle of a run is always one enemy; Poisoned drops by 1 per turn (D24) | enemies.md, spec §2, §6.6 |
-| n/a | Healing only at Villages for 50gp (+50%, once per visit); Towns don't heal; Campfires are Rest only (D25) | spec §4 |
+| n/a | One heal per visit: free +20% at Campfires, Villages and Towns, or +50% for 50gp at Villages and Towns (D25) | spec §4 |
 | B3 | Gamble Big pays gold: Insist gives +601 after a Big win (+201 after Small) | spec §4.3 |
 | B5 | Rolls weighted by rarity: abilities common 3 : uncommon 1; gems Weight 6, Cracked 6, other tier-1 4, Chargestone/Stormstone 2, Darkstone/Sunstone 1; duplicate abilities allowed | spec §4.3, §9.3 |
 | G11 | The gem list's "Lvl" column is ignored (reference only) | spells-and-gems §3.2 |

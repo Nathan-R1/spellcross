@@ -162,7 +162,7 @@ can do several things in one visit.
 | Stop | Event | Options |
 |---|---|---|
 | Start | **A Fellow Traveller** | Choose 1 of 3 random abilities (no duplicates). This replaces the old "start with 4 random abilities". Image `portraits/traveller.png` is missing |
-| Campfire | **Campfire** | Heal *or* Rest (either one ends the event). **→ D25**: Rest only |
+| Campfire | **Campfire** | Heal *or* Rest (either one ends the event). **→ D25**: Patch up +20%, Rest, Leave |
 | Village | **Village** | Heal, Rest, Purchase (−100gp, +Gemstone), Leave. All `→ stay` |
 | Town | **Town** | Heal, Rest, Purchase (−100gp, +Gemstone), Train (−100gp, +"Spellupgrade"), Leave. All `→ stay` |
 | Market | **Market** | Train (−200gp, +random Ability), Purchase (−100gp, +Gemstone), Study (−100gp, +"Spellupgrade"), Leave. All `→ stay` |
@@ -455,7 +455,7 @@ Fix gets a unit test that names this entry (e.g. `// features.md D1`).
 | D22 | Duds never match (5.2.7), so non-linked Rubble and Mist can never leave the board; long fights clog (37% of boss-fight moves had no match in the sim) | **Change** (design) | **Duds of the same type clear as sets** (3+ Rubble, Mist, Ash, Orb or Slime) with no effect: no cast, so no Critical, Fortify or Darkstone. Mixed duds don't match. Surge never joins a dud set. Linked tiles next to a dud set are still pulled in. Starting boards have no dud sets either, and Corrupt never places Rubble that completes a set. Novas still never match. Sim: boss win rate 0% → 40%, boss no-match moves 37% → 10% |
 | D23 | Swapped tiles become pending, then locked for the next turn (5.2.11), to stop two players working the same tiles on a shared board | **Change** (design) | **Swapping doesn't lock tiles.** With one player on the board the locks only got in the way. Lock states remain for enemy intents: Spin Web locks 4 tiles, which free up at the end of the player's next turn |
 | D24 | Poisoned halves each turn (`value / 2`) | **Change** (design) | Poisoned **drops by 1** each turn, so it lasts longer and deals 1 + 2 + … + value in total (Poisoned 6 deals 21, not 6 + 3 + 1 = 10). Low Blow + Sicken (Poisoned 18 → 171 total) needs watching |
-| D25 | Campfires, Villages and Towns all heal +50% for free, so the player is topped up at almost every stop | **Change** (design) | **Healing is sold only at Villages**: +50% max HP for 50gp, once per visit (the Salesman sells it too). Towns don't heal. Campfires offer Rest (ability recharges) or Leave |
+| D25 | Campfires, Villages and Towns all heal +50% for free, so the player is topped up at almost every stop | **Change** (design) | **One heal per visit**: a free **Patch up** (+20% max HP) at Campfires, Villages and Towns, *or* a paid **Healer** (+50% for 50gp) at Villages and Towns. Markets and other stops don't heal. The Salesman still sells +50% |
 Decisions D1 and D14 change combat balance (see open-questions B1–B3 for the current sim results). After M2, run the 500-seed headless sim over every
 starter encounter (combat §5) and record the win rate, average turns and average HP lost per encounter in
 `05-migration-plan.md` as the balance baseline.

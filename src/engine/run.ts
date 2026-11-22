@@ -255,6 +255,8 @@ export function chooseOption(prev: RunState, index: number, c: Content): RunStat
   const next = resolveNext(run, option.next);
   if (next === 'stay') {
     ev.used.push(index);
+    // Options in the same group (e.g. the two heals) are used up together.
+    if (option.group) nodeOptions(ev).forEach((o, i) => o.group === option.group && !ev.used.includes(i) && ev.used.push(i));
     return touch(run);
   }
   if (next === 'end') {

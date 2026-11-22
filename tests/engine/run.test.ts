@@ -199,19 +199,32 @@ describe('events', () => {
     expect(() => run.chooseOption(r, optionIndex(r, '[Purchase]'), c)).toThrow();
   });
 
-  it('healing is sold only at Villages, 50gp for +50% max HP (D25)', () => {
-    const broke = at('village', 0, (x) => (x.player.hp = 40));
-    expect(run.eventView(broke, c)!.options[optionIndex(broke, '[Healing]')].enabled).toBe(false);
-    expect(optionIndex(at('town', 500), '[Healing]')).toBe(-1);
-    expect(optionIndex(at('campfire', 500), '[Healing]')).toBe(-1);
+  it('one heal per visit: free +20% at Campfires, Villages and Towns, or +50% for 50gp at Villages and Towns (D25)', () => {
+    for (const stop of ['campfire', 'village', 'town']) {
+      let r = at(stop, 0, (x) => (x.player.hp = 40));
+      r = run.chooseOption(r, optionIndex(r, '[Patch up]'), c);
+      expect(r.player.hp).toBe(60);
+      const healer = optionIndex(r, '[Healer]');
+      if (healer >= 0) expect(run.eventView(r, c)!.options[healer].enabled).toBe(false); // already healed
+    }
+    expect(optionIndex(at('campfire', 500), '[Healer]')).toBe(-1);
+    expect(optionIndex(at('market', 500), '[Healer]')).toBe(-1);
+    expect(optionIndex(at('market', 500), '[Patch up]')).toBe(-1);
+    let r = at('town', 100, (x) => (x.player.hp = 40));
+    r = run.chooseOption(r, optionIndex(r, '[Healer]'), c);
+    expect(r.player.hp).toBe(90);
+    expect(r.player.gold).toBe(50);
+    expect(run.eventView(r, c)!.options[optionIndex(r, '[Patch up]')].enabled).toBe(false);
+    const broke = at('village', 0);
+    expect(run.eventView(broke, c)!.options[optionIndex(broke, '[Healer]')].enabled).toBe(false);
   });
 
   it('stop options are single-use per visit; Leave ends the event', () => {
     let r = at('village', 100, (x) => (x.player.hp = 40));
-    r = run.chooseOption(r, optionIndex(r, '[Healing]'), c);
+    r = run.chooseOption(r, optionIndex(r, '[Healer]'), c);
     expect(r.player.hp).toBe(90); // +50% of max
     expect(r.player.gold).toBe(50);
-    expect(run.eventView(r, c)!.options[optionIndex(r, '[Healing]')].enabled).toBe(false);
+    expect(run.eventView(r, c)!.options[optionIndex(r, '[Healer]')].enabled).toBe(false);
     r = run.chooseOption(r, optionIndex(r, '[Leave]'), c);
     expect(r.screen).toBe('map');
   });
@@ -243,7 +256,8 @@ describe('events', () => {
     r = run.assignRecharge(r, 0, c);
     r = run.assignRecharge(r, 0, c);
     expect(r.player.abilities[0].uses).toBe(2);
-    expect(r.screen).toBe('map'); // Campfire Rest ends the event once recharges are assigned
+    expect(r.screen).toBe('event'); // the Campfire stays open: you can still Patch up, then Leave
+    expect(run.eventView(r, c)!.options[optionIndex(r, '[Resting]')].enabled).toBe(false);
   });
 
   it('Gambler deducts the wager and rolls 50/50 when chosen (D5, D7)', () => {

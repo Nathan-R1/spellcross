@@ -79,8 +79,9 @@ Main menu ─New run─▶ Map (Start: Traveller event) ─travel─▶ … ─a
 - **Randomness is rolled when an option is chosen**, from the run RNG (D7). Probabilities are as listed.
 - Options marked *stay* keep the event open, so you can do several things in one visit. Each *stay* option
   works **once per visit** (Spellford). Cancelling the gem pick gives the Buy gem option back.
-- **Healing between battles is only sold at Villages** (D25): Heal = **+50% of max HP** (clamped) for **50gp**,
-  once per visit. The Salesman event also sells it. Otherwise HP only comes back in battle (Restore, Lifelink). "Rest" gives **1 ability recharge per ability owned**,
+- **Healing between battles** (D25): **one heal per visit**, either **Patch up** (+20% max HP, free) at Campfires,
+  Villages and Towns, or the **Healer** (+50% max HP for 50gp) at Villages and Towns. Taking one disables the
+  other. The Salesman event also sells +50%. Otherwise HP only comes back in battle (Restore, Lifelink). "Rest" gives **1 ability recharge per ability owned**,
   which you assign in the recharge popup.
 
 ### 4.2 Stop events
@@ -88,9 +89,9 @@ Main menu ─New run─▶ Map (Start: Traveller event) ─travel─▶ … ─a
 | Stop | Event | Options |
 |---|---|---|
 | Start | Traveller | Pick 1 of 3 random abilities |
-| Campfire | Campfire | Rest, or Leave |
-| Village | Village | Heal (50gp), Rest, Buy gem (100gp: pick 1 of 3 random gems), Leave (all *stay*) |
-| Town | Town | Rest, Buy gem (100gp, pick 1 of 3), Train (100gp, +1 Spell Upgrade), Leave (all *stay*). While at a Town, the Spellbook also offers Unsocket (50gp) |
+| Campfire | Campfire | Patch up (+20%), Rest, Leave (all *stay*) |
+| Village | Village | Patch up (+20%) *or* Healer (+50%, 50gp), Rest, Buy gem (100gp: pick 1 of 3 random gems), Leave (all *stay*) |
+| Town | Town | Patch up (+20%) *or* Healer (+50%, 50gp), Rest, Buy gem (100gp, pick 1 of 3), Train (100gp, +1 Spell Upgrade), Leave (all *stay*). While at a Town, the Spellbook also offers Unsocket (50gp) |
 | Market | Market | Train (200gp, +random ability), Buy gem (100gp, pick 1 of 3), Study (100gp, +1 Spell Upgrade), Leave (all *stay*) |
 | Encounter | random event | §4.3 |
 | Finish | the boss battle | §2 |
@@ -396,7 +397,7 @@ pip** on its tiles. Exact rule: [spells-and-gems §2](spells-and-gems.md#2-spell
 | Unsocket | 50 |
 | Salesman: ability / heal | 100 / 50 |
 | Alchemist: change to Fire | 100 (Lightning and Earth cost your last ability instead) |
-| Heal +50% (Village, once per visit) | 50 |
+| Healer +50% (Village, Town; instead of the free +20%) | 50 |
 
 Gold can't go negative. Unaffordable options are disabled.
 
