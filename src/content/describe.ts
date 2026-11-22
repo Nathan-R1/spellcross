@@ -25,7 +25,7 @@ function statusLine(status: string, value: number, self: boolean): { long: strin
         : { long: `Gain Charge ${value}: your damaging spells deal +${value} damage per tile matched, for the rest of the battle.`, short: `+${value} dmg/tile` };
     case 'fortify':
       return el
-        ? { long: `Gain Fortify ${el} ${value}: every time you cast a ${el} spell, gain ${value} Block per tile matched, for the rest of the battle.`, short: `Block when casting ${el} spells` }
+        ? { long: `Gain Fortify ${el} ${value}: every time you cast ${/^[AEIOU]/.test(el) ? 'an' : 'a'} ${el} spell, gain ${value} Block per tile matched, for the rest of the battle.`, short: `Block when casting ${el} spells` }
         : { long: `Gain Fortify ${value}: every time you cast a spell, gain ${value} Block per tile matched, for the rest of the battle.`, short: `Block on every cast` };
     default: {
       const name = def?.name ?? status;

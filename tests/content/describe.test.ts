@@ -18,6 +18,7 @@ describe('ability descriptions', () => {
     expect(describeAbility(abilities.fuel_of_stone).lines[0]).toContain('your Earth spells deal +2 damage per tile matched');
     expect(describeAbility(abilities.bulwark_of_ice).lines[0]).toContain('every time you cast a Water spell, gain 1 Block per tile matched');
     expect(describeAbility(abilities.sicken).summary).toBe("Triple target's Poison");
+    expect(describeAbility(abilities.bulwark_of_stone).lines[0]).toContain('every time you cast an Earth spell');
     expect(poisonTotal(18)).toBe(171);
   });
 });
