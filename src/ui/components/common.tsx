@@ -1,6 +1,7 @@
 // Shared UI pieces: asset images with placeholders, long-press, status icons, HP bars, modal, top bar.
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { content, assetExists } from '../../content';
 import { describeAbility } from '../../content/describe';
 import type { FruitId } from '../../engine/types';
@@ -64,12 +65,15 @@ export function HpBar({ hp, max, green }: { hp: number; max: number; green?: boo
   );
 }
 
+/** A popup over the whole app screen, wherever it's opened from (rendered at the app root). */
 export function Modal({ children, onClose }: { children: ReactNode; onClose?: () => void }) {
-  return (
+  const back = (
     <div className="modal-back" onPointerDown={(e) => e.target === e.currentTarget && onClose?.()}>
       <div className="modal panel" role="dialog" aria-modal="true">{children}</div>
     </div>
   );
+  const root = typeof document !== 'undefined' ? document.querySelector('.app') : null;
+  return root ? createPortal(back, root) : back;
 }
 
 export function TopBar({ children, onExit }: { children?: ReactNode; onExit?: () => void }) {
