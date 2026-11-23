@@ -14,7 +14,7 @@ to reuse for new tile-based enemies later.
 An enemy tile is a board tile owned by the enemy. Every enemy tile:
 
 - **never matches** and breaks lines of other tiles,
-- **can't be swapped**,
+- **can be swapped** like any tile,
 - **falls with gravity** like any tile,
 - **activates** once per enemy turn, bottom row first ([combat § 4.1](combat.md#41-activation)),
 - **never destroys another enemy tile**. If its move is blocked by one, it stays put,

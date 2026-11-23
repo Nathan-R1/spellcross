@@ -78,7 +78,7 @@ battle start: choose 3 tools (§2.1) → build the board from the enemy's genera
 ```
 
 - **Moves:** one move = one swap of two orthogonally adjacent tiles. A swap costs a move **even without a
-  match**. Enemy tiles **can't** be swapped. Stones and junk can.
+  match**. Any two tiles can be swapped, **enemy tiles included**, so you can pull a Worry back up or push it into place.
 - **When the third move resolves**, the turn ends by itself. **End Turn** ends it early, and any moves left
   are lost.
 - **Abilities** can be used any time during your turn, outside a placement. They cost no move
@@ -178,8 +178,9 @@ below it for two. The same 2 HP means a Prayer or Time hit (1 damage) only crack
 
 ## 5. Placement
 
-Some effects ask you to pick tiles on the board. While placing, the board shows a highlight preview and a
-banner ("Place 3 damage", "Place 2 Stones", …). Placements are **mandatory** and can't be saved for later.
+Some effects ask you to pick tiles on the board. Tap where it should go: the tiles it will hit light up (the
+rest of the board dims), and the banner asks **Continue** or **Select again**. Shapes and lines are centred on the
+tile you tap and kept on the board. Placements are **mandatory** and can't be saved for later.
 
 ### 5.1 Damage shapes (Prayer)
 

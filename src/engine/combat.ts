@@ -539,7 +539,8 @@ export function canSwap(s: BattleState, a: Pos, b: Pos): boolean {
   if (Math.abs(a.x - b.x) + Math.abs(a.y - b.y) !== 1) return false;
   const ta = tileAt(s.board, a.x, a.y);
   const tb = tileAt(s.board, b.x, b.y);
-  return !!ta && !!tb && ta.kind !== 'enemy' && tb.kind !== 'enemy';
+  // Any two tiles can swap, enemy tiles included (combat § 2).
+  return !!ta && !!tb;
 }
 
 /** Swap two adjacent tiles. Costs a move even without a match. */

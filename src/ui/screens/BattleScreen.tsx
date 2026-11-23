@@ -47,7 +47,7 @@ export function BattleScreen() {
   useLayoutEffect(() => {
     const el = bodyRef.current;
     if (!el) return;
-    const measure = () => setTile(Math.max(30, Math.min(64, Math.floor(Math.min(el.clientWidth - 10, el.clientHeight - 190) / 8))));
+    const measure = () => setTile(Math.max(30, Math.min(64, Math.floor(Math.min(el.clientWidth - 10, el.clientHeight - 260) / 8))));
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
@@ -66,22 +66,24 @@ export function BattleScreen() {
     if (current?.type === 'playerHit') add(current.amount > 0 ? `-${current.amount}` : `🛡${current.blocked}`, current.amount > 0 ? 'dmg' : 'block');
   }, [current]);
 
-  // Placement: first tap aims (preview), a second tap on the same cell confirms.
-  // The aim is forgotten whenever the next placement (or orientation) changes.
+  // Placement: tapping selects (the tiles light up), then Continue confirms or Select again clears it.
+  // The selection is forgotten whenever the next placement (or orientation) changes.
   const aimKey = `${battle.pending.length}:${battle.nextUid}:${orientation}`;
   const [aimState, setAimState] = useState<{ key: string; pos: Pos } | null>(null);
   const aim = aimState?.key === aimKey ? aimState.pos : null;
-  const setAim = (pos: Pos) => setAimState({ key: aimKey, pos });
-  const pending = view.phase === 'placing' ? view.pending : null;
-  const preview = pending && aim ? placementCells(battle, pending, aim, orientation) : null;
+  const pending = view.phase === 'placing' && !busy ? view.pending : null;
+  const anchor = pending && aim ? anchorFor(pending, aim, orientation, battle.board.width, battle.board.height) : null;
+  const preview = pending && anchor ? placementCells(battle, pending, anchor, orientation) : null;
   const onTap = (x: number, y: number) => {
     if (busy) return;
     if (battle.phase === 'placing') {
-      if (aim && aim.x === x && aim.y === y) selectTile({ x, y });
-      else setAim({ x, y });
+      setAimState({ key: aimKey, pos: { x, y } });
       return;
     }
     selectTile({ x, y });
+  };
+  const confirm = () => {
+    if (anchor && preview) selectTile(anchor);
   };
 
   const highlight = new Set<number>(current?.type === 'matched' ? current.uids : current?.type === 'shining' ? current.uids : []);
@@ -100,8 +102,15 @@ export function BattleScreen() {
         <span className="dim log">{log}</span>
       </TopBar>
       <div className="battle-body" ref={bodyRef}>
-        {pending && <PlacingBanner pending={pending} orientation={orientation} onOrientation={setOrientation} aimed={!!aim} />}
-        <BoardView view={view} battle={battle} tile={tile} selection={selection} preview={preview} highlight={highlight} hurt={hurt}
+        <div className="instruction panel">
+          {pending ? (
+            <PlacingBanner pending={pending} orientation={orientation} onOrientation={setOrientation} ready={!!preview}
+              onContinue={confirm} onAgain={() => setAimState(null)} />
+          ) : (
+            <span className="dim">{busy ? '…' : battle.phase === 'player' ? (selection ? 'Tap a neighbouring tile to swap' : 'Tap a tile, then a neighbour to swap them') : ''}</span>
+          )}
+        </div>
+        <BoardView view={view} battle={battle} tile={tile} selection={selection} preview={preview} placing={!!pending} highlight={highlight} hurt={hurt}
           onTap={onTap} onLong={(t) => setInfo(t)} />
         <div className="battle-panels">
           <div className="panel player-panel">
@@ -147,27 +156,52 @@ function placingText(p: Placement): string {
   }
 }
 
-function PlacingBanner({ pending, orientation, onOrientation, aimed }: { pending: Placement; orientation: 'h' | 'v'; onOrientation: (o: 'h' | 'v') => void; aimed: boolean }) {
+/** Where a placement goes for a tapped cell: shapes and lines are centred on it, then kept on the board. */
+export function anchorFor(p: Placement, tap: Pos, orientation: 'h' | 'v', width: number, height: number): Pos {
+  const clamp = (v: number, max: number) => Math.max(0, Math.min(max, v));
+  if (p.type === 'shape') {
+    const w = Math.max(...p.cells.map((c) => c.x)) + 1;
+    const h = Math.max(...p.cells.map((c) => c.y)) + 1;
+    const mid = p.cells[Math.floor(p.cells.length / 2)];
+    return { x: clamp(tap.x - mid.x, width - w), y: clamp(tap.y - mid.y, height - h) };
+  }
+  if (p.type === 'line') {
+    const back = Math.floor(p.length / 2);
+    return orientation === 'h' ? { x: clamp(tap.x - back, width - p.length), y: tap.y } : { x: tap.x, y: clamp(tap.y - back, height - p.length) };
+  }
+  return tap;
+}
+
+function PlacingBanner({ pending, orientation, onOrientation, ready, onContinue, onAgain }: {
+  pending: Placement; orientation: 'h' | 'v'; onOrientation: (o: 'h' | 'v') => void; ready: boolean; onContinue: () => void; onAgain: () => void;
+}) {
   const queued = useStore((s) => activeBattle(s)?.pending.length ?? 0);
   return (
-    <div className="placing panel">
-      <span>{placingText(pending)}{queued > 1 ? ` · ${queued} to place` : ''}</span>
-      <span className="dim">{aimed ? 'Tap again to confirm' : 'Tap where it goes'}</span>
+    <div className="placing">
+      <span><b>{placingText(pending)}</b>{queued > 1 ? ` · ${queued} to place` : ''}</span>
       {pending.type === 'line' && (
         <button className="btn" onClick={() => onOrientation(orientation === 'h' ? 'v' : 'h')}>{orientation === 'h' ? '↔ Horizontal' : '↕ Vertical'}</button>
+      )}
+      {ready ? (
+        <span className="placing-actions">
+          <button className="btn" onClick={onAgain}>Select again</button>
+          <button className="btn primary" onClick={onContinue}>Continue</button>
+        </span>
+      ) : (
+        <span className="dim">Tap the board to choose where. The tiles it hits light up.</span>
       )}
     </div>
   );
 }
 
-function BoardView({ view, battle, tile, selection, preview, highlight, hurt, onTap, onLong }: {
-  view: ViewSnapshot; battle: BattleState; tile: number; selection: Pos | null; preview: Pos[] | null; highlight: Set<number>; hurt: Set<number>;
+function BoardView({ view, battle, tile, selection, preview, placing, highlight, hurt, onTap, onLong }: {
+  view: ViewSnapshot; battle: BattleState; tile: number; selection: Pos | null; preview: Pos[] | null; placing: boolean; highlight: Set<number>; hurt: Set<number>;
   onTap: (x: number, y: number) => void; onLong: (t: Tile) => void;
 }) {
   const b = view.board;
   const inPreview = (x: number, y: number) => !!preview?.some((p) => p.x === x && p.y === y);
   return (
-    <div className="board" style={{ width: b.width * tile + 6, height: b.height * tile + 6 }} role="grid" aria-label="Tool board">
+    <div className={`board ${placing ? 'placing-mode' : ''} ${preview ? 'has-aim' : ''}`} style={{ width: b.width * tile + 6, height: b.height * tile + 6 }} role="grid" aria-label="Tool board">
       {b.cells.map((t, i) => {
         if (!t) return null;
         const x = i % b.width;
