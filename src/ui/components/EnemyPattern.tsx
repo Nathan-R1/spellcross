@@ -8,16 +8,21 @@ import { Asset } from './common';
 /** One 8-wide grid. Enemy cells show the tile's colour and icon; normal cells are dark. */
 export function PatternGrid({ rows, cell = 14, label, boardFrom }: { rows: (string | null)[][]; cell?: number; label: string; boardFrom?: number }) {
   const enemies = rows.flat().filter(Boolean).length;
+  const cols = rows[0]?.length ?? 8;
+  // The board's top edge is its own thin grid row, so every tile row keeps the same height.
+  const split = boardFrom !== undefined && boardFrom > 0 && boardFrom < rows.length;
+  const templateRows = split ? `repeat(${boardFrom}, ${cell}px) 2px repeat(${rows.length - boardFrom!}, ${cell}px)` : `repeat(${rows.length}, ${cell}px)`;
+  const cells = rows.map((row, y) => row.map((id, x) => {
+    const t = id ? content.enemyTiles[id] : null;
+    return (
+      <span key={`${x},${y}`} className={t ? 'p-enemy' : 'p-normal'} style={t ? { background: t.color } : undefined}>
+        {t && cell >= 12 && <Asset path={t.icon} alt={t.name} size={cell - 2} color="transparent" />}
+      </span>
+    );
+  }));
   return (
-    <div className="pattern" role="img" aria-label={`${label}: ${enemies} enemy tiles`} style={{ gridTemplateColumns: `repeat(${rows[0]?.length ?? 8}, ${cell}px)`, gridAutoRows: `${cell}px` }}>
-      {rows.flatMap((row, y) => row.map((id, x) => {
-        const t = id ? content.enemyTiles[id] : null;
-        return (
-          <span key={`${x},${y}`} className={`${t ? 'p-enemy' : 'p-normal'} ${y === boardFrom ? 'p-board-top' : ''}`} style={t ? { background: t.color } : undefined}>
-            {t && cell >= 12 && <Asset path={t.icon} alt={t.name} size={cell - 2} color="transparent" />}
-          </span>
-        );
-      }))}
+    <div className="pattern" role="img" aria-label={`${label}: ${enemies} enemy tiles`} style={{ gridTemplateColumns: `repeat(${cols}, ${cell}px)`, gridTemplateRows: templateRows }}>
+      {split ? [...cells.slice(0, boardFrom).flat(), <i key="board-top" className="p-board-line" />, ...cells.slice(boardFrom).flat()] : cells.flat()}
     </div>
   );
 }
