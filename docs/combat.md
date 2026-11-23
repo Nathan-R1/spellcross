@@ -208,7 +208,7 @@ A Time set deals **1 damage to 1 tile anywhere**, including an enemy tile.
 ### 5.3 Stone placement (The Word)
 
 Place the Stones **one at a time** on **any tile**. They don't need to be adjacent. Each placement is a
-**1-damage hit** on that tile (more with Faithfulness or Foresight):
+**1-damage hit** on that tile (more with Faithfulness, or with every 3 Foresight):
 
 - If the hit **deletes** the tile, a full-HP **Stone** takes its place. It's a transformation, so nothing falls.
   On an **enemy tile**, the Worry becomes a Stone, which counts towards victory.
@@ -216,7 +216,7 @@ Place the Stones **one at a time** on **any tile**. They don't need to be adjace
 
 ### 5.4 Hits (Prophecy) and abilities
 
-Prophecy gives 1 hit per tile, placed one at a time on any tile (the same tile can be hit again). Abstain
+Prophecy gives 1 hit per tile matched, each on a different tile; a tile it breaks turns into Space. Abstain
 targets 1 tile, and Many Fish places a 3-tile line (you choose horizontal or vertical first). All of them are
 damage (§1.2).
 
@@ -267,7 +267,8 @@ The battle screen is **portrait**: the board is on top, with two panels side by 
 
 - **Board:** full screen width minus the gutters. Tile size = `min((width − 16) / 8, …)`, so the two panels
   still fit below. Tiles stay square.
-- **Player panel (left):** Courage, Block, statuses, move pips and End Turn. Abilities go here too once they're
+- **Player panel (left):** Courage, Block, statuses, move pips and End Turn. **Hold (or tap) a status chip**
+  (Block, Critical, Foresight) to see what it does. Abilities go here too once they're
   redesigned (TBD).
 - **Enemy panel (right):** name, a **picture of what's coming**: a small 8×8 grid of the next 8 tiles in each
   column, nearest at the bottom, with enemy squares marked ([enemies.md § 2](enemies.md#2-the-generator)). Below

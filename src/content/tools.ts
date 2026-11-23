@@ -7,7 +7,7 @@ export const tools: Record<string, ToolDef> = {
   prayer: { id: 'prayer', name: 'Prayer', pillar: 'faith', effect: 'damageShape', description: 'Place a damage shape the same shape as the set: 1 damage to every tile in it.', icon: 'spells/fire/dmg-2.png', color: '#ffb3b3' },
   thanksgiving: { id: 'thanksgiving', name: 'Thanksgiving', pillar: 'spirit', effect: 'block', description: 'Gain 1 Block per tile.', icon: 'spells/water/block-1.png', color: '#b366b3' },
   word: { id: 'word', name: 'The Word', pillar: 'truth', effect: 'stones', description: 'Place 1 Stone per tile: each is a 1-damage hit, and a tile it deletes becomes a Stone.', icon: 'spells/lightning/dmg-1.png', color: '#ffffb3' },
-  prophecy: { id: 'prophecy', name: 'Prophecy', pillar: 'truth', effect: 'prophecy', description: 'Deal 1 damage to any tile per tile matched, then gain Foresight 1.', icon: 'spells/lightning/default.png', color: '#e6d27a' },
+  prophecy: { id: 'prophecy', name: 'Prophecy', pillar: 'truth', effect: 'prophecy', description: 'Target 1 tile per tile matched for 1 damage each; a tile it breaks turns into Space. Then gain 1 Foresight per tile matched.', icon: 'spells/lightning/default.png', color: '#e6d27a' },
   // Parked (tools.md §1.2): no effect until redesigned.
   healing: { id: 'healing', name: 'Healing', pillar: 'love', effect: 'none', parked: true, description: 'Parked.', icon: 'spells/water/healing-1.png', color: '#b3d9ff' },
   serving: { id: 'serving', name: 'Serving', pillar: 'love', effect: 'none', parked: true, description: 'Parked.', icon: 'spells/water/dmg-1.png', color: '#b3d9ff' },

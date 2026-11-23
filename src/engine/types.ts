@@ -182,6 +182,8 @@ export type Placement =
   | { type: 'hit'; damage: number; source: string }
   /** The Word: damage one tile; if deleted, a Stone takes its place. */
   | { type: 'stone'; damage: number; stoneHp: number; source: string }
+  /** Prophecy: damage one tile; if deleted, a Space junk tile takes its place. */
+  | { type: 'space'; damage: number; source: string }
   /** Many Fish: a straight line, orientation chosen when placing. */
   | { type: 'line'; length: number; damage: number; source: string };
 

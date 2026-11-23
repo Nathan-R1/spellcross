@@ -4,7 +4,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { content } from '../../content';
 import { genCell } from '../../content/enemies';
-import { STONE } from '../../content/tools';
+import { junk as JUNK, STONE } from '../../content/tools';
 import { pendingGroupSize, placementCells, previewPlacements, snapshot, upcomingGrid } from '../../engine/combat';
 import type { BattleState, Placement, Pos, Tile, TimedEvent, ViewSnapshot } from '../../engine/types';
 import { activeBattle, useStore } from '../../state/store';
@@ -122,16 +122,19 @@ export function BattleScreen() {
             <span className="dim">{busy ? '…' : battle.phase === 'player' ? (selection ? 'Tap a neighbouring tile to swap' : 'Tap a tile, then a neighbour to swap them') : ''}</span>
           )}
         </div>
-        <BoardView view={view} battle={battle} tile={tile} selection={selection} preview={preview} stones={pending?.type === 'stone'} placing={!!pending} highlight={highlight} hurt={hurt}
+        <BoardView view={view} battle={battle} tile={tile} selection={selection} preview={preview} ghost={pending?.type === 'stone' ? STONE.icon : pending?.type === 'space' ? JUNK.space.icon : null} placing={!!pending} highlight={highlight} hurt={hurt}
           onTap={onTap} onLong={(t) => setInfo(t)} />
         <div className="battle-panels">
           <div className="panel player-panel">
             <b>You</b>
             <HpBar hp={view.player.hp} max={view.player.maxHp} green />
             <div className="stat-row">
-              <span className="chip" style={{ color: 'var(--block)' }} title="Block">🛡 {view.player.block}</span>
-              {view.player.critical > 0 && <span className="chip" title="Critical: next tool set doubled">✦ ×{view.player.critical}</span>}
-              {view.player.foresight > 0 && <span className="chip" title="Foresight: Truth tools +damage">👁 {view.player.foresight}</span>}
+              <StatusChip id="block" text={`🛡 ${view.player.block}`} value={view.player.block} />
+              {view.player.critical > 0 && <StatusChip id="critical" text={`✦ ×${view.player.critical}`} value={view.player.critical} />}
+              {view.player.foresight > 0 && (
+                <StatusChip id="foresight" value={view.player.foresight}
+                  text={`👁 ${view.player.foresight} (+${Math.floor(view.player.foresight / content.config.foresightPerBonus)})`} />
+              )}
             </div>
             <div className="pips" aria-label={`${view.movesLeft} moves left`}>
               {Array.from({ length: maxMoves }, (_, i) => <i key={i} className={i < view.movesLeft ? '' : 'used'} />)}
@@ -159,12 +162,37 @@ export function BattleScreen() {
   );
 }
 
+/** A status chip on your panel: hold (or tap) it to see what the status does. */
+function StatusChip({ id, text, value }: { id: string; text: string; value: number }) {
+  const [open, setOpen] = useState(false);
+  const def = content.statuses[id];
+  const press = useLongPress(() => setOpen(true), () => setOpen(true));
+  return (
+    <>
+      <span className={`chip status-chip s-${id}`} role="button" aria-label={`${def.name} ${value}: hold for details`} {...press}>{text}</span>
+      {open && (
+        <Modal onClose={() => setOpen(false)}>
+          <div className="row">
+            <Asset path={def.icon} alt={def.name} size={44} />
+            <div>
+              <h2>{def.name} <span className="dim" style={{ fontSize: 15 }}>{value}</span></h2>
+              <div>{def.description}</div>
+            </div>
+          </div>
+          <div className="actions"><button className="btn" onClick={() => setOpen(false)}>OK</button></div>
+        </Modal>
+      )}
+    </>
+  );
+}
+
 function placingText(p: Placement, n: number): string {
   const many = n > 1 ? `${n} × ` : '';
   switch (p.type) {
     case 'shape': return `${p.source}: ${many}${p.cells.length}-tile shape, ${p.damage} damage each`;
     case 'hit': return `${p.source}: ${n > 1 ? `${n} hits` : 'a hit'} of ${p.damage} damage`;
     case 'stone': return `${p.source}: ${n > 1 ? `${n} Stones` : 'a Stone'} (${p.damage} damage; a tile it breaks becomes a Stone)`;
+    case 'space': return `${p.source}: ${n > 1 ? `${n} hits` : 'a hit'} of ${p.damage} damage (a tile it breaks becomes Space)`;
     case 'line': return `${p.source}: ${p.damage} damage to ${p.length} in a line`;
   }
 }
@@ -208,8 +236,8 @@ function PlacingBanner({ pending, group, chosen, orientation, onOrientation, onC
   );
 }
 
-function BoardView({ view, battle, tile, selection, preview, stones, placing, highlight, hurt, onTap, onLong }: {
-  view: ViewSnapshot; battle: BattleState; tile: number; selection: Pos | null; preview: ReturnType<typeof previewPlacements> | null; stones: boolean;
+function BoardView({ view, battle, tile, selection, preview, ghost, placing, highlight, hurt, onTap, onLong }: {
+  view: ViewSnapshot; battle: BattleState; tile: number; selection: Pos | null; preview: ReturnType<typeof previewPlacements> | null; ghost: string | null;
   placing: boolean; highlight: Set<number>; hurt: Set<number>;
   onTap: (x: number, y: number) => void; onLong: (t: Tile) => void;
 }) {
@@ -223,7 +251,7 @@ function BoardView({ view, battle, tile, selection, preview, stones, placing, hi
         const sel = selection && selection.x === x && selection.y === y;
         return (
           <TileView key={t.uid} t={t} battle={battle} x={x} y={y} tile={tile} selected={!!sel}
-            incoming={preview?.damage.get(t.uid) ?? 0} breaks={!!preview?.deleted.has(t.uid)} toStone={stones && !!preview?.deleted.has(t.uid)}
+            incoming={preview?.damage.get(t.uid) ?? 0} breaks={!!preview?.deleted.has(t.uid)} ghost={preview?.deleted.has(t.uid) ? ghost : null}
             matched={highlight.has(t.uid)} hurt={hurt.has(t.uid)} onTap={() => onTap(x, y)} onLong={() => onLong(t)} />
         );
       })}
@@ -245,8 +273,8 @@ export function tileLook(t: Tile, battle: BattleState): { name: string; icon: st
   return { name: e.name, icon: e.icon, color: e.color, description: e.description };
 }
 
-function TileView({ t, battle, x, y, tile, selected, incoming, breaks, toStone, matched, hurt, onTap, onLong }: {
-  t: Tile; battle: BattleState; x: number; y: number; tile: number; selected: boolean; incoming: number; breaks: boolean; toStone: boolean;
+function TileView({ t, battle, x, y, tile, selected, incoming, breaks, ghost, matched, hurt, onTap, onLong }: {
+  t: Tile; battle: BattleState; x: number; y: number; tile: number; selected: boolean; incoming: number; breaks: boolean; ghost: string | null;
   matched: boolean; hurt: boolean; onTap: () => void; onLong: () => void;
 }) {
   const aimed = incoming > 0;
@@ -267,7 +295,7 @@ function TileView({ t, battle, x, y, tile, selected, incoming, breaks, toStone, 
         {t.kind === 'stone' && t.hp < t.maxHp && <span className="crack" />}
         {(enemy || (t.kind !== 'stone' && t.maxHp > 1)) && <span className="hp">{t.hp}</span>}
         {enemy && <span className="speed">{'↓'.repeat(enemy.speed)}</span>}
-        {toStone && <span className="stone-ghost" style={{ backgroundImage: `url(/assets/${STONE.icon})` }} />}
+        {ghost && <span className="stone-ghost" style={{ backgroundImage: `url(/assets/${ghost})` }} />}
         {breaks && <span className="breaks">✕</span>}
         {aimed && <span className="incoming">−{incoming}</span>}
       </div>

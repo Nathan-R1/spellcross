@@ -81,18 +81,25 @@ describe('tools', () => {
     expect(at(r.state, 4, 4)?.kind).toBe('stone'); // a junk tile → a Stone, nothing falls
   });
 
-  it('Prophecy: 1 hit per tile, then Foresight boosts later Truth tools', () => {
+  it('Prophecy: 1 hit per tile; a broken tile becomes Space; 1 Foresight per tile', () => {
     const s = makeBattle({ rows: base({ 7: 'RRsRsmsm' }) });
     let r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
     expect(r.state.pending).toHaveLength(3);
-    expect(r.state.pending.every((p) => p.type === 'hit' && p.damage === 1)).toBe(true);
-    expect(r.state.player.foresight).toBe(1);
-    for (const x of [5, 6, 7]) r = place(r.state, { x, y: 5 }, c);
-    expect(r.state.phase).toBe('player');
-    // The Word with Foresight 1: 2 damage per Stone and 3-HP Stones.
-    const w = makeBattle({ rows: base({ 7: 'WWsWsmsm' }), state: (x) => (x.player.foresight = 1) });
-    r = playerMove(w, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
-    expect(r.state.pending[0]).toMatchObject({ type: 'stone', damage: 2, stoneHp: 3 });
+    expect(r.state.pending.every((p) => p.type === 'space' && p.damage === 1)).toBe(true);
+    expect(r.state.player.foresight).toBe(3);
+    r = placeGroup(r.state, [{ x: 0, y: 1 }, { x: 4, y: 3 }, { x: 6, y: 3 }], c); // the Worry fell to (0,1)
+    expect(at(r.state, 0, 1)).toMatchObject({ kind: 'junk', id: 'space' }); // the Worry became Space
+    expect(r.state.outcome).toBe('victory');
+  });
+
+  it('Foresight: every 3 gives Truth tools +1 damage (and nothing to Stone HP)', () => {
+    const word = (f: number) => playerMove(makeBattle({ rows: base({ 7: 'WWsWsmsm' }), state: (x) => (x.player.foresight = f) }), { x: 2, y: 7 }, { x: 3, y: 7 }, c).state.pending[0];
+    expect(word(2)).toMatchObject({ type: 'stone', damage: 1, stoneHp: 2 });
+    expect(word(3)).toMatchObject({ type: 'stone', damage: 2, stoneHp: 2 });
+    expect(word(6)).toMatchObject({ type: 'stone', damage: 3, stoneHp: 2 });
+    // Prayer is Faith, not Truth: no bonus.
+    const prayer = playerMove(makeBattle({ rows: base({ 7: 'PPsPsmsm' }), state: (x) => (x.player.foresight = 6) }), { x: 2, y: 7 }, { x: 3, y: 7 }, c).state.pending[0];
+    expect(prayer).toMatchObject({ type: 'shape', damage: 1 });
   });
 
   it('Fasting gives Critical, which doubles the next tool set', () => {

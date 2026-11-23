@@ -10,6 +10,8 @@ export const config = {
   startingTools: ['fasting', 'prayer', 'thanksgiving', 'word', 'prophecy'],
   junk: ['time', 'space'],
   stoneHp: 2,
+  /** Foresight needed per +1 damage (and +1 Stone HP) on Truth tools. */
+  foresightPerBonus: 3,
   maxToolLevel: 5,
   roadBattleAt: [0.3, 0.7] as [number, number],
   fruitDrop: { normal: 0.25, elite: 1, boss: 0 },

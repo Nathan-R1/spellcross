@@ -21,7 +21,7 @@ them. Only those 3 are in the tile pool for that battle ([combat § 1](combat.md
 | **Prayer** | Faith | Gain one **damage shape**, the same shape as the set: 1 damage to every tile in it | Yes: the shape *is* the set |
 | **Thanksgiving** | Spirit | Gain **1 Block per tile** | Yes |
 | **The Word** | Truth | **1 Stone per tile**: each one is a 1-damage hit on any tile, which becomes a Stone if the hit deletes it | Yes |
-| **Prophecy** | Truth | **1 hit per tile**: 1 damage to any tile, placed one at a time. Then gain **Foresight 1** | Hits: yes. Foresight: no |
+| **Prophecy** | Truth | **Target 1 tile per tile matched** for 1 damage each; a tile it breaks **turns into Space**. Then gain **1 Foresight per tile** | Yes, both |
 
 ### Fasting
 
@@ -31,7 +31,7 @@ Match 3+ Fasting: gain **Critical**. The next tool set you complete is **doubled
   line of 6.
 - Fasting → The Word (3): **6** Stone hits.
 - Fasting → Thanksgiving (4): **8** Block.
-- Fasting → Prophecy (3): **6** hits and **Foresight 2**.
+- Fasting → Prophecy (3): **6** hits and **6 Foresight**.
 
 ### Prayer
 
@@ -58,12 +58,12 @@ Stones block Worries ([§ 3](#3-stone)).
 
 ### Prophecy
 
-Match 3+ Prophecy: you get **1 hit per tile**. Each one deals 1 damage to any tile, placed one at a time, and
-the same tile can be hit more than once. Then you gain **Foresight 1**. That's after the hits, so it boosts
-*later* sets, not this one.
+Match X Prophecy (3+): you target **X tiles** (one per tile matched), each taking **1 damage**. A tile that
+breaks **turns into a Space** junk tile in place, so nothing falls; a Worry broken this way is gone. Then you gain
+**X Foresight**. That's after the hits, so it boosts *later* sets, not this one.
 
-**Foresight** (stacks, whole battle): every **Truth** tool (the Word, Prophecy) deals **+1 damage per hit**,
-and the Word's Stones get **+1 HP**.
+**Foresight** (stacks, whole battle) counts at a third of its value: **every 3 Foresight** gives every **Truth**
+tool (the Word, Prophecy) **+1 damage per hit**. It doesn't change Stone HP.
 
 ### 1.2 Parked tools
 
@@ -119,7 +119,7 @@ are gone. The Hermit's Devoted virtue becomes a **Love** fruit.
 | Source | The Word only, never the tile pool |
 | Gravity | Falls like any tile |
 | Swappable | Yes |
-| HP | **2** (+1 per Patience on the Word, +1 per Foresight) |
+| HP | **2** (+1 per Patience on the Word) |
 | Matches | 3+ Stones clear, with no effect, whether damaged or not |
 | Vs enemy tiles | Each Worry step deals 1 damage. While the Stone survives, the Worry stays put. Once it's deleted, the Worry moves in |
 | Art (reused) | `spells/dud/rubble.png`. Damaged: the same art with a crack overlay |
@@ -157,4 +157,4 @@ Statuses clear after every battle.
 |---|---|---|
 | **Critical** | until used | The next tool set is doubled. Each set uses 1. Stacks as a count |
 | **Block** | until the start of your next turn | Absorbs incoming damage point for point |
-| **Foresight** | whole battle, stacks | Truth tools: +1 damage per hit, and the Word's Stones get +1 HP |
+| **Foresight** | whole battle, stacks | Every 3 gives Truth tools +1 damage per hit |

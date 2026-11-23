@@ -297,7 +297,8 @@ function applySet(ctx: Ctx, st: FoundSet, key: string) {
   const size = st.cells.length + st.bonus;
   const mult = p.critical > 0 ? 2 : 1;
   if (mult === 2) p.critical -= 1;
-  const truth = tool.pillar === 'truth' ? p.foresight : 0;
+  // Foresight counts at a third of its value: every 3 gives Truth tools +1 damage.
+  const truth = tool.pillar === 'truth' ? Math.floor(p.foresight / c.config.foresightPerBonus) : 0;
   const damage = 1 + f.faithfulness + truth;
   const texts: string[] = [];
   switch (tool.effect) {
@@ -317,16 +318,16 @@ function applySet(ctx: Ctx, st: FoundSet, key: string) {
       break;
     case 'stones': {
       const n = size * mult;
-      const stoneHp = c.config.stoneHp + f.patience + truth;
+      const stoneHp = c.config.stoneHp + f.patience;
       for (let i = 0; i < n; i++) s.pending.push({ type: 'stone', damage, stoneHp, source: tool.name });
       texts.push(`${n} Stones`);
       break;
     }
     case 'prophecy': {
       const n = size * mult;
-      for (let i = 0; i < n; i++) s.pending.push({ type: 'hit', damage, source: tool.name });
-      p.foresight += mult; // after the hits were sized, so it boosts later sets only
-      texts.push(`${n} hits, Foresight +${mult}`);
+      for (let i = 0; i < n; i++) s.pending.push({ type: 'space', damage, source: tool.name });
+      p.foresight += n; // after the hits were sized, so it boosts later sets only
+      texts.push(`${n} hits, Foresight +${n}`);
       break;
     }
     case 'none':
@@ -623,7 +624,7 @@ export function placementCells(s: BattleState, pl: Placement, at: Pos, orientati
   else if (pl.type === 'line') cells = Array.from({ length: pl.length }, (_, i) => (orientation === 'h' ? { x: at.x + i, y: at.y } : { x: at.x, y: at.y + i }));
   else cells = [at];
   if (!cells.every((p) => inBounds(b, p))) return null;
-  if (!allowEmpty && (pl.type === 'hit' || pl.type === 'stone') && !tileAt(b, at.x, at.y)) return null;
+  if (!allowEmpty && (pl.type === 'hit' || pl.type === 'stone' || pl.type === 'space') && !tileAt(b, at.x, at.y)) return null;
   return cells;
 }
 
@@ -644,13 +645,14 @@ function applyPlacement(ctx: Ctx, pl: Placement, at: Pos, orientation: 'h' | 'v'
   const s = ctx.s;
   const cells = placementCells(s, pl, at, orientation, true);
   if (!cells) return; // a later hit aimed at a tile an earlier one already deleted
-  if (pl.type === 'stone') {
+  if (pl.type === 'stone' || pl.type === 'space') {
     if (!tileAt(s.board, at.x, at.y)) return;
     const gone = damageAt(ctx, cells, pl.damage);
     if (gone.length) {
-      const st = stoneTile(ctx, pl.stoneHp);
-      s.board.cells[idx(s.board, at.x, at.y)] = st;
-      emit(ctx, { type: 'stone', uid: st.uid });
+      // A transformation: the broken tile is replaced in place, so nothing falls.
+      const t: Tile = pl.type === 'stone' ? stoneTile(ctx, pl.stoneHp) : { uid: s.nextUid++, kind: 'junk', id: 'space', hp: 1, maxHp: 1 };
+      s.board.cells[idx(s.board, at.x, at.y)] = t;
+      if (pl.type === 'stone') emit(ctx, { type: 'stone', uid: t.uid });
     }
   } else {
     damageAt(ctx, cells, pl.damage);
