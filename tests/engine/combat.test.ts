@@ -1,7 +1,7 @@
 // The combat rules (docs/combat.md, docs/tools.md, docs/enemies.md) on hand-drawn boards.
 
 import { content } from '../../src/content';
-import { createBattle, endTurn, enemyToCome, findSets, pendingGroupSize, place, placeGroup, playerMove, previewPlacements, startingGrid, upcomingGrid, useAbility } from '../../src/engine/combat';
+import { createBattle, endTurn, enemyTileSpeed, enemyToCome, findSets, pendingGroupSize, place, placeGroup, playerMove, previewPlacements, startingGrid, upcomingGrid, useAbility } from '../../src/engine/combat';
 import { createPlayer } from '../../src/engine/run';
 import { at, F1, F2, makeBattle } from '../helpers';
 import { tc } from '../helpers';
@@ -321,5 +321,76 @@ describe('Greed and Financial Stress', () => {
     expect(at(r.state, 4, 6)?.id).toBe('greed');
     for (const x of [3, 5]) expect(['mud', 'space']).toContain(at(r.state, x, 6)?.id); // the junk in play (test pool: Mud, Space)
     expect(r.events.some((e) => e.event.type === 'junked')).toBe(true);
+  });
+});
+
+describe('Depression and All Quiet', () => {
+  it('All Quiet: a mirrored Depression zigzag on the top 4 rows, Worry at the top of the middle columns, 14 more Worries to come', () => {
+    const p = createPlayer(content);
+    const { state } = createBattle({ player: p, enemyId: 'all_quiet', loadout: ['t1', 't2', 't3'], seed: 7 }, content);
+    const kind = (id: string) => state.board.cells.map((t, i) => (t?.id === id ? i : -1)).filter((i) => i >= 0);
+    expect(kind('depression')).toEqual([0, 7, 9, 14, 16, 23, 25, 30]); // (0,0) (7,0) (1,1) (6,1) (0,2) (7,2) (1,3) (6,3)
+    expect(kind('worry')).toEqual([3, 4]);
+    expect(enemyToCome(state, content)).toBe(14);
+    expect(content.enemies.all_quiet.tier).toBe('elite');
+  });
+
+  it("Depression doesn't move; at the end of the enemy turn its tool and junk neighbours become Depression, Stones and enemy tiles don't", () => {
+    const s = makeBattle({ rows: base({ 4: 'msmsOsms', 5: 'smsTDism', 6: 'msmsWsms', 7: 'smsXsmsm' }) });
+    const r = endTurn(s, c);
+    const d = at(r.state, 4, 5);
+    expect(d?.id).toBe('depression');
+    expect(d?.hp).toBe(3);
+    expect(at(r.state, 4, 4)?.kind).toBe('stone');
+    for (const [x, y] of [[3, 5], [5, 5], [4, 6]]) expect(at(r.state, x, y)?.id).toBe('depression');
+    expect(at(r.state, 4, 6)?.hp).toBe(3);
+    expect(at(r.state, 2, 5)?.id).toBe('space'); // one step per turn: new Depression doesn't spread until next turn
+    expect(r.events.some((e) => e.event.type === 'spread')).toBe(true);
+  });
+
+  it('Depression on the bottom row hits the player for 1 each enemy turn, and Block absorbs it', () => {
+    const s = makeBattle({ rows: base({ 7: 'smsmDmsm' }) });
+    const r = endTurn(s, c);
+    expect(r.state.player.hp).toBe(s.player.hp - 1);
+    expect(at(r.state, 4, 7)?.id).toBe('depression'); // it stays put
+    s.player.block = 1;
+    expect(endTurn(s, c).state.player.hp).toBe(s.player.hp);
+  });
+});
+
+describe('per-fight tile speed', () => {
+  it('Hard Choices: Worries take 2 steps per enemy turn; other fights keep speed 1', () => {
+    expect(enemyTileSpeed(content, 'hard_choices', 'worry')).toBe(2);
+    expect(enemyTileSpeed(content, 'financial_stress', 'worry')).toBe(1);
+    const s = makeBattle({ rows: base({ 1: 'sXsmsmsm' }) });
+    const hc = endTurn(s, content).state; // real content: the Hard Choices override applies
+    expect(hc.board.cells.findIndex((t, i) => t?.id === 'worry' && i % 8 === 1)).toBe(3 * 8 + 1); // y=1 → y=3
+  });
+});
+
+describe('refill damping', () => {
+  const withP = (p: number) => ({ ...c, config: { ...c.config, refillNoMatchChance: p } });
+  const matchedWaves = (r: { events: { event: { type: string } }[] }) => r.events.filter((e) => e.event.type === 'matched').length;
+  // Swapping (6,0) and (7,0) makes Fasting ×3 on the top row; three new tiles drop in from Mud, Space and Time.
+  const topRowSet = (seed: number) => makeBattle({
+    rows: base({ 0: 'XsmsFFsF' }),
+    state: (s) => { s.rng = seed; s.pool = ['mud', 'space', 'time'].map((id) => ({ kind: 'junk' as const, id, weight: 1 })); },
+  });
+
+  it('at 1, new tiles from above the board never complete a set', () => {
+    for (let seed = 1; seed <= 30; seed++) expect(matchedWaves(playerMove(topRowSet(seed), { x: 6, y: 0 }, { x: 7, y: 0 }, withP(1)))).toBe(1);
+  });
+
+  it('at 0, they sometimes do (the sanity check for the test above)', () => {
+    const waves = Array.from({ length: 30 }, (_, i) => matchedWaves(playerMove(topRowSet(i + 1), { x: 6, y: 0 }, { x: 7, y: 0 }, withP(0))));
+    expect(waves.some((n) => n > 1)).toBe(true);
+  });
+
+  it('at 1, tiles already on the board that fall into a set still go off (strategic cascades)', () => {
+    // Swap (0,4) and (0,5): Fasting ×3 down column 0. The Stone above falls to (0,7) and lines up with two more.
+    const s = makeBattle({ rows: base({ 4: 'Fsmsmsms', 5: 'Omsmsmsm', 6: 'Fsmsmsms', 7: 'FOOsmsms' }) });
+    const r = playerMove(s, { x: 0, y: 4 }, { x: 0, y: 5 }, withP(1));
+    expect(matchedWaves(r)).toBeGreaterThanOrEqual(2);
+    expect(r.state.board.cells.filter((t) => t?.kind === 'stone')).toHaveLength(0);
   });
 });

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- All Quiet: an empty chair by a dark window, rain outside -->
+  <rect width="128" height="128" rx="10" fill="#1c2230"/>
+  <!-- window -->
+  <rect x="62" y="16" width="50" height="58" rx="3" fill="#2d3a4f" stroke="#0e121a" stroke-width="3"/>
+  <path d="M87 16v58M62 45h50" stroke="#0e121a" stroke-width="3"/>
+  <g stroke="#7d8ca3" stroke-width="1.5" stroke-linecap="round" opacity=".7">
+    <path d="M70 22l-3 8M80 28l-3 8M96 22l-3 8M106 30l-3 8M72 52l-3 8M84 56l-3 8M98 50l-3 8M107 58l-3 8"/>
+  </g>
+  <!-- floor -->
+  <path d="M0 100 H128 V128 H0Z" fill="#141923"/>
+  <!-- empty chair -->
+  <g fill="#4a3a2e" stroke="#1a130d" stroke-width="2" stroke-linejoin="round">
+    <rect x="22" y="44" width="8" height="70" rx="2"/>
+    <rect x="22" y="78" width="36" height="8" rx="2"/>
+    <rect x="50" y="84" width="6" height="30" rx="2"/>
+    <rect x="24" y="48" width="4" height="30" fill="#3a2d24"/>
+  </g>
+  <!-- low grey cloud -->
+  <path d="M20 30 q6-10 16-6 q6-8 14 0 q10-2 10 8 q-2 6-10 6 h-26 q-8 0-4-8z" fill="#5a6477" opacity=".9"/>
+</svg>

@@ -45,6 +45,19 @@ the board with less HP.
 | End of the enemy turn | After every enemy tile has moved, each **tool tile** orthogonally next to a Greed turns into a **random junk tile** from the junk in play (Time or Space). Junk, Stones and enemy tiles are untouched |
 | Art | placeholder: the gold coin icon (`icons/gold.png`) |
 
+### Depression
+
+| | |
+|---|---|
+| HP | 3 |
+| Speed | 0: it never moves (but falls with gravity like any tile) |
+| On the bottom row | Hits the player for 1 (once per enemy turn) |
+| End of the enemy turn | Every **tool or junk tile** orthogonally next to a Depression turns into a **Depression** (3 HP). Stones and enemy tiles are untouched. A tile that changed this turn doesn't spread until next turn |
+| Art | placeholder: `spells/dud/slime.png` |
+
+A fight can override a tile's speed with `tileSpeed` (e.g. Hard Choices' Worries take 2 steps). The board and
+the tile details show the speed for the current fight.
+
 ## 2. The generator
 
 An enemy's main mechanic is its **generator**: the stack of rows the board is built from and refills from.
@@ -87,6 +100,7 @@ Actions repeat in a fixed cycle and must be visible ahead of time ("Next: …" o
 |---|---|
 | Generator | **Rows 4, 5 and 6** (counting from the bottom of the board) are Worry rows; everything else is normal |
 | On the board at the start | All 24 Worries: rows 4–6 across the middle of the board |
+| Speed | **Worries here take 2 steps** per enemy turn (`tileSpeed: { worry: 2 }`) |
 | Total | **3 Worry rows = 24 Worries**, all on the board from the start; nothing more comes |
 | Actions | None |
 | Reward *(tune)* | 20–30 Talents, 25% chance of a fruit (normal tier) |
@@ -105,6 +119,21 @@ You win the moment no Worries are on the board, even if more are still to come
 | Actions | None |
 | Reward *(tune)* | 25–40 Talents, 25% chance of a fruit |
 
+### All Quiet (elite)
+
+| | |
+|---|---|
+| Generator | Rows 1–4 normal. Rows **5–8**: a **Depression zigzag** in both edge pairs of columns, mirrored: from the top, (0,0) and (7,0), (1,1) and (6,1), (0,2) and (7,2), (1,3) and (6,3). Rows **8–15**: **Worry in the middle two columns** (x = 3 and 4) |
+| On the board at the start | 8 Depressions and 2 Worries (the top of each middle column) |
+| Total | **24**: 16 Worries (2 on the board, 14 to come) and 8 Depressions. Depression spreads, so more appear during the fight |
+| Actions | None |
+| Reward *(tune)* | 40–60 Talents, a fruit (elite tier) |
+
+**Under review:** Depression covers the board in about 3 turns unless it's broken on turns 1–2, which locks the
+board (no sets can form). The bot wins under 10% of the time. Options on the table: spread to one neighbour per turn,
+spread every 2nd turn, cap the count, or give spread Depression 1 HP. See
+[combat-tuning.md § 5](combat-tuning.md#5-measurements).
+
 ## 5. Data files
 
 ```ts
@@ -116,7 +145,7 @@ interface EnemyTileDef {
   icon: string;            // asset path
   hp: number;
   speed: number;           // steps per enemy turn (Greed: 2)
-  onEnemyTurnEnd?: 'junkAdjacentTools'; // Greed
+  onEnemyTurnEnd?: 'junkAdjacentTools' | 'spreadToAdjacent'; // Greed, Depression
   damage: number;          // damage when it hits from the bottom row (Worry: 1)
 }
 
@@ -151,3 +180,5 @@ interface EnemyDef {
 - Hard Choices portrait: `portraits/hard_choices.svg` (a crossroads signpost).
 - Financial Stress portrait: `portraits/financial_stress.svg` (a pile of overdue bills).
 - Greed tile art (placeholder: the gold coin icon).
+- All Quiet portrait: `portraits/all_quiet.svg` (an empty chair by a rainy window).
+- Depression tile art (placeholder: `spells/dud/slime.png`).

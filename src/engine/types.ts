@@ -89,7 +89,7 @@ export interface EnemyTileDef {
   /** Damage dealt to the player when it steps from the bottom row. */
   damage: number;
   /** Effect at the end of each enemy turn, after every enemy tile has moved. */
-  onEnemyTurnEnd?: 'junkAdjacentTools';
+  onEnemyTurnEnd?: 'junkAdjacentTools' | 'spreadToAdjacent';
 }
 
 /**
@@ -107,6 +107,8 @@ export interface EnemyDef {
   portrait?: string;
   /** From the bottom row of the board upwards; normal forever after the end. */
   generator: GeneratedRow[];
+  /** Speed overrides for this fight's enemy tiles (steps per enemy turn), e.g. faster Worries. */
+  tileSpeed?: Partial<Record<string, number>>;
   talents: [number, number];
 }
 
@@ -250,6 +252,8 @@ export type BattleEvent =
   | { type: 'playerHit'; amount: number; blocked: number }
   /** Greed turned these tool tiles into junk. */
   | { type: 'junked'; uids: number[] }
+  /** Depression turned these tiles into Depression. */
+  | { type: 'spread'; uids: number[] }
   | { type: 'ability'; id: AbilityId }
   | { type: 'turnStart'; round: number }
   | { type: 'battleEnd'; outcome: 'victory' | 'defeat' };

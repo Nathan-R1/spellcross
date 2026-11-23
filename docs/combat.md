@@ -5,6 +5,7 @@ old "1–4 enemies with intent cycles" design (D14). Where [spec.md](spec.md) an
 combat, this doc wins.
 
 - Enemy and enemy-tile content: [enemies.md](enemies.md).
+- Tuning goals (set density, cascades, damage) and sim results: [combat-tuning.md](combat-tuning.md).
 - Tools, junk tiles and statuses: [tools.md](tools.md).
 - Design decisions for this rework are logged in
   [open-questions.md § Combat rework](open-questions.md#combat-rework-2026-11).
@@ -135,6 +136,11 @@ Junk and Stone sets don't use up Critical.
 After the sets resolve, gravity drops every tile and the top refills from the enemy's generator (§1). Then
 any placements are made, the board falls again, and any new sets resolve the same way. This repeats until the
 board is stable.
+
+**Refill damping** *(tune)*: a new tile dropping in from above the board that would complete a set is redrawn
+(chance `refillNoMatchChance`, currently **1**: always). Tiles already on the board are never changed, so
+cascades you set up on purpose (clear a set so the tiles above fall into another) still go off. Only the sets
+you couldn't see coming are removed. Goals and measurements: [combat-tuning.md](combat-tuning.md).
 
 Sets that form **during the enemy turn**, from gravity after a Worry moves, also resolve, and their
 placements are asked for then. You get the effect, and it costs no move.

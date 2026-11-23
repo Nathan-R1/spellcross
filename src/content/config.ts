@@ -5,6 +5,11 @@ export const config = {
   board: { width: 8, height: 8 },
   /** Tile pool shares (combat §1): the chosen tools vs the junk tiles. */
   pool: { tools: 0.7, junk: 0.3, weightPerLove: 0.2 },
+  /**
+   * Chance that a new tile from above the board is redrawn when it would complete a set (combat § 3.4). Cuts luck
+   * cascades; sets made only of tiles already on the board always go off. Goals: docs/combat-tuning.md.
+   */
+  refillNoMatchChance: 1 as number,
   /** Tools taken into each battle (combat §2.1). */
   loadoutSize: 3,
   startingTools: ['fasting', 'prayer', 'thanksgiving', 'word', 'prophecy'],

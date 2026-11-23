@@ -59,6 +59,10 @@ function posOf(b: Board, uid: number): Pos | null {
   return i < 0 ? null : { x: i % b.width, y: Math.floor(i / b.width) };
 }
 
+/** Steps per enemy turn for an enemy tile in this fight: the fight's override, else the tile's own speed. */
+export const enemyTileSpeed = (c: Content, enemyId: string, tileId: string): number =>
+  c.enemies[enemyId]?.tileSpeed?.[tileId] ?? c.enemyTiles[tileId].speed;
+
 const enemyCount = (b: Board) => b.cells.filter((t) => t?.kind === 'enemy').length;
 
 export function enemyToCome(s: BattleState, c: Content): number {
@@ -387,6 +391,7 @@ function checkVictory(ctx: Ctx): boolean {
 function gravity(ctx: Ctx) {
   const b = ctx.s.board;
   let changed = false;
+  const fresh: Pos[] = [];
   for (let x = 0; x < b.width; x++) {
     const col: Tile[] = [];
     for (let y = 0; y < b.height; y++) {
@@ -398,9 +403,45 @@ function gravity(ctx: Ctx) {
     changed = true;
     for (let y = b.height - 1, i = col.length - 1; y >= empty; y--, i--) b.cells[idx(b, x, y)] = col[i];
     // The lowest gap gets the next generated row for this column, the one above it the row after, …
-    for (let y = empty - 1; y >= 0; y--) b.cells[idx(b, x, y)] = generatedTile(ctx, ctx.s.genPos[x]++, x);
+    for (let y = empty - 1; y >= 0; y--) {
+      const t = generatedTile(ctx, ctx.s.genPos[x]++, x);
+      b.cells[idx(b, x, y)] = t;
+      if (t.kind !== 'enemy') fresh.push({ x, y });
+    }
   }
+  damp(ctx, fresh);
   if (changed) emit(ctx, { type: 'collapsed' });
+}
+
+/** Is the tile at (x, y) part of a line of 3+ in its row or column? */
+function inLine(b: Board, x: number, y: number): boolean {
+  const k = matchKey(tileAt(b, x, y));
+  if (!k) return false;
+  const run = (dx: number, dy: number) => {
+    let n = 0;
+    for (let i = 1; matchKey(tileAt(b, x + dx * i, y + dy * i)) === k; i++) n++;
+    return n;
+  };
+  return run(-1, 0) + run(1, 0) >= 2 || run(0, -1) + run(0, 1) >= 2;
+}
+
+/**
+ * Refill damping (combat § 3.4): each new tile that would complete a set is, with chance refillNoMatchChance,
+ * redrawn until it doesn't. Tiles already on the board are never changed.
+ */
+function damp(ctx: Ctx, fresh: Pos[]) {
+  const p = ctx.c.config.refillNoMatchChance;
+  if (p <= 0) return;
+  const b = ctx.s.board;
+  for (const { x, y } of fresh) {
+    if (!inLine(b, x, y) || ctx.rng.next() >= p) continue;
+    const i = idx(b, x, y);
+    for (let tries = 0; tries < 20 && inLine(b, x, y); tries++) {
+      const t = poolTile(ctx);
+      ctx.s.nextUid -= 1; // the redrawn tile keeps the original's uid
+      b.cells[i] = { ...t, uid: b.cells[i]!.uid };
+    }
+  }
 }
 
 /**
@@ -502,7 +543,14 @@ function activateEnemies(ctx: Ctx) {
     if (!p) continue;
     const t = tileAt(b, p.x, p.y)!;
     const def = c.enemyTiles[t.id];
-    for (let step = 0; step < def.speed && p; step++) {
+    const speed = enemyTileSpeed(c, s.enemyId, t.id);
+    // A tile that doesn't move (Depression) still hits you from the bottom row.
+    if (speed === 0 && p.y === b.height - 1) {
+      hitPlayer(ctx, def.damage);
+      if (s.outcome) return;
+      continue;
+    }
+    for (let step = 0; step < speed && p; step++) {
       if (p.y === b.height - 1) {
         hitPlayer(ctx, def.damage);
         if (s.outcome) return;
@@ -530,30 +578,47 @@ function activateEnemies(ctx: Ctx) {
   enemyTurnEndEffects(ctx);
 }
 
-/** Greed: every tool tile orthogonally next to it turns into a random junk tile (from the junk in play). */
+/**
+ * End-of-enemy-turn effects, for enemy tiles on the board. Targets are taken from the board as it is before any
+ * effect applies, so a tile changed this turn doesn't spread further until next turn.
+ * - Greed: every tool tile orthogonally next to it turns into a random junk tile (from the junk in play).
+ * - Depression: every tool or junk tile orthogonally next to it turns into Depression.
+ */
 function enemyTurnEndEffects(ctx: Ctx) {
   const { s, c } = ctx;
   const b = s.board;
-  const junkIds = s.pool.filter((e) => e.kind === 'junk').map((e) => e.id);
-  if (junkIds.length === 0) return;
-  const targets = new Set<number>();
+  const junkTargets = new Set<number>();
+  const spreadTargets = new Set<number>();
   for (let y = 0; y < b.height; y++) for (let x = 0; x < b.width; x++) {
     const t = tileAt(b, x, y);
-    if (t?.kind !== 'enemy' || c.enemyTiles[t.id].onEnemyTurnEnd !== 'junkAdjacentTools') continue;
+    const effect = t?.kind === 'enemy' ? c.enemyTiles[t.id].onEnemyTurnEnd : undefined;
+    if (!effect) continue;
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const n = tileAt(b, x + dx, y + dy);
-      if (n?.kind === 'tool') targets.add(idx(b, x + dx, y + dy));
+      if (effect === 'junkAdjacentTools' && n?.kind === 'tool') junkTargets.add(idx(b, x + dx, y + dy));
+      if (effect === 'spreadToAdjacent' && (n?.kind === 'tool' || n?.kind === 'junk')) spreadTargets.add(idx(b, x + dx, y + dy));
     }
   }
-  if (targets.size === 0) return;
-  const uids: number[] = [];
-  for (const i of [...targets].sort((a, z) => a - z)) {
-    const id = ctx.rng.pick(junkIds);
-    const t: Tile = { uid: s.nextUid++, kind: 'junk', id, hp: 1, maxHp: 1 };
-    b.cells[i] = t;
-    uids.push(t.uid);
+  const junkIds = s.pool.filter((e) => e.kind === 'junk').map((e) => e.id);
+  if (junkTargets.size && junkIds.length) {
+    const uids: number[] = [];
+    for (const i of [...junkTargets].sort((a, z) => a - z)) {
+      if (spreadTargets.has(i)) continue; // Depression wins
+      const t: Tile = { uid: s.nextUid++, kind: 'junk', id: ctx.rng.pick(junkIds), hp: 1, maxHp: 1 };
+      b.cells[i] = t;
+      uids.push(t.uid);
+    }
+    if (uids.length) emit(ctx, { type: 'junked', uids });
   }
-  emit(ctx, { type: 'junked', uids });
+  if (spreadTargets.size) {
+    const uids: number[] = [];
+    for (const i of [...spreadTargets].sort((a, z) => a - z)) {
+      const t = enemyTile(ctx, 'depression');
+      b.cells[i] = t;
+      uids.push(t.uid);
+    }
+    emit(ctx, { type: 'spread', uids });
+  }
 }
 
 function hitPlayer(ctx: Ctx, amount: number) {

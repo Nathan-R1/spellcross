@@ -12,18 +12,21 @@ import type { BattleState, Player, Tile } from '../src/engine/types';
  */
 export const tc: Content = {
   ...content,
+  // makeBattle boards use Hard Choices; keep its Worries at their base speed so hand-drawn boards stay exact.
+  enemies: { ...content.enemies, hard_choices: { ...content.enemies.hard_choices, tileSpeed: undefined } },
   junk: { ...content.junk, mud: { id: 'mud', name: 'Mud', description: 'test filler', icon: '', color: '#555', hits: 0 } },
 };
 
 /**
  * Board letters. Tools use createPlayer()'s uids in starting order:
  *   F Fasting (t1)  P Prayer (t2)  T Thanksgiving (t3)  W The Word (t4)  R Prophecy (t5)
- *   i Time  s Space  m Mud  O Stone  X Worry  G Greed (3 HP)
+ *   i Time  s Space  m Mud  O Stone  X Worry  G Greed (3 HP)  D Depression (3 HP)
  */
 const LETTER: Record<string, { kind: Tile['kind']; id: string; hp?: number }> = {
   F: { kind: 'tool', id: 't1' }, P: { kind: 'tool', id: 't2' }, T: { kind: 'tool', id: 't3' }, W: { kind: 'tool', id: 't4' }, R: { kind: 'tool', id: 't5' },
   i: { kind: 'junk', id: 'time' }, s: { kind: 'junk', id: 'space' }, m: { kind: 'junk', id: 'mud' },
   O: { kind: 'stone', id: 'stone', hp: 2 }, X: { kind: 'enemy', id: 'worry' }, G: { kind: 'enemy', id: 'greed', hp: 3 },
+  D: { kind: 'enemy', id: 'depression', hp: 3 },
 };
 
 /** Neutral filler rows: no two equal neighbours, so nothing ever lines up with them. */

@@ -5,7 +5,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { content } from '../../content';
 import { genCell } from '../../content/enemies';
 import { junk as JUNK, STONE } from '../../content/tools';
-import { pendingGroupSize, placementCells, previewPlacements, snapshot, upcomingGrid } from '../../engine/combat';
+import { enemyTileSpeed, pendingGroupSize, placementCells, previewPlacements, snapshot, upcomingGrid } from '../../engine/combat';
 import type { BattleState, Placement, Pos, Tile, TimedEvent, ViewSnapshot } from '../../engine/types';
 import { activeBattle, useStore } from '../../state/store';
 import { AbilityBar, Asset, HpBar, Modal, TopBar, useLongPress } from '../components/common';
@@ -13,7 +13,7 @@ import { PatternGrid } from '../components/EnemyPattern';
 
 const DURATION: Record<TimedEvent['event']['type'], number> = {
   swapped: 200, matched: 280, effect: 420, damaged: 260, stone: 220, collapsed: 260, shining: 320, enemyStep: 160,
-  playerHit: 320, held: 220, junked: 400, ability: 200, turnStart: 160, battleEnd: 700,
+  playerHit: 320, held: 220, junked: 400, spread: 400, ability: 200, turnStart: 160, battleEnd: 700,
 };
 
 interface Floater { id: number; text: string; cls: string }
@@ -98,7 +98,7 @@ export function BattleScreen() {
     if (targets.length === group) confirmPlacement(targets);
   };
 
-  const highlight = new Set<number>(current?.type === 'matched' || current?.type === 'shining' || current?.type === 'junked' ? current.uids : []);
+  const highlight = new Set<number>(current?.type === 'matched' || current?.type === 'shining' || current?.type === 'junked' || current?.type === 'spread' ? current.uids : []);
   const hurt = new Set<number>(current?.type === 'damaged' ? current.uids : []);
   const held = current?.type === 'held' ? current.uid : null;
   const [info, setInfo] = useState<Tile | null>(null);
@@ -295,7 +295,7 @@ function TileView({ t, battle, x, y, tile, selected, incoming, breaks, ghost, ma
         {shining && <span className="shine" />}
         {t.kind === 'stone' && t.hp < t.maxHp && <span className="crack" />}
         {(enemy || (t.kind !== 'stone' && t.maxHp > 1)) && <span className="hp">{t.hp}</span>}
-        {enemy && <span className="speed">{'↓'.repeat(enemy.speed)}</span>}
+        {enemy && <span className="speed">{'↓'.repeat(enemyTileSpeed(content, battle.enemyId, t.id))}</span>}
         {ghost && <span className="stone-ghost" style={{ backgroundImage: `url(/assets/${ghost})` }} />}
         {breaks && <span className="breaks">✕</span>}
         {aimed && <span className="incoming">−{incoming}</span>}
@@ -365,7 +365,7 @@ export function EnemyInfo({ enemyId, view, onClose }: { enemyId: string; view: V
         </div>
       </div>
       <div className="actions"><button className="btn" onClick={onClose}>OK</button></div>
-      {tileInfo && <EnemyTileInfo id={tileInfo} onClose={() => setTileInfo(null)} />}
+      {tileInfo && <EnemyTileInfo id={tileInfo} enemyId={enemyId} onClose={() => setTileInfo(null)} />}
     </Modal>
   );
 }
@@ -384,14 +384,14 @@ function EnemyTileCount({ id, left, total, onInfo }: { id: string; left: number;
 }
 
 /** The same details as holding that tile on the board. */
-function EnemyTileInfo({ id, onClose }: { id: string; onClose: () => void }) {
+function EnemyTileInfo({ id, enemyId, onClose }: { id: string; enemyId: string; onClose: () => void }) {
   const t = content.enemyTiles[id];
   return (
     <Modal onClose={onClose}>
       <div className="row">
         <span className="tile-icon" style={{ background: t.color }}><Asset path={t.icon} alt={t.name} size={44} color="transparent" /></span>
         <div>
-          <h2>{t.name} <span className="dim" style={{ fontSize: 14 }}>HP {t.hp} · speed {'↓'.repeat(t.speed)}</span></h2>
+          <h2>{t.name} <span className="dim" style={{ fontSize: 14 }}>HP {t.hp} · speed {'↓'.repeat(enemyTileSpeed(content, enemyId, id))}</span></h2>
           <div>{t.description}</div>
         </div>
       </div>

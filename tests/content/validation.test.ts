@@ -22,6 +22,7 @@ describe('content validation', () => {
     for (const e of Object.values(c.enemies)) expect(e.description).toContain(String(generatorEnemyTiles(e, c.config.board.width)));
     expect(generatorEnemyTiles(c.enemies.hard_choices)).toBe(24);
     expect(generatorEnemyTiles(c.enemies.financial_stress)).toBe(32);
+    expect(generatorEnemyTiles(c.enemies.all_quiet)).toBe(24);
   });
 
   it('starting tools exist and are not parked; there are 9 fruit', () => {
