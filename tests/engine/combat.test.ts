@@ -270,7 +270,8 @@ describe('Greed and Financial Stress', () => {
     expect(enemyAt).toEqual([0, 7, 8, 15]); // (0,0) (7,0) (0,1) (7,1): rows 8 and 7 from the bottom
     expect(enemyToCome(state, content)).toBe(28);
     const next = upcomingGrid(content, 'financial_stress', Array(8).fill(8));
-    expect(next[7]).toEqual(['worry', 'greed', 'greed', 'greed', 'greed', 'greed', 'greed', 'worry']); // row 9, next in
+    expect(next[7]).toEqual(['worry', null, 'greed', 'greed', 'greed', 'greed', null, 'worry']); // row 9, next in
+    expect(next.slice(5).flat().filter((t) => t === 'greed')).toHaveLength(12); // rows 9–11: a 4×3 block
   });
 
   it('Greed has 3 HP and takes 2 steps down per enemy turn', () => {

@@ -99,7 +99,7 @@ You win the moment no Worries are on the board, even if more are still to come
 
 | | |
 |---|---|
-| Generator | Rows 1–6 normal. Rows **7–16**: **Worry in the far-left and far-right columns**. Rows **9 and 10** (just above the board): **Greed** in the six middle columns. Then normal forever |
+| Generator | Rows 1–6 normal. Rows **7–16**: **Worry in the far-left and far-right columns**. Rows **9–11** (just above the board): **Greed** in the middle four columns, a **4×3 block**. Then normal forever |
 | On the board at the start | 4 Worries: the edge columns of rows 7 and 8 |
 | Total | **32**: 20 Worries (4 on the board, 16 to come) and 12 Greed (all to come) |
 | Actions | None |
