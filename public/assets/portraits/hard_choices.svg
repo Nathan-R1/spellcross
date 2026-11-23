@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!-- Hard Choices: a crossroads signpost where the path forks -->
+  <rect width="128" height="128" rx="10" fill="#2a2350"/>
+  <circle cx="98" cy="26" r="9" fill="#f6efd0" opacity=".85"/>
+  <path d="M0 92 Q64 80 128 92 V128 H0Z" fill="#2c4d32"/>
+  <!-- the forking path -->
+  <path d="M52 128 C56 112 60 104 64 98 C68 104 72 112 76 128Z" fill="#8a6a44"/>
+  <path d="M64 98 C52 92 30 90 6 92 L6 98 C30 96 50 98 60 102Z" fill="#8a6a44"/>
+  <path d="M64 98 C76 92 98 90 122 92 L122 98 C98 96 78 98 68 102Z" fill="#8a6a44"/>
+  <!-- post -->
+  <rect x="60" y="26" width="8" height="74" rx="2" fill="#5c3a18" stroke="#2b1b0e" stroke-width="1.5"/>
+  <!-- left sign -->
+  <path d="M60 36 H22 L12 45 L22 54 H60Z" fill="#c9a24a" stroke="#4a2f17" stroke-width="2" stroke-linejoin="round"/>
+  <!-- right sign -->
+  <path d="M68 58 H106 L116 67 L106 76 H68Z" fill="#c9a24a" stroke="#4a2f17" stroke-width="2" stroke-linejoin="round"/>
+  <g stroke="#4a2f17" stroke-width="2" stroke-linecap="round"><path d="M26 45h28M74 67h26"/></g>
+  <!-- question mark: which way? -->
+  <text x="64" y="22" text-anchor="middle" font-family="Georgia, serif" font-size="20" font-weight="bold" fill="#f2c14e" stroke="#000" stroke-width=".8">?</text>
+</svg>

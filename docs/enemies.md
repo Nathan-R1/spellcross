@@ -148,5 +148,6 @@ interface EnemyDef {
 ## 6. Assets needed
 
 - Worry tile art (placeholder until drawn).
-- Hard Choices portrait (placeholder until drawn).
-- Greed tile art and Financial Stress portrait (placeholders: the gold coin and the old bear portrait).
+- Hard Choices portrait: `portraits/hard_choices.svg` (a crossroads signpost).
+- Financial Stress portrait: `portraits/financial_stress.svg` (a pile of overdue bills).
+- Greed tile art (placeholder: the gold coin icon).
