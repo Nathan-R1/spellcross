@@ -401,17 +401,20 @@ function gravity(ctx: Ctx) {
   if (changed) emit(ctx, { type: 'collapsed' });
 }
 
-/** Resolve sets until the board is stable, or a placement is needed, or the battle is over. */
+/**
+ * Resolve sets until the board is stable, or a placement is needed, or the battle is over. The board always
+ * falls and refills before the player places anything, so there are no holes to aim at (combat § 5).
+ */
 function settle(ctx: Ctx): 'stable' | 'waiting' | 'over' {
   const { s } = ctx;
   for (let guard = 0; guard < 500; guard++) {
     if (s.outcome) return 'over';
+    if (s.board.cells.some((t) => t === null)) gravity(ctx);
+    if (checkVictory(ctx)) return 'over';
     if (s.pending.length > 0) {
       s.phase = 'placing';
       return 'waiting';
     }
-    if (s.board.cells.some((t) => t === null)) gravity(ctx);
-    if (checkVictory(ctx)) return 'over';
     const sets = findSets(s);
     if (sets.length === 0) return 'stable';
     resolveSets(ctx, sets);
@@ -585,27 +588,36 @@ export function useAbility(state: BattleState, index: number, c: Content): Battl
 }
 
 /** The cells a placement would cover at `at` (its top-left for shapes and lines), or null if it doesn't fit. */
-export function placementCells(s: BattleState, pl: Placement, at: Pos, orientation: 'h' | 'v' = 'h'): Pos[] | null {
+export function placementCells(s: BattleState, pl: Placement, at: Pos, orientation: 'h' | 'v' = 'h', allowEmpty = false): Pos[] | null {
   const b = s.board;
   let cells: Pos[];
   if (pl.type === 'shape') cells = pl.cells.map((o) => ({ x: at.x + o.x, y: at.y + o.y }));
   else if (pl.type === 'line') cells = Array.from({ length: pl.length }, (_, i) => (orientation === 'h' ? { x: at.x + i, y: at.y } : { x: at.x, y: at.y + i }));
   else cells = [at];
   if (!cells.every((p) => inBounds(b, p))) return null;
-  if ((pl.type === 'hit' || pl.type === 'stone') && !tileAt(b, at.x, at.y)) return null;
+  if (!allowEmpty && (pl.type === 'hit' || pl.type === 'stone') && !tileAt(b, at.x, at.y)) return null;
   return cells;
 }
 
-/** Resolve the next pending placement at `at`. */
-export function place(state: BattleState, at: Pos, c: Content, orientation: 'h' | 'v' = 'h'): BattleResult {
-  const pl = state.pending[0];
-  if (state.phase !== 'placing' || !pl) throw new Error('Nothing to place');
-  const cells = placementCells(state, pl, at, orientation);
-  if (!cells) throw new Error("It doesn't fit there");
-  const ctx = begin(state, c);
+/**
+ * How many pending placements are chosen together: the run of identical placements at the front of the queue
+ * (Prophecy's hits, the Word's Stones, a doubled Prayer's shapes).
+ */
+export function pendingGroupSize(s: BattleState): number {
+  const first = s.pending[0];
+  if (!first) return 0;
+  const same = (p: Placement) => p.type === first.type && p.source === first.source && p.damage === first.damage && p.type !== 'line';
+  let n = 1;
+  while (n < s.pending.length && same(s.pending[n]) && first.type !== 'line') n += 1;
+  return n;
+}
+
+function applyPlacement(ctx: Ctx, pl: Placement, at: Pos, orientation: 'h' | 'v') {
   const s = ctx.s;
-  s.pending.shift();
+  const cells = placementCells(s, pl, at, orientation, true);
+  if (!cells) return; // a later hit aimed at a tile an earlier one already deleted
   if (pl.type === 'stone') {
+    if (!tileAt(s.board, at.x, at.y)) return;
     const gone = damageAt(ctx, cells, pl.damage);
     if (gone.length) {
       const st = stoneTile(ctx, pl.stoneHp);
@@ -615,8 +627,53 @@ export function place(state: BattleState, at: Pos, c: Content, orientation: 'h' 
   } else {
     damageAt(ctx, cells, pl.damage);
   }
+}
+
+/** Resolve the next pending placement at `at`. */
+export function place(state: BattleState, at: Pos, c: Content, orientation: 'h' | 'v' = 'h'): BattleResult {
+  return placeGroup(state, [at], c, orientation, 1);
+}
+
+/**
+ * Resolve the next `count` pending placements (default: the whole group) at the given targets, in order. All
+ * targets are chosen on the same settled board; the same tile can be targeted more than once.
+ */
+export function placeGroup(state: BattleState, targets: Pos[], c: Content, orientation: 'h' | 'v' = 'h', count = pendingGroupSize(state)): BattleResult {
+  if (state.phase !== 'placing' || state.pending.length === 0) throw new Error('Nothing to place');
+  if (targets.length !== count || count > pendingGroupSize(state)) throw new Error(`Choose ${count} target${count > 1 ? 's' : ''}`);
+  targets.forEach((at, i) => {
+    if (!placementCells(state, state.pending[i], at, orientation)) throw new Error("It doesn't fit there");
+  });
+  const ctx = begin(state, c);
+  const s = ctx.s;
+  const group = s.pending.splice(0, count);
+  group.forEach((pl, i) => applyPlacement(ctx, pl, targets[i], orientation));
   if (!checkVictory(ctx)) proceed(ctx);
   return finish(ctx);
+}
+
+/**
+ * What a set of targets would do, for the preview: damage per tile uid, and which tiles it deletes.
+ * Hits are applied in order, so stacking on one tile adds up.
+ */
+export function previewPlacements(s: BattleState, targets: Pos[], orientation: 'h' | 'v'): { damage: Map<number, number>; deleted: Set<number>; cells: Pos[] } {
+  const damage = new Map<number, number>();
+  const deleted = new Set<number>();
+  const cells: Pos[] = [];
+  targets.forEach((at, i) => {
+    const pl = s.pending[i];
+    const hit = pl && placementCells(s, pl, at, orientation);
+    if (!hit) return;
+    for (const p of hit) {
+      cells.push(p);
+      const t = tileAt(s.board, p.x, p.y);
+      if (!t || deleted.has(t.uid)) continue;
+      const d = (damage.get(t.uid) ?? 0) + pl.damage;
+      damage.set(t.uid, d);
+      if (d >= t.hp) deleted.add(t.uid);
+    }
+  });
+  return { damage, deleted, cells };
 }
 
 // ---------------------------------------------------------------- pattern preview (enemy panel, prep, info)

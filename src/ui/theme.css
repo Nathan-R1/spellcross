@@ -171,7 +171,6 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 .tile .crack { position: absolute; inset: 0; border-radius: 6px; background: linear-gradient(135deg, transparent 46%, #000 47%, #000 50%, transparent 51%), linear-gradient(60deg, transparent 56%, #000 57%, #000 59%, transparent 60%); opacity: 0.8; }
 .tile .linked { position: absolute; inset: 0; background: url('/assets/spells/linkedTile.png') center/100% no-repeat; opacity: 0.55; }
 .tile .shine { position: absolute; inset: 0; border-radius: 6px; box-shadow: inset 0 0 8px 2px #ffe9a8; }
-.aim-empty { position: absolute; left: 0; top: 0; border: 3px dashed #ff3b30; border-radius: 6px; }
 .instruction { width: 100%; flex: 0 0 auto; min-height: 64px; display: flex; align-items: center; justify-content: center; padding: 4px 8px; font-size: 13px; text-align: center; }
 .placing { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; justify-content: center; }
 .placing-actions { display: flex; gap: 8px; }
@@ -219,3 +218,8 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 .pattern-totals { font-size: 13px; }
 .enemy-panel .pattern { margin: 2px 0; }
 
+
+/* Placement preview: damage each tile will take, ✕ on tiles that break, a faint Stone where the Word turns one. */
+.tile .incoming { position: absolute; left: 1px; bottom: 0; font-size: 12px; font-weight: bold; color: #fff; background: #ff3b30; border-radius: 6px; padding: 0 3px; }
+.tile .breaks { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #ff3b30; text-shadow: 0 0 3px #000, 0 0 3px #000; }
+.tile .stone-ghost { position: absolute; inset: 15%; background: center/contain no-repeat; opacity: 0.55; }

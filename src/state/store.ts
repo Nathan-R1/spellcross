@@ -3,7 +3,7 @@
 
 import { create } from 'zustand';
 import { content } from '../content';
-import { createBattle, endTurn, place, playerMove, snapshot, useAbility } from '../engine/combat';
+import { createBattle, endTurn, placeGroup, playerMove, snapshot, useAbility } from '../engine/combat';
 import { createRng, forkSeed } from '../engine/rng';
 import * as run from '../engine/run';
 import type { RunState } from '../engine/run';
@@ -67,6 +67,8 @@ interface Store {
   pickLevelUp(toolUid: string | null): void;
   startBattle(loadout: string[]): void;
   selectTile(p: Pos): void;
+  /** Place the next group of pending placements (combat § 5). */
+  confirmPlacement(targets: Pos[]): void;
   setOrientation(o: 'h' | 'v'): void;
   ability(i: number): void;
   endTurn(): void;
@@ -198,10 +200,6 @@ export const useStore = create<Store>((set, get) => {
     selectTile(p) {
       const b = activeBattle(get());
       if (!b || busy()) return;
-      if (b.phase === 'placing') {
-        battleAction((x) => place(x, p, content, get().orientation), { selection: null });
-        return;
-      }
       if (b.phase !== 'player') return;
       const sel = get().selection;
       if (!sel) return set({ selection: p });
@@ -209,6 +207,7 @@ export const useStore = create<Store>((set, get) => {
       if (Math.abs(sel.x - p.x) + Math.abs(sel.y - p.y) !== 1) return set({ selection: p });
       battleAction((x) => playerMove(x, sel, p, content), { selection: null });
     },
+    confirmPlacement(targets) { battleAction((x) => placeGroup(x, targets, content, get().orientation), { selection: null }); },
     setOrientation(o) { set({ orientation: o }); },
     ability(i) { battleAction((x) => useAbility(x, i, content), { selection: null }); },
     endTurn() { battleAction((x) => endTurn(x, content), { selection: null }); },

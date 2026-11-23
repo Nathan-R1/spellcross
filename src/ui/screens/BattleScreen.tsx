@@ -4,7 +4,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { content } from '../../content';
 import { STONE } from '../../content/tools';
-import { generatorTotal, placementCells, snapshot, upcomingGrid } from '../../engine/combat';
+import { generatorTotal, pendingGroupSize, previewPlacements, snapshot, upcomingGrid } from '../../engine/combat';
 import type { BattleState, Placement, Pos, Tile, TimedEvent, ViewSnapshot } from '../../engine/types';
 import { activeBattle, useStore } from '../../state/store';
 import { AbilityBar, Asset, HpBar, Modal, TopBar, useLongPress } from '../components/common';
@@ -23,7 +23,7 @@ export function BattleScreen() {
   const playback = useStore((s) => s.playback);
   const selection = useStore((s) => s.selection);
   const orientation = useStore((s) => s.orientation);
-  const { selectTile, ability, endTurn, advance, fastForward, setOrientation } = useStore.getState();
+  const { selectTile, confirmPlacement, ability, endTurn, advance, fastForward, setOrientation } = useStore.getState();
   const view = playback.view ?? snapshot(battle, content);
   const busy = playback.queue.length > 0 || playback.current !== null;
   const current = playback.current?.event;
@@ -66,24 +66,28 @@ export function BattleScreen() {
     if (current?.type === 'playerHit') add(current.amount > 0 ? `-${current.amount}` : `🛡${current.blocked}`, current.amount > 0 ? 'dmg' : 'block');
   }, [current]);
 
-  // Placement: tapping selects (the tiles light up), then Continue confirms or Select again clears it.
-  // The selection is forgotten whenever the next placement (or orientation) changes.
-  const aimKey = `${battle.pending.length}:${battle.nextUid}:${orientation}`;
-  const [aimState, setAimState] = useState<{ key: string; pos: Pos } | null>(null);
-  const aim = aimState?.key === aimKey ? aimState.pos : null;
+  // Placement (combat § 5): tap to choose targets — every hit of the group (Prophecy's hits, the Word's Stones, a
+  // doubled Prayer) is chosen first — the preview shows the damage and ✕ on tiles that break, then Continue or
+  // Select again. The choice is forgotten whenever the pending placements (or the orientation) change.
+  const pickKey = `${battle.pending.length}:${battle.nextUid}:${orientation}`;
+  const [pickState, setPickState] = useState<{ key: string; taps: Pos[] } | null>(null);
+  const taps = pickState?.key === pickKey ? pickState.taps : [];
   const pending = view.phase === 'placing' && !busy ? view.pending : null;
-  const anchor = pending && aim ? anchorFor(pending, aim, orientation, battle.board.width, battle.board.height) : null;
-  const preview = pending && anchor ? placementCells(battle, pending, anchor, orientation) : null;
+  const group = pending ? pendingGroupSize(battle) : 0;
+  const targets = pending ? taps.map((t) => anchorFor(pending, t, orientation, battle.board.width, battle.board.height)) : [];
+  const preview = pending && targets.length ? previewPlacements(battle, targets, orientation) : null;
   const onTap = (x: number, y: number) => {
     if (busy) return;
     if (battle.phase === 'placing') {
-      setAimState({ key: aimKey, pos: { x, y } });
+      const tap = { x, y };
+      const next = group <= 1 ? [tap] : taps.length < group ? [...taps, tap] : [...taps.slice(0, -1), tap];
+      setPickState({ key: pickKey, taps: next });
       return;
     }
     selectTile({ x, y });
   };
   const confirm = () => {
-    if (anchor && preview) selectTile(anchor);
+    if (targets.length === group) confirmPlacement(targets);
   };
 
   const highlight = new Set<number>(current?.type === 'matched' ? current.uids : current?.type === 'shining' ? current.uids : []);
@@ -104,13 +108,13 @@ export function BattleScreen() {
       <div className="battle-body" ref={bodyRef}>
         <div className="instruction panel">
           {pending ? (
-            <PlacingBanner pending={pending} orientation={orientation} onOrientation={setOrientation} ready={!!preview}
-              onContinue={confirm} onAgain={() => setAimState(null)} />
+            <PlacingBanner pending={pending} group={group} chosen={targets.length} orientation={orientation} onOrientation={setOrientation}
+              onContinue={confirm} onAgain={() => setPickState(null)} />
           ) : (
             <span className="dim">{busy ? '…' : battle.phase === 'player' ? (selection ? 'Tap a neighbouring tile to swap' : 'Tap a tile, then a neighbour to swap them') : ''}</span>
           )}
         </div>
-        <BoardView view={view} battle={battle} tile={tile} selection={selection} preview={preview} placing={!!pending} highlight={highlight} hurt={hurt}
+        <BoardView view={view} battle={battle} tile={tile} selection={selection} preview={preview} stones={pending?.type === 'stone'} placing={!!pending} highlight={highlight} hurt={hurt}
           onTap={onTap} onLong={(t) => setInfo(t)} />
         <div className="battle-panels">
           <div className="panel player-panel">
@@ -147,11 +151,12 @@ export function BattleScreen() {
   );
 }
 
-function placingText(p: Placement): string {
+function placingText(p: Placement, n: number): string {
+  const many = n > 1 ? `${n} × ` : '';
   switch (p.type) {
-    case 'shape': return `${p.source}: place the ${p.cells.length}-tile shape (${p.damage} damage each)`;
-    case 'hit': return `${p.source}: deal ${p.damage} damage to a tile`;
-    case 'stone': return `${p.source}: place a Stone (${p.damage} damage; becomes a Stone if it breaks the tile)`;
+    case 'shape': return `${p.source}: ${many}${p.cells.length}-tile shape, ${p.damage} damage each`;
+    case 'hit': return `${p.source}: ${n > 1 ? `${n} hits` : 'a hit'} of ${p.damage} damage`;
+    case 'stone': return `${p.source}: ${n > 1 ? `${n} Stones` : 'a Stone'} (${p.damage} damage; a tile it breaks becomes a Stone)`;
     case 'line': return `${p.source}: ${p.damage} damage to ${p.length} in a line`;
   }
 }
@@ -172,34 +177,35 @@ export function anchorFor(p: Placement, tap: Pos, orientation: 'h' | 'v', width:
   return tap;
 }
 
-function PlacingBanner({ pending, orientation, onOrientation, ready, onContinue, onAgain }: {
-  pending: Placement; orientation: 'h' | 'v'; onOrientation: (o: 'h' | 'v') => void; ready: boolean; onContinue: () => void; onAgain: () => void;
+function PlacingBanner({ pending, group, chosen, orientation, onOrientation, onContinue, onAgain }: {
+  pending: Placement; group: number; chosen: number; orientation: 'h' | 'v'; onOrientation: (o: 'h' | 'v') => void; onContinue: () => void; onAgain: () => void;
 }) {
-  const queued = useStore((s) => activeBattle(s)?.pending.length ?? 0);
+  const ready = chosen === group;
   return (
     <div className="placing">
-      <span><b>{placingText(pending)}</b>{queued > 1 ? ` · ${queued} to place` : ''}</span>
+      <span><b>{placingText(pending, group)}</b></span>
       {pending.type === 'line' && (
         <button className="btn" onClick={() => onOrientation(orientation === 'h' ? 'v' : 'h')}>{orientation === 'h' ? '↔ Horizontal' : '↕ Vertical'}</button>
       )}
-      {ready ? (
-        <span className="placing-actions">
-          <button className="btn" onClick={onAgain}>Select again</button>
-          <button className="btn primary" onClick={onContinue}>Continue</button>
-        </span>
+      {chosen === 0 ? (
+        <span className="dim">Tap the board to choose where{group > 1 ? ' (the same tile can be chosen again)' : ''}.</span>
       ) : (
-        <span className="dim">Tap the board to choose where. The tiles it hits light up.</span>
+        <span className="placing-actions">
+          {group > 1 && <span className={ready ? '' : 'dim'}>{chosen} / {group} chosen</span>}
+          <button className="btn" onClick={onAgain}>Select again</button>
+          <button className="btn primary" disabled={!ready} onClick={onContinue}>Continue</button>
+        </span>
       )}
     </div>
   );
 }
 
-function BoardView({ view, battle, tile, selection, preview, placing, highlight, hurt, onTap, onLong }: {
-  view: ViewSnapshot; battle: BattleState; tile: number; selection: Pos | null; preview: Pos[] | null; placing: boolean; highlight: Set<number>; hurt: Set<number>;
+function BoardView({ view, battle, tile, selection, preview, stones, placing, highlight, hurt, onTap, onLong }: {
+  view: ViewSnapshot; battle: BattleState; tile: number; selection: Pos | null; preview: ReturnType<typeof previewPlacements> | null; stones: boolean;
+  placing: boolean; highlight: Set<number>; hurt: Set<number>;
   onTap: (x: number, y: number) => void; onLong: (t: Tile) => void;
 }) {
   const b = view.board;
-  const inPreview = (x: number, y: number) => !!preview?.some((p) => p.x === x && p.y === y);
   return (
     <div className={`board ${placing ? 'placing-mode' : ''} ${preview ? 'has-aim' : ''}`} style={{ width: b.width * tile + 6, height: b.height * tile + 6 }} role="grid" aria-label="Tool board">
       {b.cells.map((t, i) => {
@@ -208,13 +214,11 @@ function BoardView({ view, battle, tile, selection, preview, placing, highlight,
         const y = Math.floor(i / b.width);
         const sel = selection && selection.x === x && selection.y === y;
         return (
-          <TileView key={t.uid} t={t} battle={battle} x={x} y={y} tile={tile} selected={!!sel} aimed={inPreview(x, y)}
+          <TileView key={t.uid} t={t} battle={battle} x={x} y={y} tile={tile} selected={!!sel}
+            incoming={preview?.damage.get(t.uid) ?? 0} breaks={!!preview?.deleted.has(t.uid)} toStone={stones && !!preview?.deleted.has(t.uid)}
             matched={highlight.has(t.uid)} hurt={hurt.has(t.uid)} onTap={() => onTap(x, y)} onLong={() => onLong(t)} />
         );
       })}
-      {preview?.filter((p) => !b.cells[p.y * b.width + p.x]).map((p) => (
-        <div key={`p${p.x},${p.y}`} className="aim-empty" style={{ width: tile, height: tile, transform: `translate(${p.x * tile + 3}px, ${p.y * tile + 3}px)` }} />
-      ))}
     </div>
   );
 }
@@ -233,9 +237,11 @@ export function tileLook(t: Tile, battle: BattleState): { name: string; icon: st
   return { name: e.name, icon: e.icon, color: e.color, description: e.description };
 }
 
-function TileView({ t, battle, x, y, tile, selected, aimed, matched, hurt, onTap, onLong }: {
-  t: Tile; battle: BattleState; x: number; y: number; tile: number; selected: boolean; aimed: boolean; matched: boolean; hurt: boolean; onTap: () => void; onLong: () => void;
+function TileView({ t, battle, x, y, tile, selected, incoming, breaks, toStone, matched, hurt, onTap, onLong }: {
+  t: Tile; battle: BattleState; x: number; y: number; tile: number; selected: boolean; incoming: number; breaks: boolean; toStone: boolean;
+  matched: boolean; hurt: boolean; onTap: () => void; onLong: () => void;
 }) {
+  const aimed = incoming > 0;
   const press = useLongPress(onTap, onLong);
   const look = tileLook(t, battle);
   const enemy = t.kind === 'enemy' ? content.enemyTiles[t.id] : null;
@@ -253,6 +259,9 @@ function TileView({ t, battle, x, y, tile, selected, aimed, matched, hurt, onTap
         {t.kind === 'stone' && t.hp < t.maxHp && <span className="crack" />}
         {(enemy || (t.kind !== 'stone' && t.maxHp > 1)) && <span className="hp">{t.hp}</span>}
         {enemy && <span className="speed">{'↓'.repeat(enemy.speed)}</span>}
+        {toStone && <span className="stone-ghost" style={{ backgroundImage: `url(/assets/${STONE.icon})` }} />}
+        {breaks && <span className="breaks">✕</span>}
+        {aimed && <span className="incoming">−{incoming}</span>}
       </div>
     </div>
   );

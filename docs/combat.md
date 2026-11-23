@@ -109,7 +109,7 @@ cells it covered).
    - **Time** → you deal 1 damage to 1 tile,
    - **Space** or **Stone** → nothing.
 3. If the effect needs **placement** (Prayer's damage shape, the Word's Stones, Prophecy's hits, Time's
-   target), you place it now (§5). The board is paused until you finish.
+   target), the board first **falls and refills**, then you place it (§5). The board waits until you finish.
 
 **Supportive** tiles (Kindness fruit) orthogonally next to a set of a different tool are pulled into it before
 it clears ([tools.md § 2.1](tools.md#21-supportive-linked-tiles)).
@@ -131,8 +131,9 @@ Junk and Stone sets don't use up Critical.
 
 ### 3.4 Cascades
 
-After the sets resolve and their placements are done, gravity drops every tile, the top refills from the
-enemy's generator (§1), and any new sets resolve the same way. This repeats until the board is stable.
+After the sets resolve, gravity drops every tile and the top refills from the enemy's generator (§1). Then
+any placements are made, the board falls again, and any new sets resolve the same way. This repeats until the
+board is stable.
 
 Sets that form **during the enemy turn**, from gravity after a Worry moves, also resolve, and their
 placements are asked for then. You get the effect, and it costs no move.
@@ -178,9 +179,17 @@ below it for two. The same 2 HP means a Prayer or Time hit (1 damage) only crack
 
 ## 5. Placement
 
-Some effects ask you to pick tiles on the board. Tap where it should go: the tiles it will hit light up (the
-rest of the board dims), and the banner asks **Continue** or **Select again**. Shapes and lines are centred on the
-tile you tap and kept on the board. Placements are **mandatory** and can't be saved for later.
+Some effects ask you to pick tiles on the board. The board has already fallen and refilled, so there are no
+holes to aim at.
+
+- **Tap where it goes.** The tiles it will hit light up (the rest of the board dims). Each shows the damage it
+  will take ("−1"), tiles that will break get a ✕, and for the Word a faint Stone shows where one will appear.
+  Tapping elsewhere moves the choice.
+- **Several hits are chosen together.** Prophecy's hits, the Word's Stones and a doubled Prayer's two shapes are
+  picked one tap each, with a counter ("2 / 3 chosen"), then applied together. The same tile can be chosen more
+  than once (Prophecy: "−2").
+- Then **Continue** or **Select again**.
+- Shapes and lines are centred on the tile you tap and kept on the board. Placements are **mandatory** and can't be saved for later.
 
 ### 5.1 Damage shapes (Prayer)
 

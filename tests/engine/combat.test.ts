@@ -1,7 +1,7 @@
 // The combat rules (docs/combat.md, docs/tools.md, docs/enemies.md) on hand-drawn boards.
 
 import { content } from '../../src/content';
-import { createBattle, endTurn, enemyToCome, findSets, place, playerMove, startingGrid, upcomingGrid, useAbility } from '../../src/engine/combat';
+import { createBattle, endTurn, enemyToCome, findSets, pendingGroupSize, place, placeGroup, playerMove, previewPlacements, startingGrid, upcomingGrid, useAbility } from '../../src/engine/combat';
 import { createPlayer } from '../../src/engine/run';
 import { at, F1, F2, makeBattle } from '../helpers';
 import { tc } from '../helpers';
@@ -54,8 +54,10 @@ describe('tools', () => {
     let r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
     expect(r.state.phase).toBe('placing');
     expect(r.state.pending[0]).toMatchObject({ type: 'shape', damage: 1, cells: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }] });
-    r = place(r.state, { x: 0, y: 1 }, c);
-    // Worries at (0,1),(1,1) deleted; the Stone at (2,1) survives at 1 HP (things fall in from above).
+    // The board settles first: columns 0–2 fell one row, so the Worries and Stone are now on row 2.
+    expect(r.state.board.cells.every((t) => t !== null)).toBe(true);
+    r = place(r.state, { x: 0, y: 2 }, c);
+    // Worries at (0,2),(1,2) deleted; the Stone at (2,2) survives at 1 HP.
     expect(r.state.board.cells.filter((t) => t?.kind === 'enemy').length).toBe(1);
     const stone = r.state.board.cells.find((t) => t?.kind === 'stone');
     expect(stone?.hp).toBe(1);
@@ -72,12 +74,11 @@ describe('tools', () => {
     const s = makeBattle({ rows: base({ 0: 'XsmsmsmX', 3: 'Omsmsmsm', 7: 'WWsWsmsm' }) });
     let r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
     expect(r.state.pending.map((p) => p.type)).toEqual(['stone', 'stone', 'stone']);
-    r = place(r.state, { x: 0, y: 0 }, c); // the Worry → a Stone
-    expect(at(r.state, 0, 0)).toMatchObject({ kind: 'stone', hp: 2 });
-    r = place(r.state, { x: 0, y: 3 }, c); // an existing Stone: cracked, no new Stone
-    expect(at(r.state, 0, 3)).toMatchObject({ kind: 'stone', hp: 1 });
-    r = place(r.state, { x: 4, y: 4 }, c); // a junk tile → a Stone, nothing falls
-    expect(at(r.state, 4, 4)?.kind).toBe('stone');
+    // Columns 0–2 fell one row before placing: the Worry is at (0,1), the Stone at (0,4).
+    r = placeGroup(r.state, [{ x: 0, y: 1 }, { x: 0, y: 4 }, { x: 4, y: 4 }], c);
+    expect(at(r.state, 0, 1)).toMatchObject({ kind: 'stone', hp: 2 }); // the Worry → a Stone
+    expect(at(r.state, 0, 4)).toMatchObject({ kind: 'stone', hp: 1 }); // an existing Stone: cracked, no new Stone
+    expect(at(r.state, 4, 4)?.kind).toBe('stone'); // a junk tile → a Stone, nothing falls
   });
 
   it('Prophecy: 1 hit per tile, then Foresight boosts later Truth tools', () => {
@@ -203,7 +204,7 @@ describe('winning', () => {
   it('victory the moment no enemy tiles are left on the board', () => {
     const s = makeBattle({ rows: base({ 7: 'PPsPsmsm' }) });
     let r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
-    r = place(r.state, { x: 0, y: 0 }, c);
+    r = place(r.state, { x: 0, y: 1 }, c); // the Worry fell from (0,0) to (0,1) before placing
     expect(r.state.outcome).toBe('victory');
     expect(r.events.at(-1)?.event).toEqual({ type: 'battleEnd', outcome: 'victory' });
   });
@@ -242,5 +243,21 @@ describe('pattern picture', () => {
     const g = upcomingGrid(content, 'hard_choices', [9, 8, 8, 8, 8, 8, 8, 8]);
     expect(g[7][0]).toBe('worry'); // column 0 is one row further on
     expect(g[7][1]).toBeNull();
+  });
+});
+
+describe('placing a group', () => {
+  it('Prophecy: all 3 hits are chosen together; the same tile can be hit twice; the preview says what breaks', () => {
+    const s = makeBattle({ rows: base({ 7: 'RRsRsmsm' }), state: (x) => { x.board.cells[5 * 8 + 5] = { uid: 4000, kind: 'stone', id: 'stone', hp: 2, maxHp: 2 }; } });
+    const r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
+    expect(pendingGroupSize(r.state)).toBe(3);
+    const targets = [{ x: 5, y: 5 }, { x: 5, y: 5 }, { x: 7, y: 3 }];
+    const pv = previewPlacements(r.state, targets, 'h');
+    expect(pv.damage.get(4000)).toBe(2);
+    expect(pv.deleted.has(4000)).toBe(true);
+    expect(() => placeGroup(r.state, targets.slice(0, 2), c)).toThrow(); // all 3 must be chosen
+    const done = placeGroup(r.state, targets, c);
+    expect(done.state.board.cells.some((t) => t?.uid === 4000)).toBe(false);
+    expect(done.state.phase).toBe('player');
   });
 });
