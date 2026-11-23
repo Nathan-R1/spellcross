@@ -1,14 +1,13 @@
-// The run (spec §2, §4, §9, §10): travel, road battles, stop and random events, rewards, the Spellbook.
+// The run (spec §2, §4, §9, §10): travel, road battles, stop and random events, rewards, the Toolbox.
 // Pure functions over a serialisable RunState. Randomness comes from streams forked off the run seed.
 
 import type { Content } from '../content';
 import { abilitySummary } from '../content/describe';
 import { events as eventNodes, RANDOM_EVENTS, STOP_EVENTS, TAVERN_TEXT, type Effect, type EventOption, type Next } from '../content/events';
-import { createBattle, type BattleSetup } from './battle';
+import { FRUIT_IDS } from '../content/fruits';
+import { createBattle, type BattleSetup } from './combat';
 import { createRng, forkSeed, withRng, type RngState } from './rng';
-import { newSpellInstance, resolveInstance } from './spells';
-import { heal } from './status';
-import type { BattleState, Element, GemId, Player, ResolvedSpell, SpellId, Tier, TimedEvent } from './types';
+import type { BattleState, FruitId, Player, Tier, TimedEvent, ToolInstance } from './types';
 import { generateMap, generateTerrain, neighbours, roadBetween, type WorldMap } from './world';
 
 export type Screen = 'map' | 'event' | 'prep' | 'battle' | 'result' | 'victory' | 'defeat';
@@ -20,22 +19,21 @@ export interface EventState {
   /** Indices of single-use options already taken this visit. */
   used: number[];
   pendingRecharges: number;
-  gemOffer: GemId[] | null;
-  gemOfferPrice: number;
-  /** Waiting for the player to pick a spell to level up (Campfire Meditate). */
+  fruitOffer: FruitId[] | null;
+  fruitOfferPrice: number;
+  /** Waiting for the player to pick a tool to level up (Campfire Reflect). */
   levelUpPick?: boolean;
   /** A battle the event started (Fight for Loot), run once the event closes. */
   battleAfter: Tier | null;
 }
 
 export interface PrepState {
-  encounterId: string;
-  slots: number;
+  enemyId: string;
   source: 'road' | 'event' | 'boss' | 'debug';
 }
 
 export interface RunState {
-  version: 1;
+  version: 2;
   seed: number;
   createdAt: string;
   updatedAt: string;
@@ -50,8 +48,8 @@ export interface RunState {
   event: EventState | null;
   prep: PrepState | null;
   battle: BattleState | null;
-  result: null | { outcome: 'victory' | 'defeat'; gold: number; gem: GemId | null; boss: boolean };
-  /** Spell uids from the last battle's loadout, preselected at the next battle prep. */
+  result: null | { outcome: 'victory' | 'defeat'; gold: number; fruit: FruitId | null; boss: boolean };
+  /** Tool uids from the last battle's loadout, preselected at the next battle prep. */
   lastLoadout?: string[];
   /** Message shown at defeat ("Your journey ends"), or run victory. */
   endMessage?: string;
@@ -59,13 +57,17 @@ export interface RunState {
 
 // ---------------------------------------------------------------- creation
 
+export function newToolInstance(p: Pick<Player, 'nextToolUid'>, toolId: string, c: Content): ToolInstance {
+  return { uid: `t${p.nextToolUid++}`, toolId, pillar: c.tools[toolId].pillar, level: 1, sockets: [null, null, null] };
+}
+
 export function createPlayer(c: Content, seedUid = 1): Player {
   const p: Player = {
-    hp: c.config.player.hp, maxHp: c.config.player.hp, strengthStat: 1, weaknesses: [], resistances: [], statuses: [],
-    movesPerTurn: c.config.player.movesPerTurn, spells: [], junkPool: ['orb', 'slime'], gold: c.config.player.startingGold,
-    gems: [], spellUpgrades: 0, abilities: [], maxAbilities: c.config.player.maxAbilities, nextSpellUid: seedUid,
+    hp: c.config.player.hp, maxHp: c.config.player.hp, movesPerTurn: c.config.player.movesPerTurn, tools: [],
+    gold: c.config.player.startingGold, fruits: [], upgrades: 0, abilities: [], maxAbilities: c.config.player.maxAbilities,
+    nextToolUid: seedUid,
   };
-  for (const id of ['scorch', 'strike', 'ice_bolt', 'venom', 'shield']) p.spells.push(newSpellInstance(p, c.spells[id]));
+  for (const id of c.config.startingTools) p.tools.push(newToolInstance(p, id, c));
   return p;
 }
 
@@ -75,7 +77,7 @@ export function newRun(seed: number, c: Content, viewportAspect = 844 / 390, now
   const map = generateMap(forkSeed(seed, 'map'), width, height);
   const start = map.stops.find((s) => s.type === 'start')!;
   const run: RunState = {
-    version: 1, seed, createdAt: now, updatedAt: now,
+    version: 2, seed, createdAt: now, updatedAt: now,
     rng: { events: forkSeed(seed, 'events'), run: forkSeed(seed, 'run') },
     battleCount: 0, map, terrainSeed: forkSeed(seed, 'terrain'), currentStopId: start.id, travel: null,
     player: createPlayer(c), screen: 'map', event: null, prep: null, battle: null, result: null,
@@ -87,7 +89,7 @@ export const terrainFor = (run: RunState) => generateTerrain(run.terrainSeed, ru
 
 const clone = <T>(x: T): T => structuredClone(x);
 
-const gemIds = (c: Content) => Object.keys(c.gems) as GemId[];
+const fruitWeight = (c: Content) => (f: FruitId) => c.fruits[f].dropWeight;
 export const abilityWeight = (c: Content, id: string) => c.config.abilityRarityWeight[c.abilities[id].rarity];
 
 /** Draw `count` distinct items, each draw weighted (without replacement). */
@@ -137,7 +139,7 @@ export function triggerRoadBattle(prev: RunState, c: Content): RunState {
   run.travel.battleDone = true;
   const road = run.map.roads[run.travel.roadId];
   const tier: Tier = road.type === 'trail' ? 'elite' : 'normal';
-  return touch(openPrep(run, pickEncounter(run, tier, c), tier === 'elite' ? c.config.loadoutSlots.elite : c.config.loadoutSlots.normal, 'road'));
+  return touch(openPrep(run, pickEnemy(run, tier, c), 'road'));
 }
 
 /** The UI calls this when the token arrives. Opens the stop's event, the boss, or nothing. */
@@ -147,7 +149,7 @@ export function arrive(prev: RunState, c: Content): RunState {
   run.currentStopId = run.travel.to;
   run.travel = null;
   const stop = run.map.stops[run.currentStopId];
-  if (stop.type === 'finish') return touch(openPrep(run, 'boss', c.config.loadoutSlots.boss, 'boss'));
+  if (stop.type === 'finish') return touch(openPrep(run, pickEnemy(run, 'boss', c), 'boss'));
   if (stop.type === 'encounter') {
     const id = eventsRng(run, (r) => r.pick(RANDOM_EVENTS));
     return touch(openEvent(run, id, {}, c));
@@ -156,11 +158,11 @@ export function arrive(prev: RunState, c: Content): RunState {
   return touch(ev ? openEvent(run, ev, {}, c) : run);
 }
 
-function pickEncounter(run: RunState, tier: Tier, c: Content): string {
-  let pool = Object.values(c.encounters).filter((e) => e.tier === tier);
-  // The very first battle of a run is always against a single enemy.
-  if (run.battleCount === 0) pool = pool.filter((e) => e.enemies.length === 1);
-  return runRng(run, (r) => r.pick(pool)).id;
+/** A random enemy of the tier. Until elites and a boss exist, any enemy stands in (spec §2, TBD). */
+function pickEnemy(run: RunState, tier: Tier, c: Content): string {
+  const all = Object.values(c.enemies);
+  const pool = all.filter((e) => e.tier === tier);
+  return runRng(run, (r) => r.pick(pool.length ? pool : all)).id;
 }
 
 // ---------------------------------------------------------------- events
@@ -178,7 +180,7 @@ function openEvent(run: RunState, nodeId: string, params: Record<string, number>
   let offer: string[] = [];
   if (node.offer === 'abilities') offer = eventsRng(run, (r) => weightedSample(r, Object.keys(c.abilities), (id) => abilityWeight(c, id), c.config.travellerChoices));
   const battleAfter = run.event?.battleAfter ?? null;
-  run.event = { nodeId, params, offer, used: [], pendingRecharges: 0, gemOffer: null, gemOfferPrice: 0, battleAfter };
+  run.event = { nodeId, params, offer, used: [], pendingRecharges: 0, fruitOffer: null, fruitOfferPrice: 0, battleAfter };
   run.screen = 'event';
   return run;
 }
@@ -203,7 +205,7 @@ export function eventView(run: RunState, c: Content): EventView | null {
         label: ability ? `[${ability.name}]` : o.label,
         cost: o.cost,
         reward: ability ? abilitySummary(ability.id) : o.reward,
-        enabled: !ev.used.includes(i) && (o.available ? o.available(run.player) : true) && ev.pendingRecharges === 0 && !ev.gemOffer && !ev.levelUpPick,
+        enabled: !ev.used.includes(i) && (o.available ? o.available(run.player) : true) && ev.pendingRecharges === 0 && !ev.fruitOffer && !ev.levelUpPick,
       };
     }),
   };
@@ -214,25 +216,24 @@ function applyEffect(run: RunState, e: Effect, c: Content) {
   switch (e.type) {
     case 'gold': p.gold = Math.max(0, p.gold + e.amount); break;
     case 'damage': p.hp = Math.max(0, p.hp - e.amount); break;
-    case 'healPctMax': heal(p, Math.floor(p.maxHp * e.pct)); break;
+    case 'healPctMax': p.hp = Math.min(p.maxHp, p.hp + Math.max(1, Math.floor(p.maxHp * e.pct))); break;
     case 'addAbility': {
       if (p.abilities.length >= p.maxAbilities) break;
       const id = e.id ?? eventsRng(run, (r) => r.weighted(Object.keys(c.abilities), (a) => abilityWeight(c, a)));
       p.abilities.push({ id, uses: c.abilities[id].maxUses });
       break;
     }
-    case 'gem': p.gems.push(e.id ?? eventsRng(run, (r) => r.weighted(gemIds(c), (g) => c.gems[g].dropWeight))); break;
-    case 'gemOffer':
-      run.event!.gemOffer = eventsRng(run, (r) => weightedSample(r, gemIds(c), (g) => c.gems[g].dropWeight, c.config.shopGemChoices));
-      run.event!.gemOfferPrice = e.price;
+    case 'fruit': p.fruits.push(e.id ?? eventsRng(run, (r) => r.weighted(FRUIT_IDS, fruitWeight(c)))); break;
+    case 'fruitOffer':
+      run.event!.fruitOffer = eventsRng(run, (r) => weightedSample(r, [...FRUIT_IDS], fruitWeight(c), c.config.shopFruitChoices));
+      run.event!.fruitOfferPrice = e.price;
       break;
-    case 'spellUpgrade': p.spellUpgrades += e.count; break;
-    case 'levelUpSpell': run.event!.levelUpPick = true; break;
+    case 'upgrade': p.upgrades += e.count; break;
+    case 'levelUpTool': run.event!.levelUpPick = true; break;
     case 'recharge': run.event!.pendingRecharges += e.count === 'perAbility' ? p.abilities.length : e.count; break;
-    case 'addSpell': p.spells.push(newSpellInstance(p, c.spells[e.id])); break;
-    case 'changeElement': {
-      const s = p.spells.find((x) => x.element !== e.element);
-      if (s) s.element = e.element as Element;
+    case 'changePillar': {
+      const t = p.tools.find((x) => x.pillar !== e.pillar);
+      if (t) t.pillar = e.pillar;
       break;
     }
     case 'removeLastAbility': p.abilities.pop(); break;
@@ -266,8 +267,8 @@ export function chooseOption(prev: RunState, index: number, c: Content): RunStat
     return touch(run);
   }
   if (next === 'end') {
-    // Wait for pending popups (recharge, gem offer) before closing.
-    if (ev.pendingRecharges > 0 || ev.gemOffer || ev.levelUpPick) {
+    // Wait for pending popups (recharge, fruit offer) before closing.
+    if (ev.pendingRecharges > 0 || ev.fruitOffer || ev.levelUpPick) {
       ev.used = nodeOptions(ev).map((_, i) => i);
       ev.params = { ...ev.params, closeAfterPopup: 1 };
       return touch(run);
@@ -282,7 +283,7 @@ function closeEvent(run: RunState, c: Content): RunState {
   const battleTier = run.event?.battleAfter ?? null;
   run.event = null;
   run.screen = 'map';
-  if (battleTier) return openPrep(run, pickEncounter(run, battleTier, c), c.config.loadoutSlots[battleTier], 'event');
+  if (battleTier) return openPrep(run, pickEnemy(run, battleTier, c), 'event');
   return run;
 }
 
@@ -304,37 +305,37 @@ export function skipRecharges(prev: RunState, c: Content): RunState {
   return touch(afterPopup(run, c));
 }
 
-/** Pick one of the shop's gem offers (or null to cancel and keep the gold). */
-export function pickGemOffer(prev: RunState, gem: GemId | null, c: Content): RunState {
+/** Pick one of the shop's fruit offers (or null to cancel and keep the Talents). */
+export function pickFruitOffer(prev: RunState, fruit: FruitId | null, c: Content): RunState {
   const run = clone(prev);
   const ev = run.event;
-  if (!ev?.gemOffer) return prev;
-  if (gem && ev.gemOffer.includes(gem) && run.player.gold >= ev.gemOfferPrice) {
-    run.player.gold -= ev.gemOfferPrice;
-    run.player.gems.push(gem);
+  if (!ev?.fruitOffer) return prev;
+  if (fruit && ev.fruitOffer.includes(fruit) && run.player.gold >= ev.fruitOfferPrice) {
+    run.player.gold -= ev.fruitOfferPrice;
+    run.player.fruits.push(fruit);
   } else {
     // Cancelled: the single-use purchase option is given back.
-    const idx = nodeOptions(ev).findIndex((o) => o.effects?.some((x) => x.type === 'gemOffer'));
+    const idx = nodeOptions(ev).findIndex((o) => o.effects?.some((x) => x.type === 'fruitOffer'));
     ev.used = ev.used.filter((i) => i !== idx);
   }
-  ev.gemOffer = null;
+  ev.fruitOffer = null;
   return touch(afterPopup(run, c));
 }
 
 /**
- * Campfire Meditate: raise one spell's level by 1 (max 5), or cancel (null) to get the option, and the
+ * Campfire Reflect: raise one tool's level by 1 (max 5), or cancel (null) to get the option, and the
  * rest of its either/or group, back.
  */
-export function pickLevelUp(prev: RunState, spellUid: string | null, c: Content): RunState {
+export function pickLevelUp(prev: RunState, toolUid: string | null, c: Content): RunState {
   const run = clone(prev);
   const ev = run.event;
   if (!ev?.levelUpPick) return prev;
-  const inst = spellUid ? run.player.spells.find((s) => s.uid === spellUid) : undefined;
-  if (inst && inst.level < c.config.maxSpellLevel) {
+  const inst = toolUid ? run.player.tools.find((s) => s.uid === toolUid) : undefined;
+  if (inst && inst.level < c.config.maxToolLevel) {
     inst.level = (inst.level + 1) as 1 | 2 | 3 | 4 | 5;
   } else {
     const opts = nodeOptions(ev);
-    const idx = opts.findIndex((o) => o.effects?.some((x) => x.type === 'levelUpSpell'));
+    const idx = opts.findIndex((o) => o.effects?.some((x) => x.type === 'levelUpTool'));
     const group = opts[idx]?.group;
     ev.used = ev.used.filter((i) => i !== idx && !(group && opts[i]?.group === group));
   }
@@ -344,32 +345,46 @@ export function pickLevelUp(prev: RunState, spellUid: string | null, c: Content)
 
 function afterPopup(run: RunState, c: Content): RunState {
   const ev = run.event;
-  if (ev && ev.params.closeAfterPopup && ev.pendingRecharges === 0 && !ev.gemOffer && !ev.levelUpPick) return closeEvent(run, c);
+  if (ev && ev.params.closeAfterPopup && ev.pendingRecharges === 0 && !ev.fruitOffer && !ev.levelUpPick) return closeEvent(run, c);
   return run;
 }
 
 // ---------------------------------------------------------------- battles
 
-function openPrep(run: RunState, encounterId: string, slots: number, source: PrepState['source']): RunState {
-  run.prep = { encounterId, slots, source };
+function openPrep(run: RunState, enemyId: string, source: PrepState['source']): RunState {
+  run.prep = { enemyId, source };
   run.screen = 'prep';
   return run;
 }
 
-export function startBattle(prev: RunState, loadout: string[], junk: SpellId[], c: Content): { run: RunState; events: TimedEvent[] } {
+/** Check a loadout: the configured number of distinct owned tools (fewer if you own fewer). */
+export function validateLoadout(player: Player, loadout: string[], c: Content) {
+  const need = Math.min(c.config.loadoutSize, player.tools.length);
+  if (loadout.length !== need) throw new Error(`Choose ${need} tools`);
+  if (new Set(loadout).size !== loadout.length) throw new Error('Duplicate tool');
+  if (loadout.some((uid) => !player.tools.some((t) => t.uid === uid))) throw new Error('Unknown tool');
+}
+
+export function startBattle(prev: RunState, loadout: string[], c: Content): { run: RunState; events: TimedEvent[] } {
   const run = clone(prev);
   const prep = run.prep;
   if (!prep) throw new Error('No battle to start');
-  if (loadout.length !== Math.min(prep.slots, run.player.spells.length)) throw new Error('Fill every loadout slot');
-  if (new Set(loadout).size !== loadout.length) throw new Error('Duplicate loadout spell');
-  if (junk.length > c.config.junkSlots || junk.some((j) => !run.player.junkPool.includes(j))) throw new Error('Invalid junk');
+  validateLoadout(run.player, loadout, c);
   run.battleCount += 1;
   run.lastLoadout = [...loadout];
-  const setup: BattleSetup = { player: run.player, encounter: c.encounters[prep.encounterId], loadout, junk, seed: forkSeed(run.seed, `battle:${run.battleCount}`) };
+  const setup: BattleSetup = { player: run.player, enemyId: prep.enemyId, loadout, seed: forkSeed(run.seed, `battle:${run.battleCount}`) };
   const { state, events } = createBattle(setup, c);
   run.battle = state;
   run.screen = 'battle';
   return { run: touch(run), events };
+}
+
+/** Rewards for beating an enemy: Talents from its range, and maybe a fruit (by tier). */
+export function rollRewards(r: ReturnType<typeof createRng>, enemyId: string, c: Content): { gold: number; fruit: FruitId | null } {
+  const e = c.enemies[enemyId];
+  const gold = r.int(e.talents[0], e.talents[1] + 1);
+  const fruit = r.next() < c.config.fruitDrop[e.tier] ? r.weighted(FRUIT_IDS, fruitWeight(c)) : null;
+  return { gold, fruit };
 }
 
 /** Called by the UI once the battle's outcome has played. Applies rewards or the defeat. */
@@ -378,23 +393,15 @@ export function finishBattle(prev: RunState, c: Content): RunState {
   const battle = run.battle;
   if (!battle?.outcome) return prev;
   const prep = run.prep!;
-  // Carry HP and gold (Steal) back; statuses always clear after a battle; ability uses persist.
+  // Courage and ability uses carry over; statuses always clear after a battle.
   run.player.hp = battle.player.hp;
-  run.player.gold = battle.player.gold;
   run.player.abilities = battle.player.abilities;
-  run.player.statuses = [];
   run.battle = null;
   if (battle.outcome === 'defeat') return touch(defeat(run));
-  let gold = 0;
-  for (const e of battle.enemies) {
-    const [lo, hi] = c.enemies[e.defId].gold;
-    gold += runRng(run, (r) => r.int(lo, hi + 1));
-  }
-  const dropChance = c.config.gemDrop[battle.tier];
-  const gem = runRng(run, (r) => (r.next() < dropChance ? r.weighted(gemIds(c), (g) => c.gems[g].dropWeight) : null));
+  const { gold, fruit } = runRng(run, (r) => rollRewards(r, battle.enemyId, c));
   run.player.gold += gold;
-  if (gem) run.player.gems.push(gem);
-  run.result = { outcome: 'victory', gold, gem, boss: prep.source === 'boss' };
+  if (fruit) run.player.fruits.push(fruit);
+  run.result = { outcome: 'victory', gold, fruit, boss: prep.source === 'boss' };
   run.screen = 'result';
   return touch(run);
 }
@@ -423,20 +430,16 @@ function defeat(run: RunState): RunState {
   return run;
 }
 
-// ---------------------------------------------------------------- spellbook
-
-export function resolvedPlayerSpells(player: Player, c: Content): ResolvedSpell[] {
-  return player.spells.map((s) => resolveInstance(s, c.spells[s.spellId], c.gems, c.assetExists));
-}
+// ---------------------------------------------------------------- toolbox
 
 /**
- * The loadout to preselect: the last battle's spells (still owned), topped up from the spell list in order,
- * trimmed to the slot count.
+ * The loadout to preselect: the last battle's tools (still owned), topped up from the tool list in order,
+ * trimmed to the loadout size.
  */
-export function suggestedLoadout(run: RunState, slots: number): string[] {
-  const owned = run.player.spells.map((s) => s.uid);
-  const picked = (run.lastLoadout ?? []).filter((uid) => owned.includes(uid)).slice(0, slots);
-  for (const uid of owned) if (picked.length < Math.min(slots, owned.length) && !picked.includes(uid)) picked.push(uid);
+export function suggestedLoadout(player: Player, last: string[] | undefined, size: number): string[] {
+  const owned = player.tools.map((s) => s.uid);
+  const picked = (last ?? []).filter((uid) => owned.includes(uid)).slice(0, size);
+  for (const uid of owned) if (picked.length < Math.min(size, owned.length) && !picked.includes(uid)) picked.push(uid);
   return picked;
 }
 
@@ -444,42 +447,38 @@ export function atTown(run: RunState): boolean {
   return !run.travel && run.map.stops[run.currentStopId]?.type === 'town';
 }
 
-export function socketGem(prev: RunState, spellUid: string, socket: number, gemIndex: number, secondElement: Element | undefined, c: Content): RunState {
+export function socketFruit(prev: RunState, toolUid: string, socket: number, fruitIndex: number): RunState {
   const run = clone(prev);
   const p = run.player;
-  const inst = p.spells.find((s) => s.uid === spellUid);
-  const gem = p.gems[gemIndex];
-  if (!inst || gem === undefined || socket < 0 || socket > 2 || inst.sockets[socket]) throw new Error('Cannot socket there');
-  if (gem === 'sunstone') {
-    if (!secondElement || secondElement === inst.element) throw new Error('Sunstone needs a different second element');
-  }
-  inst.sockets[socket] = gem === 'sunstone' ? { gem, secondElement } : { gem };
-  p.gems.splice(gemIndex, 1);
-  void c;
+  const inst = p.tools.find((s) => s.uid === toolUid);
+  const fruit = p.fruits[fruitIndex];
+  if (!inst || fruit === undefined || socket < 0 || socket > 2 || inst.sockets[socket]) throw new Error('Cannot add a fruit there');
+  inst.sockets[socket] = fruit;
+  p.fruits.splice(fruitIndex, 1);
   return touch(run);
 }
 
-export function unsocketGem(prev: RunState, spellUid: string, socket: number, c: Content): RunState {
-  if (!atTown(prev)) throw new Error('Unsocketing is only possible in a Town');
+export function unsocketFruit(prev: RunState, toolUid: string, socket: number, c: Content): RunState {
+  if (!atTown(prev)) throw new Error('Fruit can only be removed in a Town');
   const run = clone(prev);
   const p = run.player;
-  const inst = p.spells.find((s) => s.uid === spellUid);
-  const sock = inst?.sockets[socket];
-  if (!inst || !sock) throw new Error('Nothing to unsocket');
+  const inst = p.tools.find((s) => s.uid === toolUid);
+  const fruit = inst?.sockets[socket];
+  if (!inst || !fruit) throw new Error('Nothing to remove');
   if (p.gold < c.config.prices.unsocket) throw new Error('Not enough Talents');
   p.gold -= c.config.prices.unsocket;
-  p.gems.push(sock.gem);
+  p.fruits.push(fruit);
   inst.sockets[socket] = null;
   return touch(run);
 }
 
-export function upgradeSpell(prev: RunState, spellUid: string, c: Content): RunState {
+export function upgradeTool(prev: RunState, toolUid: string, c: Content): RunState {
   const run = clone(prev);
   const p = run.player;
-  const inst = p.spells.find((s) => s.uid === spellUid);
-  if (!inst || p.spellUpgrades <= 0 || inst.level >= c.config.maxSpellLevel) throw new Error('Cannot upgrade');
+  const inst = p.tools.find((s) => s.uid === toolUid);
+  if (!inst || p.upgrades <= 0 || inst.level >= c.config.maxToolLevel) throw new Error('Cannot upgrade');
   inst.level = (inst.level + 1) as 1 | 2 | 3 | 4 | 5;
-  p.spellUpgrades -= 1;
+  p.upgrades -= 1;
   return touch(run);
 }
 
@@ -490,9 +489,9 @@ function touch(run: RunState): RunState {
 
 // ---------------------------------------------------------------- debug
 
-export function debugBattle(prev: RunState, encounterId: string, c: Content): RunState {
-  const run = clone(prev);
-  return touch(openPrep(run, encounterId, c.config.loadoutSlots[c.encounters[encounterId].tier], 'debug'));
+export function debugBattle(prev: RunState, enemyId: string, c: Content): RunState {
+  if (!c.enemies[enemyId]) throw new Error(`Unknown enemy ${enemyId}`);
+  return touch(openPrep(clone(prev), enemyId, 'debug'));
 }
 
 export function debugEvent(prev: RunState, eventId: string, c: Content): RunState {

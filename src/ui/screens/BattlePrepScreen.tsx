@@ -1,116 +1,95 @@
-// Battle preparation (spec §5): fill every loadout slot, pick up to 2 junk tiles, then FIGHT.
+// Battle preparation (combat § 2.1): see the enemy and choose 3 of your tools. Used by runs and quick fights.
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { content } from '../../content';
-import { resolvedPlayerSpells, suggestedLoadout } from '../../engine/run';
-import { resolveJunk } from '../../engine/spells';
+import { PILLAR_NAME } from '../../content/tools';
+import { suggestedLoadout } from '../../engine/run';
+import type { ToolInstance } from '../../engine/types';
 import { useStore } from '../../state/store';
-import { Asset, PlayerStats, TopBar, useLongPress } from '../components/common';
-import { EnemyInfo } from './BattleScreen';
-import { SpellDetails } from './SpellbookScreen';
+import { AbilityBar, Asset, FruitIcon, Modal, PlayerStats, TopBar, useLongPress } from '../components/common';
 
 export function BattlePrepScreen() {
-  const run = useStore((s) => s.run)!;
+  const run = useStore((s) => s.run);
+  const quick = useStore((s) => s.quick);
   const startBattle = useStore((s) => s.startBattle);
-  const prep = run.prep!;
-  const spells = useMemo(() => resolvedPlayerSpells(run.player, content), [run.player]);
-  const slots = Math.min(prep.slots, spells.length);
-  // Preselect the spells used last battle (D26).
-  const [loadout, setLoadout] = useState<string[]>(() => suggestedLoadout(run, slots));
-  // Junk starts empty: the player opts in.
-  const [junk, setJunk] = useState<string[]>([]);
-  const [info, setInfo] = useState<string | null>(null);
-  const [enemyInfo, setEnemyInfo] = useState<string | null>(null);
-  const encounter = content.encounters[prep.encounterId];
+  const player = quick?.player ?? run!.player;
+  const enemyId = quick?.enemyId ?? run!.prep!.enemyId;
+  const boss = run?.prep?.source === 'boss';
+  const size = Math.min(content.config.loadoutSize, player.tools.length);
+  const [loadout, setLoadout] = useState<string[]>(() => suggestedLoadout(player, quick?.lastLoadout ?? run?.lastLoadout, size));
+  const [info, setInfo] = useState<ToolInstance | null>(null);
+  const enemy = content.enemies[enemyId];
 
-  const toggle = (ref: string) => {
-    if (loadout.includes(ref)) setLoadout(loadout.filter((r) => r !== ref));
-    else if (loadout.length < slots) setLoadout([...loadout, ref]);
+  const toggle = (uid: string) => {
+    if (loadout.includes(uid)) setLoadout(loadout.filter((u) => u !== uid));
+    else if (loadout.length < size) setLoadout([...loadout, uid]);
   };
-  const toggleJunk = (id: string) => {
-    if (junk.includes(id)) setJunk(junk.filter((j) => j !== id));
-    else if (junk.length < content.config.junkSlots) setJunk([...junk, id]);
-  };
-  const infoSpell = spells.find((s) => s.ref === info) ?? (info && content.spells[info] ? resolveJunk(content.spells[info]) : undefined);
 
   return (
     <div className="screen">
-      <TopBar><PlayerStats /></TopBar>
+      <TopBar>
+        {!quick && <PlayerStats />}
+        <span className="spacer" />
+        {!quick && <AbilityBar />}
+      </TopBar>
       <div className="prep-body">
-        <div className="prep-col panel" style={{ flex: 2, minWidth: 0 }}>
-          <div className="banner">{prep.source === 'boss' ? 'Pride' : encounter.tier === 'elite' ? 'A dangerous foe!' : 'Enemy Encounter!'}</div>
-          <div className="dim" style={{ fontSize: 13 }}>
-            Choose {slots} tools ({loadout.length}/{slots}). Hold any tile for details.
+        <div className="panel prep-enemy">
+          <div className="banner">{boss ? 'The final battle' : enemy.tier === 'elite' ? 'A dangerous foe!' : 'Enemy Encounter!'}</div>
+          <div className="row">
+            <Asset path={enemy.portrait} alt={enemy.name} size={64} color="#5a2a2a" />
+            <div>
+              <h2 style={{ margin: 0 }}>{enemy.name}</h2>
+              <div style={{ fontSize: 14 }}>{enemy.description}</div>
+            </div>
           </div>
-          <div className="spell-grid">
-            {spells.map((s) => (
-              <SpellCard key={s.ref} spell={s} selected={loadout.includes(s.ref)} onTap={() => toggle(s.ref)} onLong={() => setInfo(s.ref)} />
+        </div>
+        <div className="panel prep-col">
+          <b>Choose {size} tools ({loadout.length}/{size}). Hold one for details.</b>
+          <div className="tool-grid">
+            {player.tools.map((t) => (
+              <ToolCard key={t.uid} tool={t} selected={loadout.includes(t.uid)} onTap={() => toggle(t.uid)} onLong={() => setInfo(t)} />
             ))}
           </div>
         </div>
-        <div className="prep-col panel" style={{ flex: 1, minWidth: 0 }}>
-          <b>Enemies</b>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {encounter.enemies.map((id, i) => <EnemyCard key={i} id={id} onLong={() => setEnemyInfo(id)} />)}
-          </div>
-          <b>Distractions ({junk.length}/{content.config.junkSlots})</b>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {run.player.junkPool.map((id) => (
-              <JunkCard key={id} id={id} selected={junk.includes(id)} onTap={() => toggleJunk(id)} onLong={() => setInfo(id)} />
-            ))}
-          </div>
-          <span className="spacer" style={{ flex: 1 }} />
-          <button className="btn primary big" disabled={loadout.length !== slots} onClick={() => startBattle(loadout, junk)}>FIGHT!</button>
+        <button className="btn primary big" disabled={loadout.length !== size} onClick={() => startBattle(loadout)}>FIGHT!</button>
+      </div>
+      {info && <ToolInfo tool={info} onClose={() => setInfo(null)} />}
+    </div>
+  );
+}
+
+export function ToolCard({ tool, selected, onTap, onLong }: { tool: ToolInstance; selected?: boolean; onTap: () => void; onLong: () => void }) {
+  const def = content.tools[tool.toolId];
+  const press = useLongPress(onTap, onLong);
+  return (
+    <button className={`tool-card ${selected ? 'selected' : ''}`} style={{ background: def.color + '33' }} aria-pressed={!!selected} {...press}>
+      <span className="lvl">Lv{tool.level}</span>
+      <Asset path={def.icon} alt={def.name} size={36} color={def.color} />
+      <span>{def.name}</span>
+      <span className="dim" style={{ fontSize: 11 }}>{PILLAR_NAME[tool.pillar]}</span>
+      <span className="fruit-row">{tool.sockets.map((f, i) => (f ? <FruitIcon key={i} fruit={f} size={14} /> : <i key={i} className="socket" />))}</span>
+    </button>
+  );
+}
+
+export function ToolInfo({ tool, onClose }: { tool: ToolInstance; onClose: () => void }) {
+  const def = content.tools[tool.toolId];
+  const fruits = tool.sockets.filter((f): f is NonNullable<typeof f> => !!f);
+  return (
+    <Modal onClose={onClose}>
+      <div className="row">
+        <Asset path={def.icon} alt={def.name} size={56} color={def.color} />
+        <div>
+          <h2>{def.name} <span className="dim" style={{ fontSize: 15 }}>Lv {tool.level} · {PILLAR_NAME[tool.pillar]}</span></h2>
+          <div>{def.description}</div>
+          {fruits.length > 0 && (
+            <ul style={{ margin: '6px 0', paddingLeft: 18 }}>
+              {fruits.map((f, i) => <li key={i}><b>{content.fruits[f].name}</b> ({content.fruits[f].keyword}): {content.fruits[f].description}</li>)}
+            </ul>
+          )}
         </div>
       </div>
-      {infoSpell && <SpellDetails spell={infoSpell} onClose={() => setInfo(null)} />}
-      {enemyInfo && <EnemyInfo defId={enemyInfo} onClose={() => setEnemyInfo(null)} />}
-    </div>
+      <div className="actions"><button className="btn" onClick={onClose}>OK</button></div>
+    </Modal>
   );
-}
-
-function EnemyCard({ id, onLong }: { id: string; onLong: () => void }) {
-  const press = useLongPress(() => {}, onLong);
-  const def = content.enemies[id];
-  return (
-    <div style={{ textAlign: 'center', fontSize: 12, width: 56 }} role="button" aria-label={`${def.name}: hold for details`} {...press}>
-      <Asset path={def.portrait} alt={def.name} size={44} color="#5a2a2a" />
-      <div>{def.name}</div>
-    </div>
-  );
-}
-
-function JunkCard({ id, selected, onTap, onLong }: { id: string; selected: boolean; onTap: () => void; onLong: () => void }) {
-  const press = useLongPress(onTap, onLong);
-  const def = content.spells[id];
-  return (
-    <button className={`spell-card ${selected ? 'selected' : ''}`} style={{ width: 64 }} aria-pressed={selected} {...press}>
-      <Asset path={def.icon} alt={def.name} size={32} />
-      <span>{def.name}</span>
-    </button>
-  );
-}
-
-export function SpellCard({ spell, selected, onTap, onLong }: { spell: ReturnType<typeof resolvedPlayerSpells>[number]; selected?: boolean; onTap: () => void; onLong: () => void }) {
-  const press = useLongPress(onTap, onLong);
-  return (
-    <button className={`spell-card ${selected ? 'selected' : ''}`} style={{ background: spell.color + '33' }} {...press}>
-      <span className="lvl">Lv{spell.level}</span>
-      <Asset path={spell.icon} alt={spell.name} size={36} color={spell.color} />
-      <span>{spell.name}</span>
-      <span className="dim" style={{ fontSize: 11 }}>{statLine(spell)}</span>
-    </button>
-  );
-}
-
-export function statLine(s: { damage: number; healing: number; chaos: number; statuses: { status: string; value: number; perTile: boolean; self: boolean }[] }) {
-  const parts: string[] = [];
-  if (s.damage) parts.push(`⚔${s.damage}`);
-  if (s.healing) parts.push(`♥${s.healing}`);
-  if (s.chaos) parts.push(`?${s.chaos}`);
-  for (const st of s.statuses) {
-    const name = content.statuses[st.status]?.name ?? st.status;
-    parts.push(`${name} ${st.value}${st.perTile ? '' : '*'}`);
-  }
-  return parts.join(' · ');
 }

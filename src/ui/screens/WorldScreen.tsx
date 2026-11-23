@@ -15,7 +15,7 @@ const BASE_COLOR: Record<string, string> = { town: '#4d80cc', village: '#669966'
 
 export function WorldScreen() {
   const run = useStore((s) => s.run)!;
-  const { travelTo, roadBattle, arrive, setSpellbook } = useStore.getState();
+  const { travelTo, roadBattle, arrive, setToolbox } = useStore.getState();
   const [legend, setLegend] = useState(false);
   const scroller = useRef<HTMLDivElement>(null);
   const pathRef = useRef<SVGPathElement>(null);
@@ -80,7 +80,7 @@ export function WorldScreen() {
         <PlayerStats />
         <span className="spacer" />
         <AbilityBar />
-        <button className="btn" onClick={() => setSpellbook(true)}>Toolbox</button>
+        <button className="btn" onClick={() => setToolbox(true)}>Toolbox</button>
         <button className="btn" onClick={() => setLegend((v) => !v)}>Legend</button>
       </TopBar>
       <div className="world-scroll" ref={scroller}>

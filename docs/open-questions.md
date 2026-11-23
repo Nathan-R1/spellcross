@@ -60,6 +60,12 @@ board tiles), Self-Control (dates) +1 Focus (+1 move the first time the set clea
 choose 3 per battle.** Abilities replaced by Abstain (10 damage, uncommon), Stand Firm (5 Block, common), Many
 Fish (1 damage to a line of 3, common) and Revival (+3 moves, rare).
 
+Chosen while building (2026-11-23, easy to change): Hard Choices pays 20–30 Talents with a 25% fruit drop. Event
+Courage costs are scaled to 20 Courage (Shrine Scorn 1, Tavern ambush 10, Chest ⌈(3 + attempt) / 5⌉). Placements
+are aimed with one tap and confirmed with a second tap on the same cell. Quick fights show rewards but don't keep
+them. The headless balance sim was removed with the old combat. A new bot for the board-defence game is still to
+do.
+
 Nothing is open for the combat rework.
 
 ## Pre-rework (mostly moot after the combat rework)

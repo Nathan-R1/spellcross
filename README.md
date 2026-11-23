@@ -6,8 +6,7 @@ and battles one enemy at a time on an 8×8 match-3 board. The enemy's tiles marc
 you match tools (Prayer, Fasting, Thanksgiving, The Word) to hold them off (see [docs/combat.md](docs/combat.md)).
 
 **Target platform: phone browsers in portrait** (iOS Safari and Android Chrome, also installable as a
-PWA). This changed from landscape with the 2026-11 combat rework. The code is still landscape until the rework
-is built. Desktop browsers work but are not a design target.
+PWA). This changed from landscape with the 2026-11 combat rework. Desktop browsers work but are not a design target.
 
 ## Host it on localhost
 
@@ -63,7 +62,6 @@ or an HTTPS tunnel for that.
 | `pnpm test` | All unit, integration and UI tests (Vitest) |
 | `pnpm test:watch` | Tests in watch mode |
 | `pnpm coverage` | Tests plus a line/branch coverage report for `src/` |
-| `pnpm sim` | Headless combat sim: a bot plays every encounter and prints win rates (`SIM_SEEDS=100 pnpm sim` for more seeds) |
 | `pnpm lint` / `pnpm typecheck` | ESLint (with the engine/UI boundary rule) and TypeScript |
 | `pnpm assets:manifest` | Regenerate `src/content/assets.manifest.json` after adding files to `public/assets/` |
 
@@ -91,7 +89,7 @@ src/
   content/   game data: spells, statuses, abilities, gems, enemies & intents, encounters, events, config
   state/     Zustand store (actions the UI calls) and localStorage persistence
   ui/        React screens: menu, world map, events, battle prep, battle, spellbook, results
-tests/       Vitest suites (engine, run, content validation, UI smoke tests, sim)
+tests/       Vitest suites (combat engine, run, content validation, UI smoke tests)
 public/assets/   art and fonts, copied from Spellford
 ```
 

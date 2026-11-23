@@ -8,7 +8,7 @@ import { FullscreenButton, Modal } from '../components/common';
 type ObjId = 'pathway' | 'hut' | 'chasm' | 'tree';
 
 export function MenuScreen() {
-  const { hasSave, newRun, continueRun, abandonRun } = useStore();
+  const { hasSave, newRun, continueRun, abandonRun, openQuickFight } = useStore();
   const [lifted, setLifted] = useState<ObjId | null>(null);
   const [confirmAbandon, setConfirmAbandon] = useState(false);
   const [confirmNew, setConfirmNew] = useState(false);
@@ -45,7 +45,7 @@ export function MenuScreen() {
 
   return (
     <div className="screen menu">
-      <svg viewBox="0 0 1000 460" preserveAspectRatio="xMidYMid slice">
+      <svg viewBox="0 0 1000 460" preserveAspectRatio="xMidYMid meet">
         <defs>
           <linearGradient id="sky" x1="0" x2="0" y1="0" y2="1">
             <stop offset="0" stopColor="#0b1030" />
@@ -105,6 +105,10 @@ export function MenuScreen() {
       </svg>
 
       <div className="menu-corner"><FullscreenButton /></div>
+      <div className="menu-buttons">
+        <button className="btn primary big" onClick={openQuickFight}>⚔ Fight</button>
+        <div className="dim" style={{ fontSize: 13 }}>Pick an enemy and battle it straight away.</div>
+      </div>
       {confirmAbandon && (
         <Modal onClose={() => setConfirmAbandon(false)}>
           <h2>Abandon this run?</h2>

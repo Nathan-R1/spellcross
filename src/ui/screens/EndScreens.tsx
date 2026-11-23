@@ -1,6 +1,6 @@
 import { content } from '../../content';
 import { useStore } from '../../state/store';
-import { GemIcon } from '../components/common';
+import { Asset, FruitIcon } from '../components/common';
 
 export function ResultScreen() {
   const run = useStore((s) => s.run)!;
@@ -12,8 +12,8 @@ export function ResultScreen() {
         <h1 className="title">Victory!</h1>
         <div className="panel" style={{ padding: '12px 20px', display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div className="reward">+{r.gold} Talents</div>
-          {r.gem && <div className="reward"><GemIcon gem={r.gem} /> {content.gems[r.gem].name} virtue</div>}
-          <div className="dim">HP {run.player.hp}/{run.player.maxHp}</div>
+          {r.fruit && <div className="reward"><FruitIcon fruit={r.fruit} /> {content.fruits[r.fruit].name} fruit</div>}
+          <div className="dim">Courage {run.player.hp}/{run.player.maxHp}</div>
         </div>
         <button className="btn primary big" onClick={continueResult}>{r.boss ? 'Finish the journey' : 'Continue'}</button>
       </div>
@@ -31,6 +31,48 @@ export function EndScreen() {
         <h1 className="title">{won ? 'Journey complete' : 'Your journey ends'}</h1>
         <div className="dim">{run.endMessage}</div>
         <button className="btn primary big" onClick={toTitle}>Return to title</button>
+      </div>
+    </div>
+  );
+}
+
+/** Quick fight result: back to the main menu. Rewards are shown but not kept. */
+export function QuickResultScreen() {
+  const quick = useStore((s) => s.quick)!;
+  const toTitle = useStore((s) => s.toTitle);
+  const r = quick.result!;
+  return (
+    <div className="screen">
+      <div className="centered">
+        <h1 className="title">{r.outcome === 'victory' ? 'Victory!' : 'Defeated'}</h1>
+        <div className="dim">{content.enemies[quick.enemyId!].name}</div>
+        {r.outcome === 'victory' && (
+          <div className="panel" style={{ padding: '12px 20px' }}>
+            <div className="reward">+{r.gold} Talents</div>
+            {r.fruit && <div className="reward"><FruitIcon fruit={r.fruit} /> {content.fruits[r.fruit].name} fruit</div>}
+            <div className="dim" style={{ fontSize: 12 }}>(quick fight: rewards aren't kept)</div>
+          </div>
+        )}
+        <button className="btn primary big" onClick={toTitle}>Main menu</button>
+      </div>
+    </div>
+  );
+}
+
+/** Quick fight: pick the enemy (combat § 9). */
+export function EnemyPickerScreen() {
+  const { quickPick, toTitle } = useStore.getState();
+  return (
+    <div className="screen">
+      <div className="topbar"><button className="btn icon" onClick={toTitle} aria-label="Back">←</button><span className="title" style={{ fontSize: 20 }}>Fight</span></div>
+      <div className="centered" style={{ justifyContent: 'flex-start' }}>
+        <div className="dim">Choose an enemy</div>
+        {Object.values(content.enemies).map((e) => (
+          <button key={e.id} className="btn enemy-pick" onClick={() => quickPick(e.id)}>
+            <Asset path={e.portrait} alt={e.name} size={48} color="#5a2a2a" />
+            <span style={{ textAlign: 'left' }}><b>{e.name}</b><br /><span style={{ fontSize: 12 }}>{e.description}</span></span>
+          </button>
+        ))}
       </div>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import type { RunState } from '../engine/run';
 
-export const SAVE_KEY = 'spellcross:run:v1';
+export const SAVE_KEY = 'spellcross:run:v2';
 
 function storage(): Storage | null {
   try {
@@ -19,7 +19,7 @@ export function loadSave(): RunState | null {
     const raw = s.getItem(SAVE_KEY);
     if (!raw) return null;
     const data = JSON.parse(raw) as RunState;
-    if (data?.version !== 1 || !data.map || !data.player) throw new Error('bad save');
+    if (data?.version !== 2 || !data.map || !data.player) throw new Error('bad save');
     return data;
   } catch {
     try {

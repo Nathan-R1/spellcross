@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { content, assetExists } from '../../content';
 import { describeAbility } from '../../content/describe';
-import type { StatusInstance } from '../../engine/types';
-import { useStore } from '../../state/store';
+import type { FruitId } from '../../engine/types';
+import { activeBattle, useStore } from '../../state/store';
 import { enterFullscreen, exitFullscreen, fullscreenSupport, isFullscreen, onFullscreenChange } from '../fullscreen';
 
 /** Image from public/assets with a generated placeholder (coloured circle + initial) when missing (doc 04). */
@@ -64,46 +64,11 @@ export function HpBar({ hp, max, green }: { hp: number; max: number; green?: boo
   );
 }
 
-export function StatusRow({ statuses, max = 99, onPick }: { statuses: StatusInstance[]; max?: number; onPick?: (s: StatusInstance) => void }) {
-  const shown = statuses.slice(0, max);
-  return (
-    <div className="statuses">
-      {shown.map((s) => {
-        const def = content.statuses[s.id];
-        return (
-          <span key={s.id} className="status" title={def?.name} onClick={() => onPick?.(s)}>
-            <Asset path={def?.icon} alt={def?.name ?? s.id} size={20} />
-            <b>{s.value}</b>
-          </span>
-        );
-      })}
-      {statuses.length > max && <span className="dim" style={{ fontSize: 12 }}>+{statuses.length - max}</span>}
-    </div>
-  );
-}
-
 export function Modal({ children, onClose }: { children: ReactNode; onClose?: () => void }) {
   return (
     <div className="modal-back" onPointerDown={(e) => e.target === e.currentTarget && onClose?.()}>
       <div className="modal panel" role="dialog" aria-modal="true">{children}</div>
     </div>
-  );
-}
-
-export function StatusInfo({ s, onClose }: { s: StatusInstance; onClose: () => void }) {
-  const def = content.statuses[s.id];
-  return (
-    <Modal onClose={onClose}>
-      <div className="row">
-        <Asset path={def?.icon} alt={def?.name ?? s.id} size={48} />
-        <div>
-          <h2>{def?.name ?? s.id}</h2>
-          <div>{def?.description}</div>
-          <div className="dim">Value: {s.value}{def?.family === 'weak' ? ' turn(s)' : ''}</div>
-        </div>
-      </div>
-      <div className="actions"><button className="btn" onClick={onClose}>OK</button></div>
-    </Modal>
   );
 }
 
@@ -122,10 +87,10 @@ export function PlayerStats() {
   if (!p) return null;
   return (
     <>
-      <span className="chip"><Asset path="icons/heart.png" alt="HP" size={20} /> {p.hp}/{p.maxHp}</span>
-      <span className="chip"><Asset path="icons/gold.png" alt="Talents" size={20} /> {p.gold}</span>
-      <span className="chip"><Asset path="icons/gem.png" alt="Virtues" size={20} /> {p.gems.length}</span>
-      {p.spellUpgrades > 0 && <span className="chip">⬆ {p.spellUpgrades}</span>}
+      <span className="chip" title="Courage"><Asset path="icons/heart.png" alt="Courage" size={20} /> {p.hp}/{p.maxHp}</span>
+      <span className="chip" title="Talents"><Asset path="icons/gold.png" alt="Talents" size={20} /> {p.gold}</span>
+      <span className="chip" title="Fruit"><Asset path="fruits/love.svg" alt="Fruit" size={20} /> {p.fruits.length}</span>
+      {p.upgrades > 0 && <span className="chip" title="Upgrades">⬆ {p.upgrades}</span>}
     </>
   );
 }
@@ -158,16 +123,18 @@ export function Toasts() {
   return <div className="toasts">{toasts.map((t) => <div key={t.id} className="toast">{t.text}</div>)}</div>;
 }
 
-export function GemIcon({ gem, size = 14 }: { gem: keyof typeof content.gems; size?: number }) {
-  return <i className="gem" style={{ background: content.gems[gem].color, width: size, height: size }} title={content.gems[gem].name} />;
+export function FruitIcon({ fruit, size = 20 }: { fruit: FruitId; size?: number }) {
+  const def = content.fruits[fruit];
+  return <Asset path={def.icon} alt={def.name} size={size} color="#6b8e23" />;
 }
 
 /** Ability bar (top bar). In battle, tapping an ability opens its popup with a Trigger button. */
 export function AbilityBar({ onTrigger }: { onTrigger?: (i: number) => void }) {
-  const player = useStore((s) => s.run?.battle?.player ?? s.run?.player);
+  const player = useStore((s) => activeBattle(s)?.player ?? s.run?.player);
   const [open, setOpen] = useState<number | null>(null);
   if (!player) return null;
-  const slots = Array.from({ length: player.maxAbilities }, (_, i) => player.abilities[i]);
+  const max = 'maxAbilities' in player ? player.maxAbilities : Math.max(player.abilities.length, 1);
+  const slots = Array.from({ length: max }, (_, i) => player.abilities[i]);
   const openAbility = open !== null ? player.abilities[open] : undefined;
   const def = openAbility ? content.abilities[openAbility.id] : undefined;
   return (

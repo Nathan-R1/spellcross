@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 // UI smoke tests: render the real app and click through the main flows (menu → Traveller → map →
-// spellbook → battle prep → battle → end turn). No browser here, so layout and animation aren't checked.
+// toolbox → battle prep → battle → end turn, and the quick fight). No browser here, so layout and animation aren't checked.
 
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { App } from '../../src/ui/App';
@@ -16,7 +16,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   localStorage.clear();
-  useStore.setState({ run: null, hasSave: false, spellbookOpen: false, playback: { queue: [], view: null, current: null }, selection: null, debug: false });
+  useStore.setState({ run: null, quick: null, hasSave: false, toolboxOpen: false, playback: { queue: [], view: null, current: null, log: '' }, selection: null, debug: false });
 });
 afterEach(() => cleanup());
 
@@ -24,6 +24,12 @@ const tap = (el: Element) => {
   fireEvent.pointerDown(el);
   fireEvent.pointerUp(el);
   fireEvent.click(el);
+};
+
+const toPrep = () => {
+  act(() => useStore.getState().newRun(42));
+  act(() => useStore.getState().chooseOption(0));
+  act(() => useStore.getState().debugBattle('hard_choices'));
 };
 
 describe('UI smoke', () => {
@@ -39,85 +45,72 @@ describe('UI smoke', () => {
     expect(localStorage.getItem(SAVE_KEY)).toContain('"screen":"map"');
   });
 
-  it('toolbox lists the starting tools', async () => {
+  it('the toolbox lists the five starting tools', async () => {
     act(() => useStore.getState().newRun(42));
     act(() => useStore.getState().chooseOption(0));
     render(<App />);
     fireEvent.click(screen.getByText('Toolbox'));
-    await waitFor(() => screen.getAllByText('Prayer'));
-    expect(screen.getAllByText('Serving').length).toBeGreaterThan(0);
+    for (const name of ['Fasting', 'Prayer', 'Thanksgiving', 'The Word', 'Prophecy']) await waitFor(() => screen.getAllByText(name));
     fireEvent.click(screen.getByLabelText('Close toolbox'));
-    await waitFor(() => expect(useStore.getState().spellbookOpen).toBe(false));
+    await waitFor(() => expect(useStore.getState().toolboxOpen).toBe(false));
   });
 
-  it('battle prep → battle: board, enemies, end turn plays the enemy phase', async () => {
-    act(() => useStore.getState().newRun(42));
-    act(() => useStore.getState().chooseOption(0));
-    act(() => useStore.getState().debugBattle('wolf'));
+  it('battle prep → choose 3 tools → battle: 8×8 board, enemy panel, end turn plays the enemy turn', async () => {
+    toPrep();
     render(<App />);
-    expect(screen.getByText('Enemy Encounter!')).toBeTruthy();
-    fireEvent.click(screen.getByText('FIGHT!'));
+    expect(screen.getByText('Hard Choices')).toBeTruthy();
+    const fight = screen.getByText('FIGHT!') as HTMLButtonElement;
+    expect(fight.disabled).toBe(false); // the first three tools are preselected
+    fireEvent.click(fight);
     await waitFor(() => screen.getByText('End Turn'));
-    const visible = screen.getAllByRole('gridcell').filter((t) => (t as HTMLElement).style.visibility !== 'hidden');
-    expect(visible).toHaveLength(48);
-    expect(screen.getByLabelText(/Strife, 30 HP/)).toBeTruthy();
-    const cursor = useStore.getState().run!.battle!.enemies[0].intentCursor;
+    expect(screen.getAllByRole('gridcell')).toHaveLength(64);
+    expect(screen.getAllByLabelText(/^Worry/)).toHaveLength(8);
+    expect(screen.getByLabelText('Hard Choices: hold for details')).toBeTruthy();
     fireEvent.click(screen.getByText('End Turn'));
     await waitFor(() => expect(useStore.getState().run!.battle!.round).toBe(2));
-    await waitFor(() => expect(useStore.getState().playback.queue).toHaveLength(0), { timeout: 5000 });
-    expect(useStore.getState().run!.battle!.enemies[0].intentCursor).toBe((cursor + 1) % 3);
-    expect(useStore.getState().run!.player.hp).toBe(100); // run HP updates only when the battle ends
+    await waitFor(() => expect(useStore.getState().playback.queue).toHaveLength(0), { timeout: 15000 });
+    expect(useStore.getState().run!.player.hp).toBe(20); // run Courage updates only when the battle ends
+  }, 20000);
+
+  it('battle prep: tapping a selected tool deselects it and FIGHT needs 3', async () => {
+    toPrep();
+    render(<App />);
+    const prayer = screen.getByText('Prayer').closest('button')!;
+    expect(prayer.getAttribute('aria-pressed')).toBe('true');
+    tap(prayer);
+    await waitFor(() => expect((screen.getByText('FIGHT!') as HTMLButtonElement).disabled).toBe(true));
+    tap(screen.getByText('Prophecy').closest('button')!);
+    await waitFor(() => expect((screen.getByText('FIGHT!') as HTMLButtonElement).disabled).toBe(false));
   });
 
-  it('battle prep: junk starts unselected; holding a junk tile shows its description', async () => {
-    act(() => useStore.getState().newRun(42));
-    act(() => useStore.getState().chooseOption(0));
-    act(() => useStore.getState().debugBattle('wolf'));
+  it('battle prep preselects the tools used last battle', async () => {
+    toPrep();
+    act(() => useStore.getState().apply((r) => ({ ...r, lastLoadout: ['t3', 't4', 't5'] })));
     render(<App />);
-    expect(screen.getByText('Distractions (0/2)')).toBeTruthy();
-    const orb = screen.getByText('Idol').closest('button')!;
-    expect(orb.getAttribute('aria-pressed')).toBe('false');
-    fireEvent.pointerDown(orb);
-    await waitFor(() => screen.getByText(/Distraction: not much use/), { timeout: 2000 });
-    expect(screen.getByText('A shiny idol')).toBeTruthy();
-    expect(screen.getByText('Distractions (0/2)')).toBeTruthy(); // holding doesn't select it
-    fireEvent.pointerUp(orb);
-    fireEvent.click(screen.getByText('OK'));
-    tap(screen.getByText('Idol').closest('button')!);
-    await waitFor(() => screen.getByText('Distractions (1/2)'));
+    const selected = screen.getAllByRole('button').filter((b) => b.className.includes('tool-card') && b.className.includes('selected')).map((b) => b.textContent);
+    expect(selected.join(' ')).toMatch(/Thanksgiving.*The Word.*Prophecy/);
   });
 
-  it('battle prep: holding an enemy shows its intent cycle', async () => {
-    act(() => useStore.getState().newRun(42));
-    act(() => useStore.getState().chooseOption(0));
-    act(() => useStore.getState().debugBattle('spider'));
+  it('quick fight: Fight → pick an enemy → choose tools → battle, without touching the run save', async () => {
     render(<App />);
-    fireEvent.pointerDown(screen.getByLabelText('Lust: hold for details'));
-    await waitFor(() => screen.getByText('Repeats this cycle:'), { timeout: 2000 });
-    expect(screen.getByText('Temptation')).toBeTruthy();
-    expect(screen.getByText(/elite · 76 HP/)).toBeTruthy();
-  });
-
-  it('battle prep preselects the spells used last battle', async () => {
-    act(() => useStore.getState().newRun(42));
-    act(() => useStore.getState().chooseOption(0));
-    act(() => useStore.getState().apply((r) => ({ ...r, lastLoadout: ['s3', 's4', 's5'] })));
-    act(() => useStore.getState().debugBattle('wolf'));
-    render(<App />);
-    const selected = screen.getAllByRole('button').filter((b) => b.className.includes('spell-card') && b.className.includes('selected')).map((b) => b.textContent);
-    expect(selected.join(' ')).toMatch(/Serving.*Fasting.*Fellowship/);
+    fireEvent.click(screen.getByText('⚔ Fight'));
+    await waitFor(() => screen.getByText('Choose an enemy'));
+    fireEvent.click(screen.getByText('Hard Choices'));
+    await waitFor(() => screen.getByText('FIGHT!'));
+    fireEvent.click(screen.getByText('FIGHT!'));
+    await waitFor(() => screen.getByText('End Turn'));
+    expect(useStore.getState().quick?.battle).toBeTruthy();
+    expect(localStorage.getItem(SAVE_KEY)).toBeNull();
   });
 
   it('continue run restores a mid-battle save', async () => {
-    act(() => useStore.getState().newRun(42));
-    act(() => useStore.getState().chooseOption(0));
-    act(() => useStore.getState().debugBattle('bear'));
-    act(() => useStore.getState().startBattle(useStore.getState().run!.player.spells.slice(0, 3).map((s) => s.uid), []));
+    toPrep();
+    act(() => useStore.getState().startBattle(['t1', 't2', 't3']));
     useStore.setState({ run: null });
     act(() => useStore.getState().continueRun());
     render(<App />);
     await waitFor(() => screen.getByText('End Turn'));
-    expect(screen.getByLabelText(/Greed, 45 HP/)).toBeTruthy();
+    expect(screen.getAllByRole('gridcell')).toHaveLength(64);
   });
 
   it('abandon run clears the save', async () => {

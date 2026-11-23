@@ -1,68 +1,42 @@
 // Content validation (doc 04 "Validation at boot"): references resolve, rules hold, art exists.
 
-import { content, flattenIntent } from '../../src/content';
+import { content } from '../../src/content';
+import { generatorEnemyTiles } from '../../src/content/enemies';
 import { events as eventNodes, RANDOM_EVENTS, STOP_EVENTS } from '../../src/content/events';
-import { STARTING_SPELLS } from '../../src/content/spells';
+import { FRUIT_IDS } from '../../src/content/fruits';
+import { STONE } from '../../src/content/tools';
 
 const c = content;
 
 describe('content validation', () => {
-  it('every named intent flattens without cycles', () => {
-    for (const id of Object.keys(c.intents)) expect(flattenIntent(id, c.intents).length).toBeGreaterThan(0);
-  });
-
-  it('every enemy has at least one intent; board intents only on elites and bosses', () => {
+  it('every enemy generator names real enemy tiles and starts with at least one on the board', () => {
     for (const e of Object.values(c.enemies)) {
-      const parts = c.enemyIntents[e.id].flatMap((i) => i.parts);
-      expect(parts.length).toBeGreaterThan(0);
-      if (e.tier === 'normal') expect(parts.some((p) => p.type === 'lock' || p.type === 'addTiles')).toBe(false);
+      for (const r of e.generator) if (r !== 'normal') expect(c.enemyTiles[r.tile], r.tile).toBeDefined();
+      expect(e.generator.slice(0, c.config.board.height).some((r) => r !== 'normal'), e.id).toBe(true);
     }
   });
 
-  it('encounters have 1–4 known enemies and every tier is covered', () => {
-    for (const enc of Object.values(c.encounters)) {
-      expect(enc.enemies.length).toBeGreaterThanOrEqual(1);
-      expect(enc.enemies.length).toBeLessThanOrEqual(4);
-      for (const id of enc.enemies) expect(c.enemies[id]).toBeDefined();
-    }
-    for (const tier of ['normal', 'elite', 'boss']) expect(Object.values(c.encounters).some((e) => e.tier === tier)).toBe(true);
+  it("every enemy's setup description states its enemy-tile total", () => {
+    for (const e of Object.values(c.enemies)) expect(e.description).toContain(String(generatorEnemyTiles(e, c.config.board.width)));
+    expect(generatorEnemyTiles(c.enemies.hard_choices)).toBe(32);
   });
 
-  it('every status referenced by spells, abilities and intents exists', () => {
-    const refs = [
-      ...Object.values(c.spells).flatMap((s) => s.statuses.map((x) => x.status)),
-      ...Object.values(c.abilities).flatMap((a) => a.statuses.map((x) => x.status)),
-      ...Object.values(c.enemyIntents).flat().flatMap((i) => i.parts.flatMap((p) => ('status' in p ? [p.status] : []))),
+  it('starting tools exist and are not parked; there are 9 fruit', () => {
+    for (const id of c.config.startingTools) {
+      expect(c.tools[id]).toBeDefined();
+      expect(c.tools[id].parked).toBeFalsy();
+    }
+    expect(FRUIT_IDS).toHaveLength(9);
+  });
+
+  it('every icon, portrait and event image exists in the asset manifest', () => {
+    const paths = [
+      ...Object.values(c.tools).map((t) => t.icon), ...Object.values(c.junk).map((j) => j.icon), STONE.icon,
+      ...Object.values(c.fruits).map((f) => f.icon), ...Object.values(c.abilities).map((a) => a.icon),
+      ...Object.values(c.statuses).map((s) => s.icon), ...Object.values(c.enemyTiles).map((t) => t.icon),
+      ...Object.values(c.enemies).map((e) => e.portrait!), ...Object.values(eventNodes).map((n) => n.image),
     ];
-    for (const r of refs) expect(c.statuses[r], r).toBeDefined();
-  });
-
-  it('every addTiles intent names a junk spell', () => {
-    for (const i of Object.values(c.enemyIntents).flat()) for (const p of i.parts) if (p.type === 'addTiles') expect(['dud', 'nova']).toContain(c.spells[p.spell].spellClass);
-  });
-
-  it('every fixed icon and portrait exists in the asset manifest (except known art gaps)', () => {
-    const known = new Set(['spider', 'stone_giant']); // U5: no Spellford art for these
-    for (const s of Object.values(c.spells)) if (s.icon) expect(c.assetExists(s.icon), s.icon).toBe(true);
-    for (const a of Object.values(c.abilities)) expect(c.assetExists(a.icon), a.icon).toBe(true);
-    for (const e of Object.values(c.enemies)) if (!known.has(e.id)) expect(c.assetExists(e.portrait!), e.id).toBe(true);
-    for (const s of Object.values(c.statuses)) expect(c.assetExists(s.icon), s.icon).toBe(true);
-    for (const n of Object.values(eventNodes)) expect(c.assetExists(n.image), n.image).toBe(true);
-  });
-
-  it('gems: effect gems have 5 values by spell level; Weight and Sunstone have none', () => {
-    for (const g of Object.values(c.gems)) {
-      if (g.id === 'weight' || g.id === 'sunstone') expect(g.values).toBeUndefined();
-      else expect(g.values).toHaveLength(5);
-    }
-    expect(Object.keys(c.gems)).not.toContain('trapstone'); // G3: cut
-  });
-
-  it('starting spells are upgradable player spells', () => {
-    for (const id of STARTING_SPELLS) {
-      expect(c.spells[id].spellClass).toBe('player');
-      expect(c.spells[id].upgradable).toBe(true);
-    }
+    for (const p of paths) expect(c.assetExists(p), p).toBe(true);
   });
 
   it('stop and random events exist', () => {
@@ -70,10 +44,11 @@ describe('content validation', () => {
     for (const id of Object.values(STOP_EVENTS)) if (id) expect(eventNodes[id]).toBeDefined();
   });
 
-  it('config matches the spec', () => {
-    expect(c.config.player).toMatchObject({ hp: 100, movesPerTurn: 3, maxAbilities: 5 });
-    expect(c.config.board).toEqual({ width: 8, visibleRows: 6, bufferRows: 6 });
-    expect(c.config.loadoutSlots).toEqual({ normal: 3, elite: 3, boss: 3 });
-    expect(c.config.pool.loadout + c.config.pool.duds + c.config.pool.novas).toBeCloseTo(1);
+  it('config matches the docs', () => {
+    expect(c.config.player).toMatchObject({ hp: 20, movesPerTurn: 3, maxAbilities: 5 });
+    expect(c.config.board).toEqual({ width: 8, height: 8 });
+    expect(c.config.loadoutSize).toBe(3);
+    expect(c.config.stoneHp).toBe(2);
+    expect(c.config.pool.tools + c.config.pool.junk).toBeCloseTo(1);
   });
 });

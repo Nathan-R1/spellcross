@@ -1,21 +1,23 @@
-// Tunable numbers (spec.md; values marked "tune" there). Spellford Constants.kt equivalents.
+// Tunable numbers (docs/combat.md and docs/spec.md; values marked "tune" there).
 
 export const config = {
-  player: { hp: 100, movesPerTurn: 3, maxAbilities: 5, startingGold: 0 },
-  board: { width: 8, visibleRows: 6, bufferRows: 6 },
-  /** Tile pool shares (combat §2.4). */
-  pool: { loadout: 0.6, duds: 0.25, novas: 0.15, weightPerGem: 0.2 },
-  junkSlots: 2,
-  /** Every battle uses a 3-spell loadout (Spellford gave Trail battles 4). */
-  loadoutSlots: { normal: 3, elite: 3, boss: 3 },
-  maxSpellLevel: 5,
+  player: { hp: 20, movesPerTurn: 3, maxAbilities: 5, startingGold: 0 },
+  board: { width: 8, height: 8 },
+  /** Tile pool shares (combat §1): the chosen tools vs the junk tiles. */
+  pool: { tools: 0.7, junk: 0.3, weightPerLove: 0.2 },
+  /** Tools taken into each battle (combat §2.1). */
+  loadoutSize: 3,
+  startingTools: ['fasting', 'prayer', 'thanksgiving', 'word', 'prophecy'],
+  junk: ['time', 'space'],
+  stoneHp: 2,
+  maxToolLevel: 5,
   roadBattleAt: [0.3, 0.7] as [number, number],
-  gemDrop: { normal: 0.25, elite: 1, boss: 0 },
-  prices: { villageHeal: 50, gem: 100, spellUpgrade: 100, ability: 200, unsocket: 50, salesmanAbility: 100, salesmanHeal: 50, alchemistFire: 100 },
+  fruitDrop: { normal: 0.25, elite: 1, boss: 0 },
+  prices: { villageHeal: 50, fruit: 100, upgrade: 100, ability: 200, unsocket: 50, salesmanAbility: 100, salesmanHeal: 50, alchemistFire: 100 },
   healPct: 0.5,
   /** Relative chance of rolling an ability of each rarity. */
   abilityRarityWeight: { common: 3, uncommon: 1, rare: 0.5, legendary: 0.2 },
-  shopGemChoices: 3,
+  shopFruitChoices: 3,
   travellerChoices: 3,
   worldHeight: 1080,
 } as const;

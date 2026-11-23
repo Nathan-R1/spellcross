@@ -1,7 +1,7 @@
 // Story and stop events (spec §4, features §4.2–4.3). Text is Spellford's EventLibrary, verbatim.
 // Options are data except availability checks and parametric nodes (Chest, Tavern), which take params.
 
-import type { AbilityId, Element, GemId, Player, SpellId } from '../engine/types';
+import type { AbilityId, FruitId, Pillar, Player } from '../engine/types';
 
 export type Next =
   | 'end'
@@ -15,14 +15,13 @@ export type Effect =
   | { type: 'damage'; amount: number }
   | { type: 'healPctMax'; pct: number }
   | { type: 'addAbility'; id?: AbilityId }
-  | { type: 'gem'; id?: GemId }
-  | { type: 'gemOffer'; price: number }
-  | { type: 'spellUpgrade'; count: number }
-  /** Pick a spell and raise its level now (Campfire Meditate). */
-  | { type: 'levelUpSpell' }
+  | { type: 'fruit'; id?: FruitId }
+  | { type: 'fruitOffer'; price: number }
+  | { type: 'upgrade'; count: number }
+  /** Pick a tool and raise its level now (Campfire Reflect). */
+  | { type: 'levelUpTool' }
   | { type: 'recharge'; count: number | 'perAbility' }
-  | { type: 'addSpell'; id: SpellId }
-  | { type: 'changeElement'; element: Element }
+  | { type: 'changePillar'; pillar: Pillar }
   | { type: 'removeLastAbility' }
   | { type: 'battle'; tier: 'normal' | 'elite' };
 
@@ -59,11 +58,11 @@ const hasAbilities = (p: Player) => p.abilities.length > 0;
 
 // One heal per visit (D25): a free +20% at Campfires, Villages and Towns, or a paid +50% at Villages and Towns.
 // Spellford healed +50% for free at Campfires, Villages and Towns.
-const PATCH_UP: EventOption = { label: '[Patch up]', reward: '+20% HP', effects: [{ type: 'healPctMax', pct: 0.2 }], next: 'stay', group: 'heal' };
-const HEAL: EventOption = { label: '[Healer]', reward: '+50% HP', cost: '-50 Talents', available: gold(50), effects: [{ type: 'gold', amount: -50 }, { type: 'healPctMax', pct: 0.5 }], next: 'stay', group: 'heal' };
+const PATCH_UP: EventOption = { label: '[Patch up]', reward: '+20% Courage', effects: [{ type: 'healPctMax', pct: 0.2 }], next: 'stay', group: 'heal' };
+const HEAL: EventOption = { label: '[Healer]', reward: '+50% Courage', cost: '-50 Talents', available: gold(50), effects: [{ type: 'gold', amount: -50 }, { type: 'healPctMax', pct: 0.5 }], next: 'stay', group: 'heal' };
 const REST: EventOption = { label: '[Resting]', reward: '+1 Recharge per ability', available: hasAbilities, effects: [{ type: 'recharge', count: 'perAbility' }], next: 'stay' };
-const BUY_GEM: EventOption = { label: '[Purchase]', reward: '+Virtue (pick 1 of 3)', cost: '-100 Talents', available: gold(100), effects: [{ type: 'gemOffer', price: 100 }], next: 'stay' };
-const TRAIN_UPGRADE = (label: string): EventOption => ({ label, reward: '+Upgrade', cost: '-100 Talents', available: gold(100), effects: [{ type: 'gold', amount: -100 }, { type: 'spellUpgrade', count: 1 }], next: 'stay' });
+const BUY_FRUIT: EventOption = { label: '[Purchase]', reward: '+Fruit (pick 1 of 3)', cost: '-100 Talents', available: gold(100), effects: [{ type: 'fruitOffer', price: 100 }], next: 'stay' };
+const TRAIN_UPGRADE = (label: string): EventOption => ({ label, reward: '+Upgrade', cost: '-100 Talents', available: gold(100), effects: [{ type: 'gold', amount: -100 }, { type: 'upgrade', count: 1 }], next: 'stay' });
 
 /** A random ability (rarity-weighted) for 200gp: Villages, Towns and Markets. Disabled at 5 abilities (D20). */
 const BUY_ABILITY: EventOption = {
@@ -82,24 +81,24 @@ export const events: Record<string, EventNode> = {
   }),
   campfire: node({
     id: 'campfire', title: 'Campfire', text: '', image: TOWN_IMG,
-    // Campfire: choose one of Patch up, Rest or Meditate.
+    // Campfire: choose one of Patch up, Rest or Reflect.
     options: () => [
       { ...PATCH_UP, group: 'campfire' },
       { ...REST, group: 'campfire' },
       {
         label: '[Reflect]', reward: 'Level up a tool', group: 'campfire', next: 'stay',
-        available: (p) => p.spells.some((s) => s.level < 5), effects: [{ type: 'levelUpSpell' }],
+        available: (p) => p.tools.some((s) => s.level < 5), effects: [{ type: 'levelUpTool' }],
       },
       LEAVE,
     ],
   }),
-  village: node({ id: 'village', title: 'Village', text: '', image: TOWN_IMG, options: () => [PATCH_UP, HEAL, REST, BUY_GEM, BUY_ABILITY, LEAVE] }),
-  town: node({ id: 'town', title: 'Town', text: '', image: TOWN_IMG, options: () => [PATCH_UP, HEAL, REST, BUY_GEM, BUY_ABILITY, LEAVE] }),
+  village: node({ id: 'village', title: 'Village', text: '', image: TOWN_IMG, options: () => [PATCH_UP, HEAL, REST, BUY_FRUIT, BUY_ABILITY, LEAVE] }),
+  town: node({ id: 'town', title: 'Town', text: '', image: TOWN_IMG, options: () => [PATCH_UP, HEAL, REST, BUY_FRUIT, BUY_ABILITY, LEAVE] }),
   market: node({
     id: 'market', title: 'Market', text: '', image: TOWN_IMG,
     options: () => [
       BUY_ABILITY,
-      BUY_GEM,
+      BUY_FRUIT,
       TRAIN_UPGRADE('[Study]'),
       LEAVE,
     ],
@@ -121,7 +120,7 @@ export const events: Record<string, EventNode> = {
     options: (p) => [
       // Spellford pays a flat 201, which made Gamble Big a trap. Big now pays 601 (tune); Small keeps 201.
       { label: '[Insist]', reward: `+${insistGold(p.wager)} Talents`, effects: [{ type: 'gold', amount: insistGold(p.wager) }], next: 'end' },
-      { label: '[Take some junk]', reward: '+Virtue', effects: [{ type: 'gem' }], next: 'end' },
+      { label: '[Take some junk]', reward: '+Fruit', effects: [{ type: 'fruit' }], next: 'end' },
     ],
   }),
   gambler_lose: node({
@@ -134,7 +133,7 @@ export const events: Record<string, EventNode> = {
     text: 'Times are changing good friend. There is word of havoc and death. The watchmen have been called off to war. The roads are no longer safe for the likes of you and I. Who will defend us when thugs and robbers attack?',
     options: () => [
       { label: '[Pay for a Tool]', reward: '+Ability', cost: '-100 Talents', available: (p) => p.gold >= 100 && p.abilities.length < p.maxAbilities, effects: [{ type: 'gold', amount: -100 }, { type: 'addAbility' }], next: 'stay' },
-      { label: '[Pay for Healing]', reward: '+50% HP', cost: '-50 Talents', available: gold(50), effects: [{ type: 'gold', amount: -50 }, { type: 'healPctMax', pct: 0.5 }], next: 'stay' },
+      { label: '[Pay for Healing]', reward: '+50% Courage', cost: '-50 Talents', available: gold(50), effects: [{ type: 'gold', amount: -50 }, { type: 'healPctMax', pct: 0.5 }], next: 'stay' },
       LEAVE,
     ],
   }),
@@ -153,12 +152,12 @@ export const events: Record<string, EventNode> = {
   warlock_wisdom: node({
     id: 'warlock_wisdom', title: 'Wandering Hermit', image: IMG,
     text: 'Hmmmmph. Well fine then. ... I shall tell you the most useful wisdom of all. Rise early, pray often, and never let the sun go down on your anger.',
-    options: () => [{ label: '[Listen]', reward: '+Upgrade', effects: [{ type: 'spellUpgrade', count: 1 }], next: 'end' }],
+    options: () => [{ label: '[Listen]', reward: '+Upgrade', effects: [{ type: 'upgrade', count: 1 }], next: 'end' }],
   }),
   warlock_stuff: node({
     id: 'warlock_stuff', title: 'Wandering Hermit', image: IMG,
     text: 'Greedy fool, see a man better off than you and think you can get something from him. Well fine... but only because I am on a religious journey of kindness you jerk.',
-    options: () => [{ label: '[Take]', reward: '+Devoted Virtue', effects: [{ type: 'gem', id: 'weight' }], next: 'end' }], // D5
+    options: () => [{ label: '[Take]', reward: '+Love Fruit', effects: [{ type: 'fruit', id: 'love' }], next: 'end' }], // D5
   }),
   shrine: node({
     id: 'shrine', title: 'Fallen Shrine', image: IMG, text: "You discover a cracked old stone that must once have served as someone's god. ",
@@ -168,7 +167,7 @@ export const events: Record<string, EventNode> = {
   shrine_scorn: node({
     id: 'shrine_scorn', title: 'Fallen Shrine', image: IMG,
     text: "The shrine looks up at you as if to say: 'You scorn me? You are one without memory, without purpose, you barely even have a grasp on life itself'",
-    options: () => [{ label: '[Stalk Away]', cost: '-5 HP', available: (p) => p.hp >= 5, effects: [{ type: 'damage', amount: 5 }], next: 'end' }],
+    options: () => [{ label: '[Stalk Away]', cost: '-1 Courage', available: (p) => p.hp >= 1, effects: [{ type: 'damage', amount: 1 }], next: 'end' }],
   }),
   shrine_pray: node({
     id: 'shrine_pray', title: 'Fallen Shrine', image: IMG,
@@ -180,11 +179,12 @@ export const events: Record<string, EventNode> = {
     options: (p) => {
       const n = p.attempt ?? 1;
       const guaranteed = n >= 10;
-      const cost = 3 + n;
+      // Scaled to 20 Courage (tune): 1, 1, 2, 2, 2, 2, 2, 3, …
+      const cost = Math.ceil((3 + n) / 5);
       const chance = guaranteed ? 1 : Math.min(1, (25 + n * 10) / 100);
       return [
         {
-          label: '[Reach Inside]', reward: guaranteed ? '100% Relic' : `${Math.round(chance * 100)}% Relic`, cost: `Lose ${cost} HP`,
+          label: '[Reach Inside]', reward: guaranteed ? '100% Relic' : `${Math.round(chance * 100)}% Relic`, cost: `Lose ${cost} Courage`,
           available: (pl) => pl.hp >= cost, effects: [{ type: 'damage', amount: cost }],
           next: { chance, pass: { node: 'chest_success' }, fail: { node: 'chest', params: { attempt: n + 1 } } },
         },
@@ -219,20 +219,20 @@ export const events: Record<string, EventNode> = {
   }),
   tavern_ambush: node({
     id: 'tavern_ambush', title: 'Something Awakens!', image: IMG, text: 'Something attacks you from the shadows!',
-    options: () => [{ label: '[Continue]', cost: '-50 HP', effects: [{ type: 'damage', amount: 50 }], next: 'end' }],
+    options: () => [{ label: '[Continue]', cost: '-10 Courage', effects: [{ type: 'damage', amount: 10 }], next: 'end' }],
   }),
   fight_for_loot: node({
     id: 'fight_for_loot', title: 'A Dangerous Situation', image: IMG,
     text: 'Behold before you a crooked path leading off into the mountains. The path has the markings of some great beast. ',
-    options: () => [LEAVE, { label: '[Explore]', reward: '+Tool', cost: 'Fight', effects: [{ type: 'addSpell', id: 'wind_wall' }, { type: 'battle', tier: 'normal' }], next: 'end' }],
+    options: () => [LEAVE, { label: '[Explore]', reward: '+Tool (none yet)', cost: 'Fight', effects: [{ type: 'battle', tier: 'normal' }], next: 'end' }],
   }),
   alchemist: node({
     id: 'alchemist', title: 'The Mentor', image: IMG, text: 'A wise old woman looks over at you. She says nothing but the options are clear.',
     options: () => [
       LEAVE,
-      { label: '[Pay to grow in Faith]', cost: '-100 Talents', available: (p) => p.gold >= 100 && p.spells.some((s) => s.element !== 'fire'), effects: [{ type: 'gold', amount: -100 }, { type: 'changeElement', element: 'fire' }], next: 'end' },
-      { label: '[Sacrifice to grow in Truth]', cost: '-Ability', available: (p) => hasAbilities(p) && p.spells.some((s) => s.element !== 'lightning'), effects: [{ type: 'removeLastAbility' }, { type: 'changeElement', element: 'lightning' }], next: 'end' },
-      { label: '[Sacrifice to grow in Unity]', cost: '-Ability', available: (p) => hasAbilities(p) && p.spells.some((s) => s.element !== 'earth'), effects: [{ type: 'removeLastAbility' }, { type: 'changeElement', element: 'earth' }], next: 'end' },
+      { label: '[Pay to grow in Faith]', cost: '-100 Talents', available: (p) => p.gold >= 100 && p.tools.some((s) => s.pillar !== 'faith'), effects: [{ type: 'gold', amount: -100 }, { type: 'changePillar', pillar: 'faith' }], next: 'end' },
+      { label: '[Sacrifice to grow in Truth]', cost: '-Ability', available: (p) => hasAbilities(p) && p.tools.some((s) => s.pillar !== 'truth'), effects: [{ type: 'removeLastAbility' }, { type: 'changePillar', pillar: 'truth' }], next: 'end' },
+      { label: '[Sacrifice to grow in Unity]', cost: '-Ability', available: (p) => hasAbilities(p) && p.tools.some((s) => s.pillar !== 'unity'), effects: [{ type: 'removeLastAbility' }, { type: 'changePillar', pillar: 'unity' }], next: 'end' },
     ],
   }),
 };

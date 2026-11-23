@@ -75,6 +75,7 @@ Actions repeat in a fixed cycle and must be visible ahead of time ("Next: …" o
 | On the board at the start | The bottom 7 rows are normal, and the **top row is all Worries** |
 | Total | **4 Worry rows = 32 Worries**: 8 on the board at the start and 24 still to come |
 | Actions | None |
+| Reward *(tune)* | 20–30 Talents, 25% chance of a fruit (normal tier) |
 | Setup description (shown on hold) | "Rows of Worry with a normal row between each: 4 Worry rows, **32 Worries** in all. The first row starts on the board." |
 
 You win the moment no Worries are on the board, even if more are still to come

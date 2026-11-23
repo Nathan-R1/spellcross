@@ -1,72 +1,59 @@
-// Core engine types (doc 02, spec.md). Everything here is plain serialisable data.
+// Core engine types (docs/combat.md, docs/tools.md, docs/enemies.md). Everything here is plain serialisable data.
 
 import type { RngState } from './rng';
 
-export type Element = 'fire' | 'lightning' | 'water' | 'earth' | 'air' | 'acid';
-export const ELEMENTS: readonly Element[] = ['fire', 'lightning', 'water', 'earth', 'air', 'acid'];
+export type Pillar = 'faith' | 'truth' | 'love' | 'unity' | 'spirit' | 'discipline';
+export const PILLARS: readonly Pillar[] = ['faith', 'truth', 'love', 'unity', 'spirit', 'discipline'];
 
-export type SpellId = string;
-export type StatusId = string;
+export type ToolId = string;
 export type AbilityId = string;
-export type GemId =
-  | 'strikecut' | 'lifelink' | 'walled' | 'toxicut' | 'cracked' | 'weight'
-  | 'chargestone' | 'stormstone' | 'darkstone' | 'sunstone';
 export type EnemyId = string;
-export type EncounterId = string;
-/** A SpellInstance uid (player spells) or a SpellId (dud/nova tiles). */
-export type SpellRef = string;
+export type FruitId =
+  | 'love' | 'joy' | 'peace' | 'patience' | 'kindness' | 'goodness' | 'faithfulness' | 'gentleness' | 'self_control';
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'legendary';
+export type Tier = 'normal' | 'elite' | 'boss';
 
 // ---------------------------------------------------------------- content definitions
 
-export type SpellClass = 'player' | 'enemy' | 'dud' | 'nova' | 'both';
-export type SpellTarget = 'single' | 'all' | 'random' | 'self';
+/** What a tool's set does (tools.md §1). 'none' = parked tool. */
+export type ToolEffect = 'critical' | 'damageShape' | 'block' | 'stones' | 'prophecy' | 'none';
 
-export interface SpellStatus {
-  status: StatusId;
-  value: number;
-  self: boolean;
-  /** Spellford `multipliedByTiles`: applied at value × tiles, else flat value. */
-  perTile: boolean;
-}
-
-export interface SpellDef {
-  id: SpellId;
+export interface ToolDef {
+  id: ToolId;
   name: string;
   description: string;
-  /** Fixed icon (dud/nova/enemy). Player spells derive theirs from stats. */
-  icon?: string;
-  element: Element;
-  damage: number;
-  healing: number;
-  weight: number;
-  spellClass: SpellClass;
-  linked: boolean;
-  linkBehaviour?: 'mimicNeighbour';
-  target: SpellTarget;
-  statuses: SpellStatus[];
+  pillar: Pillar;
+  effect: ToolEffect;
+  icon: string;
   color: string;
-  upgradable: boolean;
+  /** Parked tools exist as data but can't be owned yet. */
+  parked?: boolean;
 }
 
-export type StatusFamily =
-  | 'critical' | 'strength' | 'weak' | 'charge' | 'fortify' | 'block' | 'permaBlock' | 'poisoned';
-
-export interface StatusDef {
-  id: StatusId;
+export interface JunkDef {
+  id: string;
   name: string;
   description: string;
   icon: string;
-  family: StatusFamily;
-  /** Element-scoped Charge / Fortify. */
-  element?: Element;
+  color: string;
+  /** Damage hits granted when 3+ clear (Time: 1). */
+  hits: number;
 }
 
-export interface StatusInstance {
-  id: StatusId;
-  value: number;
+export interface FruitDef {
+  id: FruitId;
+  name: string;
+  keyword: string;
+  description: string;
+  icon: string;
+  dropWeight: number;
 }
 
-export type Rarity = 'common' | 'uncommon' | 'rare' | 'legendary';
+export type AbilityEffect =
+  | { type: 'hit'; damage: number }
+  | { type: 'block'; amount: number }
+  | { type: 'line'; length: number; damage: number }
+  | { type: 'moves'; amount: number };
 
 export interface AbilityDef {
   id: AbilityId;
@@ -75,10 +62,7 @@ export interface AbilityDef {
   rarity: Rarity;
   icon: string;
   maxUses: number;
-  damage?: number;
-  damageElement?: Element;
-  statuses: { status: StatusId; value: number; self: boolean }[];
-  effects: { type: 'triplePoison' }[];
+  effect: AbilityEffect;
 }
 
 export interface AbilityInstance {
@@ -86,152 +70,99 @@ export interface AbilityInstance {
   uses: number;
 }
 
-export interface GemDef {
-  id: GemId;
-  name: string;
-  /** "Lvl" column of the design list. Reference only (G11). */
-  tier: 1 | 2 | 3;
-  description: string;
-  /** Value by spell level 1–5. */
-  values?: [number, number, number, number, number];
-  /** Relative drop / shop weight (Weight and Cracked are the most common). */
-  dropWeight: number;
-  color: string;
-}
-
-// ---------------------------------------------------------------- intents & enemies
-
-export type GenericIntent =
-  | { type: 'attack'; amount: number }
-  /** Damage scaled by the attacker's HP fraction: `max` at full HP, rounded up (Stone Giant). */
-  | { type: 'attackScaled'; max: number }
-  | { type: 'defend' | 'defendAllies'; amount: number }
-  | { type: 'heal' | 'healAlly' | 'healAllies'; amount: number }
-  | { type: 'buff' | 'buffAllies' | 'debuff'; status: StatusId; value: number }
-  | { type: 'steal'; amount: number }
-  | { type: 'lock'; count: number }
-  | { type: 'addTiles'; spell: SpellId; count: number };
-
-export type IntentRef = string | GenericIntent;
-
-export interface NamedIntentDef {
+export interface StatusDef {
   id: string;
   name: string;
-  icon?: string;
   description: string;
-  do: IntentRef[];
+  icon: string;
 }
 
-/** A named or generic intent, flattened to generic parts at content load. */
-export interface ResolvedIntent {
+/** An enemy tile type (enemies.md §1). */
+export interface EnemyTileDef {
+  id: string;
   name: string;
   description: string;
-  parts: GenericIntent[];
+  icon: string;
+  color: string;
+  hp: number;
+  speed: number;
+  /** Damage dealt to the player when it steps from the bottom row. */
+  damage: number;
 }
 
-export type Tier = 'normal' | 'elite' | 'boss';
+/** One generated row: normal (from the tile pool) or a row of 8 enemy tiles (enemies.md §2). */
+export type GeneratedRow = 'normal' | { tile: string };
 
 export interface EnemyDef {
   id: EnemyId;
   name: string;
   tier: Tier;
-  hp: number;
+  /** Setup description: the generation pattern and its totals. */
+  description: string;
   portrait?: string;
-  start?: 'first' | 'random';
-  gold: [number, number];
-  intents: IntentRef[];
-  weaknesses?: Element[];
-  resistances?: Element[];
-  startingStatuses?: StatusInstance[];
-}
-
-export interface EncounterDef {
-  id: EncounterId;
-  tier: Tier;
-  enemies: EnemyId[];
+  /** From the bottom row of the board upwards; normal forever after the end. */
+  generator: GeneratedRow[];
+  talents: [number, number];
 }
 
 // ---------------------------------------------------------------- player state
 
-export interface GemSocket {
-  gem: GemId;
-  secondElement?: Element;
-}
+export type Socket = FruitId | null;
 
-export interface SpellInstance {
+export interface ToolInstance {
   uid: string;
-  spellId: SpellId;
-  element: Element;
+  toolId: ToolId;
+  pillar: Pillar;
   level: 1 | 2 | 3 | 4 | 5;
-  sockets: [GemSocket | null, GemSocket | null, GemSocket | null];
+  sockets: [Socket, Socket, Socket];
 }
 
-export interface Combatant {
+export interface Player {
+  /** Courage. */
   hp: number;
   maxHp: number;
-  /** Spellford's entity strength stat (a multiplier, always 1 in v1). Not the Strength status. */
-  strengthStat: number;
-  weaknesses: Element[];
-  resistances: Element[];
-  statuses: StatusInstance[];
-}
-
-export interface Player extends Combatant {
   movesPerTurn: number;
-  spells: SpellInstance[];
-  junkPool: SpellId[];
+  tools: ToolInstance[];
+  /** Talents. */
   gold: number;
-  gems: GemId[];
-  spellUpgrades: number;
+  fruits: FruitId[];
+  upgrades: number;
   abilities: AbilityInstance[];
   maxAbilities: number;
-  nextSpellUid: number;
+  nextToolUid: number;
 }
 
-/** A spell with all customisation applied. Battles store these so they are self-contained. */
-export interface ResolvedSpell {
-  ref: SpellRef;
-  spellId: SpellId;
+/** A tool instance with its fruit counted, as a battle uses it. */
+export interface BattleTool {
+  uid: string;
+  toolId: ToolId;
   name: string;
-  description: string;
-  elements: Element[];
-  level: number;
-  damage: number;
-  healing: number;
-  chaos: number;
-  statuses: SpellStatus[];
-  selfDamage: number;
-  extraMove: boolean;
-  weight: number;
-  spellClass: SpellClass;
-  linked: boolean;
-  linkBehaviour?: 'mimicNeighbour';
-  target: SpellTarget;
-  color: string;
+  pillar: Pillar;
+  effect: ToolEffect;
   icon: string;
-  /** Effect categories the icon can't show (the "+n" pip). */
-  hiddenCategories: number;
-  gems: GemId[];
+  color: string;
+  weight: number;
+  fruit: Record<FruitId, number>;
 }
 
 // ---------------------------------------------------------------- board & battle
 
-/** Only enemy intents (Spin Web) lock tiles; swapping doesn't (D23). */
-export type TileLock = 'free' | 'locked';
+export type TileKind = 'tool' | 'junk' | 'stone' | 'enemy';
 
 export interface Tile {
   uid: number;
-  spell: SpellRef | null;
-  lock: TileLock;
+  kind: TileKind;
+  /** Tool instance uid, junk id ('time' | 'space'), 'stone', or enemy tile id ('worry'). */
+  id: string;
+  hp: number;
+  maxHp: number;
 }
 
 export interface Board {
   width: number;
   height: number;
-  /** Rows above this index are the hidden refill buffer. */
-  visibleFrom: number;
-  cells: Tile[];
-  nextUid: number;
+  /** Row-major, y = 0 is the top row. null = empty (only mid-resolution). */
+  cells: (Tile | null)[];
 }
 
 export interface Pos {
@@ -239,67 +170,74 @@ export interface Pos {
   y: number;
 }
 
-export interface EnemyState extends Combatant {
-  defId: EnemyId;
-  name: string;
-  slot: number;
-  intentCursor: number;
-  alive: boolean;
-  stolenGold: number;
-}
+export type Placement =
+  /** Prayer: 1 damage to every cell of this shape (offsets from its top-left). */
+  | { type: 'shape'; cells: Pos[]; damage: number; source: string }
+  /** Prophecy, Time, Abstain: damage one tile. */
+  | { type: 'hit'; damage: number; source: string }
+  /** The Word: damage one tile; if deleted, a Stone takes its place. */
+  | { type: 'stone'; damage: number; stoneHp: number; source: string }
+  /** Many Fish: a straight line, orientation chosen when placing. */
+  | { type: 'line'; length: number; damage: number; source: string };
 
-export type Phase = 'player' | 'enemies' | 'over';
+export type Stage = 'player' | 'endTurn' | 'enemy' | 'newTurn';
+export type Phase = 'player' | 'placing' | 'over';
+
+export interface BattlePlayer {
+  hp: number;
+  maxHp: number;
+  block: number;
+  critical: number;
+  foresight: number;
+  movesPerTurn: number;
+  abilities: AbilityInstance[];
+}
 
 export interface BattleState {
   board: Board;
-  player: Player;
-  enemies: EnemyState[];
-  phase: Phase;
+  enemyId: EnemyId;
+  /** Next generated-row index for each column (starts at the board height). */
+  genPos: number[];
+  tools: Record<string, BattleTool>;
+  /** Weighted pool for normal cells. */
+  pool: { kind: 'tool' | 'junk'; id: string; weight: number }[];
+  player: BattlePlayer;
   movesLeft: number;
-  extraMoveUsed: boolean;
-  targetSlot: number;
   round: number;
+  phase: Phase;
+  stage: Stage;
+  pending: Placement[];
+  /** Tool uids whose Focus fired this turn. */
+  focusUsed: string[];
   outcome: null | 'victory' | 'defeat';
-  encounterId: EncounterId;
-  tier: Tier;
-  /** Resolved spells keyed by SpellRef: loadout instances plus dud/nova tiles. */
-  spells: Record<SpellRef, ResolvedSpell>;
-  /** Weighted tile pool used for refills. */
-  pool: { ref: SpellRef; weight: number }[];
+  nextUid: number;
   rng: RngState;
 }
 
 // ---------------------------------------------------------------- battle events (UI playback)
 
-export type Target = 'player' | number; // enemy slot
-
 export interface ViewSnapshot {
   board: Board;
-  player: { hp: number; maxHp: number; statuses: StatusInstance[]; gold: number };
-  enemies: { slot: number; hp: number; maxHp: number; statuses: StatusInstance[]; alive: boolean; intentCursor: number }[];
+  player: { hp: number; maxHp: number; block: number; critical: number; foresight: number };
   movesLeft: number;
-  targetSlot: number;
+  round: number;
   phase: Phase;
+  pending: Placement | null;
+  enemyOnBoard: number;
+  enemyToCome: number;
 }
 
 export type BattleEvent =
   | { type: 'swapped'; a: Pos; b: Pos }
-  | { type: 'matched'; step: number; uids: number[] }
-  | { type: 'cast'; ref: SpellRef; power: number; chaos?: 'damage' | 'block' | 'healing'; hits: { target: Target; damage: number; blocked: number }[]; healing: number }
-  | { type: 'cleared'; uids: number[] }
+  | { type: 'matched'; uids: number[] }
+  | { type: 'effect'; source: string; text: string }
+  | { type: 'damaged'; uids: number[]; deleted: number[] }
+  | { type: 'stone'; uid: number }
   | { type: 'collapsed' }
-  | { type: 'enemyTurn'; slot: number; intent: string }
-  | { type: 'damage'; target: Target; amount: number; blocked: number; source: 'intent' | 'poison' | 'self' | 'ability' }
-  | { type: 'healed'; target: Target; amount: number }
-  | { type: 'status'; target: Target; status: StatusId; value: number }
-  | { type: 'goldStolen'; slot: number; amount: number }
-  | { type: 'goldReturned'; slot: number; amount: number }
-  | { type: 'tilesLocked'; uids: number[] }
-  | { type: 'tilesReplaced'; uids: number[]; spell: SpellRef }
-  | { type: 'defeated'; target: Target }
+  | { type: 'shining'; uids: number[] }
+  | { type: 'enemyStep'; uid: number }
+  | { type: 'playerHit'; amount: number; blocked: number }
   | { type: 'ability'; id: AbilityId }
-  | { type: 'targetChanged'; slot: number }
-  | { type: 'extraMove' }
   | { type: 'turnStart'; round: number }
   | { type: 'battleEnd'; outcome: 'victory' | 'defeat' };
 

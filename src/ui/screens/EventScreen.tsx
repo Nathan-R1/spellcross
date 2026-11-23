@@ -2,14 +2,14 @@
 
 import { content } from '../../content';
 import { abilitySummary } from '../../content/describe';
-import { eventView, resolvedPlayerSpells } from '../../engine/run';
-import type { GemId } from '../../engine/types';
+import { eventView } from '../../engine/run';
+import type { FruitId } from '../../engine/types';
 import { useStore } from '../../state/store';
-import { AbilityBar, Asset, GemIcon, Modal, PlayerStats, TopBar } from '../components/common';
+import { AbilityBar, Asset, FruitIcon, Modal, PlayerStats, TopBar } from '../components/common';
 
 export function EventScreen() {
   const run = useStore((s) => s.run)!;
-  const { chooseOption, assignRecharge, skipRecharges, pickGem, pickLevelUp } = useStore.getState();
+  const { chooseOption, assignRecharge, skipRecharges, pickFruit, pickLevelUp } = useStore.getState();
   const view = eventView(run, content);
   if (!view) return null;
   const ev = run.event!;
@@ -64,38 +64,41 @@ export function EventScreen() {
       {ev.levelUpPick && (
         <Modal onClose={() => pickLevelUp(null)}>
           <h2>Reflect</h2>
-          <div className="dim">Choose a tool to level up. A tool's level sets how strong its virtues are.</div>
+          <div className="dim">Choose a tool to level up.</div>
           <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-            {resolvedPlayerSpells(run.player, content).map((sp) => (
-              <button key={sp.ref} className="btn" disabled={sp.level >= 5} onClick={() => pickLevelUp(sp.ref)} style={{ flexDirection: 'column', minWidth: 92 }}>
-                <Asset path={sp.icon} alt={sp.name} size={32} color={sp.color} />
-                <span style={{ fontSize: 12 }}>{sp.name}</span>
-                <span className="dim" style={{ fontSize: 12 }}>Lv {sp.level}{sp.level < 5 ? ` → ${sp.level + 1}` : ' (max)'}</span>
-              </button>
-            ))}
+            {run.player.tools.map((t) => {
+              const def = content.tools[t.toolId];
+              return (
+                <button key={t.uid} className="btn" disabled={t.level >= 5} onClick={() => pickLevelUp(t.uid)} style={{ flexDirection: 'column', minWidth: 92 }}>
+                  <Asset path={def.icon} alt={def.name} size={32} color={def.color} />
+                  <span style={{ fontSize: 12 }}>{def.name}</span>
+                  <span className="dim" style={{ fontSize: 12 }}>Lv {t.level}{t.level < 5 ? ` → ${t.level + 1}` : ' (max)'}</span>
+                </button>
+              );
+            })}
           </div>
           <div className="actions"><button className="btn" onClick={() => pickLevelUp(null)}>Cancel</button></div>
         </Modal>
       )}
 
-      {ev.gemOffer && (
-        <Modal onClose={() => pickGem(null)}>
-          <h2>Choose a virtue</h2>
-          <div className="dim">Pick 1 of 3 for {ev.gemOfferPrice} Talents. Values grow with the level of the tool you add it to.</div>
+      {ev.fruitOffer && (
+        <Modal onClose={() => pickFruit(null)}>
+          <h2>Choose a fruit</h2>
+          <div className="dim">Pick 1 of 3 for {ev.fruitOfferPrice} Talents.</div>
           <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-            {ev.gemOffer.map((g: GemId) => {
-              const def = content.gems[g];
+            {ev.fruitOffer.map((f: FruitId) => {
+              const def = content.fruits[f];
               return (
-                <button key={g} className="btn" style={{ flexDirection: 'column', flex: 1, minWidth: 120, padding: 8 }} onClick={() => pickGem(g)}>
-                  <GemIcon gem={g} size={20} />
+                <button key={f} className="btn" style={{ flexDirection: 'column', flex: 1, minWidth: 120, padding: 8 }} onClick={() => pickFruit(f)}>
+                  <FruitIcon fruit={f} size={32} />
                   <b>{def.name}</b>
+                  <span className="dim" style={{ fontSize: 12 }}>{def.keyword}</span>
                   <span style={{ fontSize: 12 }}>{def.description}</span>
-                  {def.values && <span className="dim" style={{ fontSize: 11 }}>Lv1–5: {def.values.join(' / ')}</span>}
                 </button>
               );
             })}
           </div>
-          <div className="actions"><button className="btn" onClick={() => pickGem(null)}>Cancel</button></div>
+          <div className="actions"><button className="btn" onClick={() => pickFruit(null)}>Cancel</button></div>
         </Modal>
       )}
     </div>
