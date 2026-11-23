@@ -105,6 +105,27 @@ describe('UI smoke', () => {
     expect(localStorage.getItem(SAVE_KEY)).toBeNull();
   });
 
+  it('a Prayer set asks where to deal damage: tap a tile, then Continue', async () => {
+    toPrep();
+    act(() => useStore.getState().startBattle(['t1', 't2', 't3']));
+    // Rig the bottom row so swapping columns 2 and 3 makes a Prayer set.
+    act(() => {
+      const r = useStore.getState().run!;
+      const b = structuredClone(r.battle!);
+      const mk = (kind: 'tool' | 'junk', id: string) => ({ uid: b.nextUid++, kind, id, hp: 1, maxHp: 1 });
+      b.board.cells[56] = mk('tool', 't2'); b.board.cells[57] = mk('tool', 't2'); b.board.cells[58] = mk('junk', 'space'); b.board.cells[59] = mk('tool', 't2');
+      useStore.setState({ run: { ...r, battle: b } });
+    });
+    render(<App />);
+    act(() => { useStore.getState().selectTile({ x: 2, y: 7 }); useStore.getState().selectTile({ x: 3, y: 7 }); });
+    await waitFor(() => expect(document.querySelector('.instruction')?.textContent).toMatch(/Prayer: 3-tile shape.*Tap the board/), { timeout: 8000 });
+    tap(screen.getAllByRole('gridcell')[0]);
+    await waitFor(() => screen.getByText('Continue'));
+    expect(document.querySelectorAll('.tile.aimed')).toHaveLength(3);
+    fireEvent.click(screen.getByText('Continue'));
+    await waitFor(() => expect(useStore.getState().run!.battle!.phase).toBe('player'));
+  }, 20000);
+
   it('continue run restores a mid-battle save', async () => {
     toPrep();
     act(() => useStore.getState().startBattle(['t1', 't2', 't3']));

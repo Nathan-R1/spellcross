@@ -24,8 +24,9 @@ export function BattleScreen() {
   const selection = useStore((s) => s.selection);
   const orientation = useStore((s) => s.orientation);
   const { selectTile, confirmPlacement, ability, endTurn, advance, fastForward, setOrientation } = useStore.getState();
-  const view = playback.view ?? snapshot(battle, content);
   const busy = playback.queue.length > 0 || playback.current !== null;
+  // While events play, show their frames; once idle, show the battle as it really is (e.g. waiting for a placement).
+  const view = busy && playback.view ? playback.view : snapshot(battle, content);
   const current = playback.current?.event;
 
   // Playback driver.
