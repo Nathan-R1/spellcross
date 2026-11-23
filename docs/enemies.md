@@ -19,18 +19,20 @@ An enemy tile is a board tile owned by the enemy. Every enemy tile:
 - **activates** once per enemy turn, bottom row first ([combat § 4.1](combat.md#41-activation)),
 - **never destroys another enemy tile**. If its move is blocked by one, it stays put,
 - enters the board from the enemy's **generator** (§2), or from an enemy action (§3),
-- leaves the board only through **Prayer** removal shapes and **Time**, or by being **transformed** into a
-  Stone by **the Word** ([combat § 5](combat.md#5-placement)).
+- leaves the board when **damage** reaches its HP, or by being **transformed** into a Stone by **the Word**
+  ([combat § 1.2](combat.md#12-hp-and-damage), [§ 5](combat.md#5-placement)),
+- shows its **HP** as a red number in the top-right corner and its **move speed** as arrows at the bottom-middle.
 
-Each tile type has an **HP** value. For now nothing deals partial damage (removal is outright), so HP is
-recorded for future tools.
+Each tile type has an **HP** value and a **speed** (steps per activation). Damage below its HP leaves it on
+the board with less HP.
 
 ### Worry (base enemy tile)
 
 | | |
 |---|---|
 | HP | 1 |
-| On activate | On the bottom row: **1 damage** to the player, and it stays. Otherwise **move 1 down**. A tool or junk tile below is destroyed. A Stone below cracks, and the Worry stays. A Cracked Stone below breaks, and the Worry moves in. Another enemy tile below blocks it |
+| Speed | 1 (↓) |
+| On activate | On the bottom row: **1 damage** to the player, and it stays. Otherwise it deals **1 damage** to the tile below. If that tile is deleted, the Worry moves in. If it survives (a full-HP Stone), the Worry stays. Another enemy tile below blocks it, with no damage |
 | Art | placeholder from the old junk art (e.g. `spells/dud/ash.png`) until drawn |
 
 ## 2. The generator

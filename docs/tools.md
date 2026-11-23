@@ -16,7 +16,7 @@ choose.
 | Tool | Pillar | Set effect | Scales with set size? |
 |---|---|---|---|
 | **Fasting** | Discipline | Gain **Critical 1** | No: 1 per set |
-| **Prayer** | Faith | Gain one **removal shape**, the same shape as the set (3 in a line → remove 3 in a line) | Yes: the shape *is* the set |
+| **Prayer** | Faith | Gain one **damage shape**, the same shape as the set: 1 damage to every tile in it (3 in a line → 3 in a line) | Yes: the shape *is* the set |
 | **Thanksgiving** | Spirit | Gain **1 Block per tile** | Yes |
 | **The Word** | Truth | Create **1 Stone per tile**, each placed on any tile, including a Worry | Yes |
 
@@ -24,16 +24,16 @@ choose.
 
 Match 3+ Fasting: gain **Critical**. The next tool set you complete is **doubled** ([combat § 3.3](combat.md#33-critical)):
 
-- Fasting → Prayer (3): you place **two** horizontal-3 removal shapes. It's two separate shapes, not one
+- Fasting → Prayer (3): you place **two** horizontal-3 damage shapes. It's two separate shapes, not one
   line of 6.
 - Fasting → The Word (3): **6** Stones.
 - Fasting → Thanksgiving (4): **8** Block.
 
 ### Prayer
 
-Match 3+ Prayer: you get a removal shape matching the set, and place it anywhere it fits with the same
-orientation. Everything under it is removed: Worries, tools, junk, Stones. Prayer is the main way to defeat
-enemy tiles. ([combat § 5.1](combat.md#51-removal-shapes-prayer))
+Match 3+ Prayer: you get a damage shape matching the set, and place it anywhere it fits with the same
+orientation. Every tile under it takes 1 damage. That deletes Worries, tools and junk (1 HP) and cracks Stones
+(2 HP). Prayer is the main way to defeat enemy tiles. ([combat § 5.1](combat.md#51-damage-shapes-prayer))
 
 ### Thanksgiving
 
@@ -43,7 +43,7 @@ the start of your next turn.
 ### The Word
 
 Match 3+ Word: create 1 **Stone** per tile, placed one at a time on any tile, even a Worry. The tile **transforms** into a Stone. Stones block Worries:
-a Stone takes 2 hits. The first cracks it and stops the Worry for that turn, and the second breaks it.
+a Stone has 2 HP. The first Worry step cracks it and stops the Worry for that turn, and the second deletes it.
 
 ## 2. Junk
 
@@ -52,7 +52,7 @@ Slime, Orb, Surge, Critical, Charge, Wall, Wild), which are retired. Their art i
 
 | Junk | Set effect | Art (reused) |
 |---|---|---|
-| **Time** | 3+ Time: remove **1 tile anywhere** on the board, including an enemy tile | `spells/dud/orb.png` |
+| **Time** | 3+ Time: deal **1 damage to 1 tile** anywhere on the board, including an enemy tile | `spells/dud/orb.png` |
 | **Space** | 3+ Space: **nothing**. They just clear | `spells/dud/mist.png` |
 
 ## 3. Stone
@@ -62,9 +62,10 @@ Slime, Orb, Surge, Critical, Charge, Wall, Wild), which are retired. Their art i
 | Source | The Word only, never the tile pool |
 | Gravity | Falls like any tile |
 | Swappable | Yes |
-| Matches | 3+ Stones clear, with no effect. Cracked and uncracked Stones match each other |
-| Vs enemy tiles | Takes 2 hits. Hit 1: it becomes a **Cracked Stone**, and the Worry stays put. Hit 2: it breaks, and the Worry moves into its cell |
-| Art (reused) | `spells/dud/rubble.png`. Cracked Stone: the same art with a crack overlay |
+| HP | **2** |
+| Matches | 3+ Stones clear, with no effect, whether damaged or not |
+| Vs enemy tiles | A Worry step deals 1 damage. First step: 1 HP left, and the Worry stays put. Second step: deleted, and the Worry moves in |
+| Art (reused) | `spells/dud/rubble.png`. At 1 HP: the same art with a crack overlay |
 
 ## 4. Statuses
 

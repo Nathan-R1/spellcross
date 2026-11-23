@@ -140,12 +140,14 @@ The enemy and its pattern are shown on the battle screen ([combat § 8](combat.m
 Authoritative rules: **[combat.md](combat.md)**. In short:
 
 - **One enemy**, an **8×8 board**, **portrait** layout (board on top, player and enemy panels below).
-- Your turn: **3 swaps**. Tool sets trigger as they clear. Prayer and Time ask you to place removals, and
+- Your turn: **3 swaps**. Tool sets trigger as they clear. Prayer and Time ask you to place **damage**, and
   the Word asks you to place Stones (it transforms tiles, including Worries).
+- **Every tile has HP** (1, Stones 2). Damage that reaches a tile's HP deletes it. There's no separate
+  "remove" effect.
 - The enemy's **generator** decides which rows the board is built and refilled from (Hard Choices: a row of
   Worries, a normal row, a row of Worries, …).
 - Enemy turn: enemy actions, if any (default none), then its **tiles activate**. A Worry steps down one row,
-  destroying what's below. A Stone takes two hits: the first cracks it and stops the Worry, the second breaks it.
+  dealing 1 damage to the tile below and moving in if it's deleted. A Stone (2 HP) stops it for one turn.
   From the bottom row a Worry hits you for 1.
 - **Win** when the enemy has no tiles left on the board. **Lose** when Courage hits 0.
 - Enemies and enemy tiles: [enemies.md](enemies.md). Tools, junk, Stones and statuses: [tools.md](tools.md).

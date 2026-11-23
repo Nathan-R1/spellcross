@@ -16,23 +16,23 @@ Decided by the designer:
 | Enemy tiles | Never match. Never destroy each other: blocked like by a Stone. Fall with gravity |
 | Damage | 1 damage = 1 Courage. Block absorbs first |
 | Win | The enemy has no tiles left on the board |
-| Getting rid of Worries | Prayer removal shapes and Time remove them. The Word transforms them into Stones |
-| Tools | Fasting (Critical: next set ×2), Prayer (removal in the set's shape), Thanksgiving (1 Block per tile), The Word (1 Stone per tile, placed individually) |
-| Critical | Doubles the next set: Prayer → two removal shapes, Word → double Stones, etc. |
-| Removal shape | Same shape as the completed set (3 horizontal → 3 horizontal). Removes anything under it |
+| Getting rid of Worries | Damage (Prayer, Time). The Word transforms them into Stones |
+| Tools | Fasting (Critical: next set ×2), Prayer (1 damage in the set's shape), Thanksgiving (1 Block per tile), The Word (1 Stone per tile, placed individually) |
+| Critical | Doubles the next set: Prayer → two damage shapes, Word → double Stones, etc. |
+| Damage shape | Same shape as the completed set (3 horizontal → 3 horizontal). 1 damage to every tile under it |
 | Stones | Fall, match (3+ clear), block Worries. A Stone takes 2 hits: the first cracks it and stops the Worry, the second breaks it |
-| Junk | Old duds and novas retired (art reused). New: Time (3+ → remove 1 tile anywhere), Space (no effect) |
+| Junk | Old duds and novas retired (art reused). New: Time (3+ → 1 damage to 1 tile anywhere), Space (no effect) |
 | Stats | 3 moves per turn, 20 Courage |
 | Main menu | A Fight button → pick an enemy → battle |
 | Kept, TBD | Run, map, events, virtues, abilities, tool levels: kept, redesigned later |
 
 Confirmed in round 2: the **generator** (Hard Choices = Worry row, normal row, Worry row, … 4 Worry rows,
 32 Worries, then normal; the setup description shows the totals). Worries fall with gravity. No tile has
-end-of-turn effects yet. Time can remove a Worry (RW1). ~~A Stone cracks in one hit and the Worry stays put (RW3)~~ — superseded in round 5.
+end-of-turn effects yet. Time can hit a Worry (RW1). ~~A Stone cracks in one hit and the Worry stays put (RW3)~~ — superseded in round 5.
 Activation goes bottom-up (RW4). You win as soon as the board has no enemy tiles (RW6). The whole app goes
 portrait (RW15).
 
-Confirmed in round 3: removal shapes keep the set's orientation (RW7). Placements are mandatory and immediate (RW8).
+Confirmed in round 3: damage shapes keep the set's orientation (RW7). Placements are mandatory and immediate (RW8).
 Fasting gives Critical 1 per set, Critical stacks, and junk and Stone sets don't use it up (RW9). The tile pool
 is 70% tools and 30% junk (RW12). **Stones can be placed on any tile, including a Worry, which they transform (RW13).**
 Thanksgiving's pillar is Spirit (RW14).
@@ -44,6 +44,10 @@ breaks it, and the Worry moves in (RW3, replacing round 2's one-hit rule, which 
 **transforms** tiles and doesn't delete them, so nothing falls. Fight for Loot's tool reward stays a dud
 (nothing) until more tools exist. The Shrine's [Courage] option is renamed [Take Heart] to avoid clashing with
 the Courage stat. Rework IDs are prefixed RW so they don't collide with the pre-rework log (R1–R7).
+
+Confirmed in round 6: **no "remove" keyword, only damage.** Every tile has HP (tools, junk, Worry: 1; Stone: 2).
+Damage that reaches a tile's HP deletes it. A Worry step is 1 damage to the tile below, which replaces the 2-hit
+Stone wording. Enemy tiles show HP as a red number top-right and speed as arrows bottom-middle.
 
 Nothing is open for the combat rework.
 

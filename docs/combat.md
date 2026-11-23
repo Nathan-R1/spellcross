@@ -39,10 +39,26 @@ Numbers marked *(tune)* are starting values for playtesting.
 |---|---|---|---|
 | **Tool** | Fasting, Prayer, Thanksgiving, The Word | Yes: 3+ of the same tool | The effect triggers when the set clears ([tools.md](tools.md)) |
 | **Junk** | Time, Space | Yes: 3+ of the same junk | Time has a small effect and Space has none |
-| **Stone** | Stone, Cracked Stone | Yes: 3+ Stones clear (cracked or not), with no effect | Blocks enemy tiles (§4.2) |
-| **Enemy** | Worry | **Never** | Blocks lines. Removed by Prayer and Time, or transformed into a Stone by the Word (§5) |
+| **Stone** | Stone | Yes: 3+ Stones clear (damaged or not), with no effect | 2 HP. Blocks enemy tiles (§4.2) |
+| **Enemy** | Worry | **Never** | Blocks lines. Destroyed by damage, or transformed into a Stone by the Word (§5) |
 
 Different kinds never match each other. An enemy tile in the middle of a line breaks the line.
+
+### 1.2 HP and damage
+
+There's no "remove" effect, only **damage**:
+
+- **Every tile has HP.** Tools, junk and Worries have **1 HP**. Stones have **2 HP**. Later enemy tiles will
+  have more.
+- **Damage ≥ remaining HP → the tile is deleted.** Otherwise it loses that much HP and stays where it is.
+  Deleted tiles never trigger their own effects. Damage doesn't heal back.
+- Damage only comes from **effects**: Prayer, Time, abilities, Worries stepping down, and later Shining.
+  Matching a set isn't damage. The set just clears.
+- **Enemy tile badges:**
+  - **HP** is a red number in the **top-right** corner.
+  - **Move speed** is shown as arrows at the **bottom-middle**: ↓ = 1 step per activation, ↓↓ = 2, and so on.
+    A Worry shows a red **1** and one arrow.
+- A Stone that has taken 1 damage shows a crack.
 
 ## 2. Turn structure
 
@@ -80,9 +96,9 @@ cells it covered).
 1. The set's tiles clear.
 2. Its effect triggers:
    - a **tool** set → the tool's effect ([tools.md](tools.md)),
-   - **Time** → you remove 1 tile,
+   - **Time** → you deal 1 damage to 1 tile,
    - **Space** or **Stone** → nothing.
-3. If the effect needs **placement** (Prayer's removal shape, the Word's Stones, Time's single tile), you
+3. If the effect needs **placement** (Prayer's damage shape, the Word's Stones, Time's target), you
    place it now (§5). The board is paused until you finish.
 
 Sets are resolved in **reading order of their top-left tile**: top row first, then left to right. This order
@@ -92,7 +108,7 @@ decides which set uses up a Critical.
 
 **Critical** doubles the **next tool set**, then expires. See [tools.md § Fasting](tools.md#fasting).
 
-- Prayer → you place its removal shape **twice**.
+- Prayer → you place its damage shape **twice**.
 - The Word → twice as many Stones.
 - Thanksgiving → twice the Block.
 - Fasting → Critical 2: the next **two** tool sets are doubled.
@@ -115,13 +131,16 @@ At step 2 of the enemy turn, every enemy tile **activates** once. Tiles are proc
 up**, left to right within a row. What a tile does is defined by its type ([enemies.md](enemies.md)). The
 base enemy tile, **Worry**, does this:
 
-- **On the bottom row:** deals **1 damage** to you. It stays where it is and hits again next turn.
-- **Otherwise:** it tries to move **1 cell down**:
-  - into an **empty** cell → it moves,
-  - onto a **tool or junk** tile → that tile is **destroyed**, with no effect, and the Worry moves into its cell,
-  - onto a **Stone** → the Stone becomes a **Cracked Stone**, and the Worry **stays put** this turn,
-  - onto a **Cracked Stone** → it **breaks** (is destroyed) and the Worry **moves** into its cell,
-  - onto **another enemy tile** → it **stays put**. Enemy tiles never destroy each other.
+- **Speed 1** (one arrow): it takes one **step** per activation.
+- **On the bottom row:** the step deals **1 damage** to you. It stays where it is and hits again next turn.
+- **Otherwise:** the step deals **1 damage** to the tile below it:
+  - if that tile is **deleted** (a tool, junk, or a Stone already at 1 HP), the Worry moves into its cell,
+  - if it **survives** (a full-HP Stone drops to 1 HP), the Worry **stays put** this turn,
+  - if it's **another enemy tile**, there's no damage and the Worry **stays put**. Enemy tiles never damage
+    each other.
+
+Tiles faster than speed 1 take that many steps, one after another. Exactly how they behave is decided when
+the first one is designed.
 
 Because tiles are processed bottom-up, a column of Worries moves down together when the lowest one can move.
 Every move leaves a gap at the top of the column, which refills from the generator, so each Worry step pulls
@@ -129,16 +148,16 @@ the next generated tile into that column.
 
 ### 4.2 Stones
 
-Stones fall with gravity and can be swapped. 3+ Stones in a line match and clear with no effect. Cracked and
-uncracked Stones match each other.
+Stones have **2 HP**. They fall with gravity and can be swapped. 3+ Stones in a line match and clear with no
+effect, whether they're damaged or not.
 
-A Stone takes **2 hits** from a Worry. The first hit cracks it, and the Worry is stopped for that turn. The
-second hit breaks it, and the Worry moves into its cell. So a Stone holds a Worry back for one turn and protects
-the tile below it for two.
+Against a Worry, the first step leaves the Stone at 1 HP and stops the Worry for that turn. The second step
+deletes it, and the Worry moves into its cell. So a Stone holds a Worry back for one turn and protects the tile
+below it for two. The same 2 HP means a Prayer or Time hit (1 damage) only cracks a Stone.
 
 ### 4.3 Damage and Block
 
-- Each hit is **1 damage**. **Block** absorbs damage first, point for point, and the rest comes off
+- Damage to **you** works like this. Each Worry hit is **1 damage**. **Block** absorbs damage first, point for point, and the rest comes off
   **Courage**.
 - Block is gained on your turn (Thanksgiving), lasts through the enemy turn, and **clears at the start of
   your next turn**.
@@ -146,27 +165,26 @@ the tile below it for two.
 ## 5. Placement
 
 Some effects ask you to pick tiles on the board. While placing, the board shows a highlight preview and a
-banner ("Place 3 removes", "Place 2 Stones", …). Placements are **mandatory** and can't be saved for later.
+banner ("Place 3 damage", "Place 2 Stones", …). Placements are **mandatory** and can't be saved for later.
 
-### 5.1 Removal shapes (Prayer)
+### 5.1 Damage shapes (Prayer)
 
-- A Prayer set gives one **removal shape**: the **same shape as the completed set**. A horizontal 3 gives a
+- A Prayer set gives one **damage shape**: the **same shape as the completed set**. A horizontal 3 gives a
   horizontal line of 3, a vertical 4 gives a vertical line of 4, and an L of 5 gives that same L.
 - You choose where the shape goes. It can sit anywhere it fits entirely on the board, with the **same
   orientation** (no rotating).
-- **Every tile under the shape is removed**: enemy tiles, tools, junk, Stones. Removed tiles don't trigger
-  their effects.
+- **Every tile under the shape takes 1 damage** (§1.2): enemy tiles, tools, junk and Stones alike.
 
-### 5.2 Single removes (Time)
+### 5.2 Single-target damage (Time)
 
-A Time set lets you remove **1 tile anywhere**, including an enemy tile.
+A Time set deals **1 damage to 1 tile anywhere**, including an enemy tile.
 
 ### 5.3 Stone placement (The Word)
 
-Place the Stones **one at a time** on **any tile** on the board. The tile **transforms** into a Stone. It
-isn't removed, so nothing falls. Stones don't need to be adjacent. That includes an **enemy tile**: a Worry
-transformed into a Stone is no longer an enemy tile, so it counts towards victory. Placing on a Stone or Cracked
-Stone is allowed but does nothing (it doesn't repair a crack).
+Place the Stones **one at a time** on **any tile** on the board. The tile **transforms** into a full-HP Stone.
+This isn't damage and nothing is deleted, so nothing falls. Stones don't need to be adjacent. That includes an **enemy tile**: a Worry
+transformed into a Stone is no longer an enemy tile, so it counts towards victory. Placing on a Stone is allowed but does nothing
+(it doesn't repair a damaged Stone).
 
 ## 6. Winning and losing
 
