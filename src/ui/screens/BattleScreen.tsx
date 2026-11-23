@@ -13,7 +13,7 @@ import { PatternGrid } from '../components/EnemyPattern';
 
 const DURATION: Record<TimedEvent['event']['type'], number> = {
   swapped: 200, matched: 280, effect: 420, damaged: 260, stone: 220, collapsed: 260, shining: 320, enemyStep: 160,
-  playerHit: 320, junked: 400, ability: 200, turnStart: 160, battleEnd: 700,
+  playerHit: 320, held: 220, junked: 400, ability: 200, turnStart: 160, battleEnd: 700,
 };
 
 interface Floater { id: number; text: string; cls: string }
@@ -100,6 +100,7 @@ export function BattleScreen() {
 
   const highlight = new Set<number>(current?.type === 'matched' || current?.type === 'shining' || current?.type === 'junked' ? current.uids : []);
   const hurt = new Set<number>(current?.type === 'damaged' ? current.uids : []);
+  const held = current?.type === 'held' ? current.uid : null;
   const [info, setInfo] = useState<Tile | null>(null);
   const [enemyInfo, setEnemyInfo] = useState(false);
   const enemy = content.enemies[battle.enemyId];
@@ -122,7 +123,7 @@ export function BattleScreen() {
             <span className="dim">{busy ? '…' : battle.phase === 'player' ? (selection ? 'Tap a neighbouring tile to swap' : 'Tap a tile, then a neighbour to swap them') : ''}</span>
           )}
         </div>
-        <BoardView view={view} battle={battle} tile={tile} selection={selection} preview={preview} ghost={pending?.type === 'stone' ? STONE.icon : pending?.type === 'space' ? JUNK.space.icon : null} placing={!!pending} highlight={highlight} hurt={hurt}
+        <BoardView view={view} battle={battle} tile={tile} selection={selection} preview={preview} ghost={pending?.type === 'stone' ? STONE.icon : pending?.type === 'space' ? JUNK.space.icon : null} placing={!!pending} highlight={highlight} hurt={hurt} held={held}
           onTap={onTap} onLong={(t) => setInfo(t)} />
         <div className="battle-panels">
           <div className="panel player-panel">
@@ -236,9 +237,9 @@ function PlacingBanner({ pending, group, chosen, orientation, onOrientation, onC
   );
 }
 
-function BoardView({ view, battle, tile, selection, preview, ghost, placing, highlight, hurt, onTap, onLong }: {
+function BoardView({ view, battle, tile, selection, preview, ghost, placing, highlight, hurt, held, onTap, onLong }: {
   view: ViewSnapshot; battle: BattleState; tile: number; selection: Pos | null; preview: ReturnType<typeof previewPlacements> | null; ghost: string | null;
-  placing: boolean; highlight: Set<number>; hurt: Set<number>;
+  placing: boolean; highlight: Set<number>; hurt: Set<number>; held: number | null;
   onTap: (x: number, y: number) => void; onLong: (t: Tile) => void;
 }) {
   const b = view.board;
@@ -252,7 +253,7 @@ function BoardView({ view, battle, tile, selection, preview, ghost, placing, hig
         return (
           <TileView key={t.uid} t={t} battle={battle} x={x} y={y} tile={tile} selected={!!sel}
             incoming={preview?.damage.get(t.uid) ?? 0} breaks={!!preview?.deleted.has(t.uid)} ghost={preview?.deleted.has(t.uid) ? ghost : null}
-            matched={highlight.has(t.uid)} hurt={hurt.has(t.uid)} onTap={() => onTap(x, y)} onLong={() => onLong(t)} />
+            matched={highlight.has(t.uid)} hurt={hurt.has(t.uid)} held={held === t.uid} onTap={() => onTap(x, y)} onLong={() => onLong(t)} />
         );
       })}
     </div>
@@ -273,9 +274,9 @@ export function tileLook(t: Tile, battle: BattleState): { name: string; icon: st
   return { name: e.name, icon: e.icon, color: e.color, description: e.description };
 }
 
-function TileView({ t, battle, x, y, tile, selected, incoming, breaks, ghost, matched, hurt, onTap, onLong }: {
+function TileView({ t, battle, x, y, tile, selected, incoming, breaks, ghost, matched, hurt, held, onTap, onLong }: {
   t: Tile; battle: BattleState; x: number; y: number; tile: number; selected: boolean; incoming: number; breaks: boolean; ghost: string | null;
-  matched: boolean; hurt: boolean; onTap: () => void; onLong: () => void;
+  matched: boolean; hurt: boolean; held: boolean; onTap: () => void; onLong: () => void;
 }) {
   const aimed = incoming > 0;
   const press = useLongPress(onTap, onLong);
@@ -298,6 +299,7 @@ function TileView({ t, battle, x, y, tile, selected, incoming, breaks, ghost, ma
         {ghost && <span className="stone-ghost" style={{ backgroundImage: `url(/assets/${ghost})` }} />}
         {breaks && <span className="breaks">✕</span>}
         {aimed && <span className="incoming">−{incoming}</span>}
+        {held && <span className="held">🛡</span>}
       </div>
     </div>
   );

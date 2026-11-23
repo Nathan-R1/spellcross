@@ -245,6 +245,8 @@ export type BattleEvent =
   | { type: 'collapsed' }
   | { type: 'shining'; uids: number[] }
   | { type: 'enemyStep'; uid: number }
+  /** Block cancelled one step of this enemy tile. */
+  | { type: 'held'; uid: number }
   | { type: 'playerHit'; amount: number; blocked: number }
   /** Greed turned these tool tiles into junk. */
   | { type: 'junked'; uids: number[] }

@@ -41,8 +41,9 @@ orientation. Every tile under it takes 1 damage. That deletes Worries, tools and
 
 ### Thanksgiving
 
-Match 3+ Thanksgiving: gain 1 **Block** per tile. Block absorbs Worry hits during the enemy turn and clears at
-the start of your next turn.
+Match 3+ Thanksgiving: gain 1 **Block** per tile. On the enemy turn Block **holds the line**: it first absorbs hits
+from the bottom row, then each point left **stops one enemy step**, lowest enemy tiles first
+([combat § 4.3](combat.md#43-damage-and-block)). It clears at the start of your next turn.
 
 ### The Word
 
@@ -156,5 +157,5 @@ Statuses clear after every battle.
 | Status | Lasts | Effect |
 |---|---|---|
 | **Critical** | until used | The next tool set is doubled. Each set uses 1. Stacks as a count |
-| **Block** | until the start of your next turn | Absorbs incoming damage point for point |
+| **Block** | until the start of your next turn | Absorbs bottom-row hits, then each point left stops one enemy step (lowest first) |
 | **Foresight** | whole battle, stacks | Every 3 gives Truth tools +1 damage per hit |

@@ -200,6 +200,30 @@ describe('enemy turn', () => {
     expect(at(r.state, 0, 7)?.kind).toBe('enemy');
   });
 
+  it('Block holds the line: after absorbing hits, each point stops one enemy step, lowest first', () => {
+    // Worries at (0,0) and (2,4); 1 Block: the lower one (2,4) is held, the top one moves.
+    const s = makeBattle({ rows: base({ 4: 'msXsmsms' }), state: (x) => (x.player.block = 1) });
+    const r = endTurn(s, c);
+    expect(at(r.state, 2, 4)?.kind).toBe('enemy'); // held
+    expect(at(r.state, 0, 1)?.kind).toBe('enemy'); // moved down one
+    expect(r.events.some((e) => e.event.type === 'held')).toBe(true);
+  });
+
+  it('Block goes to bottom-row hits first, then steps', () => {
+    const s = makeBattle({ rows: base({ 7: 'Xmsmsmsm' }), state: (x) => (x.player.block = 2) });
+    const r = endTurn(s, c);
+    expect(r.state.player.hp).toBe(20); // the hit was absorbed
+    expect(at(r.state, 0, 0)?.kind).toBe('enemy'); // and the second point held the top Worry
+  });
+
+  it('a speed-2 Greed needs 2 Block to stay still; 1 Block lets it take one step', () => {
+    const one = endTurn(makeBattle({ rows: base({ 2: 'msGsmsms' }), state: (x) => (x.player.block = 1) }), c);
+    // The (0,0) Worry is processed after Greed (higher up), so Greed gets the Block: it moves 1, not 2.
+    expect(at(one.state, 2, 3)?.id).toBe('greed');
+    const two = endTurn(makeBattle({ rows: base({ 2: 'msGsmsms' }), state: (x) => (x.player.block = 2) }), c);
+    expect(at(two.state, 2, 2)?.id).toBe('greed');
+  });
+
   it('defeat when Courage reaches 0', () => {
     const s = makeBattle({ rows: base({ 7: 'Xmsmsmsm' }), player: (p) => (p.hp = 1) });
     const r = endTurn(s, c);

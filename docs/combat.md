@@ -175,8 +175,12 @@ below it for two. The same 2 HP means a Prayer or Time hit (1 damage) only crack
 
 - Damage to **you** works like this. Each Worry hit is **1 damage**. **Block** absorbs damage first, point for point, and the rest comes off
   **Courage**.
-- Block is gained on your turn (Thanksgiving), lasts through the enemy turn, and **clears at the start of
-  your next turn**.
+- **Block holds the line.** Enemy tiles are processed bottom row first, so Block goes to bottom-row hits first.
+  Every point left then **stops one enemy step**: the tile stays put and the tile below takes no damage. 1 Block
+  stops 1 step, so a speed-2 Greed needs 2 Block to stay completely still. A step already blocked by another
+  enemy tile uses no Block.
+- Block is gained on your turn (Thanksgiving, Peace, Stand Firm), lasts through the enemy turn, and **clears at
+  the start of your next turn**.
 
 ## 5. Placement
 

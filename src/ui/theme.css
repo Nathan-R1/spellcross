@@ -235,3 +235,6 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 .status-chip.s-block { color: var(--block); }
 .status-chip.s-critical { color: var(--gold); }
 .status-chip.s-foresight { color: #e6d27a; }
+
+/* Block stopping an enemy step. */
+.tile .held { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; background: rgba(159, 180, 204, 0.45); border-radius: 6px; }

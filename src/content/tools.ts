@@ -5,7 +5,7 @@ import type { JunkDef, Pillar, ToolDef } from '../engine/types';
 export const tools: Record<string, ToolDef> = {
   fasting: { id: 'fasting', name: 'Fasting', pillar: 'discipline', effect: 'critical', description: 'Gain Critical: your next tool set is doubled.', icon: 'spells/acid/poison-1.png', color: '#59ff4d' },
   prayer: { id: 'prayer', name: 'Prayer', pillar: 'faith', effect: 'damageShape', description: 'Place a damage shape the same shape as the set: 1 damage to every tile in it.', icon: 'spells/fire/dmg-2.png', color: '#ffb3b3' },
-  thanksgiving: { id: 'thanksgiving', name: 'Thanksgiving', pillar: 'spirit', effect: 'block', description: 'Gain 1 Block per tile.', icon: 'spells/water/block-1.png', color: '#b366b3' },
+  thanksgiving: { id: 'thanksgiving', name: 'Thanksgiving', pillar: 'spirit', effect: 'block', description: 'Gain 1 Block per tile. Block absorbs hits, then stops enemy steps.', icon: 'spells/water/block-1.png', color: '#b366b3' },
   word: { id: 'word', name: 'The Word', pillar: 'truth', effect: 'stones', description: 'Place 1 Stone per tile: each is a 1-damage hit, and a tile it deletes becomes a Stone.', icon: 'spells/lightning/dmg-1.png', color: '#ffffb3' },
   prophecy: { id: 'prophecy', name: 'Prophecy', pillar: 'truth', effect: 'prophecy', description: 'Target 1 tile per tile matched for 1 damage each; a tile it breaks turns into Space. Then gain 1 Foresight per tile matched.', icon: 'spells/lightning/default.png', color: '#e6d27a' },
   // Parked (tools.md §1.2): no effect until redesigned.

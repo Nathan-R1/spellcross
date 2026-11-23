@@ -510,6 +510,13 @@ function activateEnemies(ctx: Ctx) {
       }
       const below = tileAt(b, p.x, p.y + 1);
       if (below?.kind === 'enemy') break;
+      // Hold the line: leftover Block cancels steps, 1 per step. Tiles are processed bottom-up, so Block goes to
+      // bottom-row hits first, then to the lowest steps.
+      if (s.player.block > 0) {
+        s.player.block -= 1;
+        emit(ctx, { type: 'held', uid });
+        continue;
+      }
       if (below) {
         const gone = damageAt(ctx, [{ x: p.x, y: p.y + 1 }], 1);
         if (gone.length === 0) break; // it survived (a Stone with HP left): the enemy tile stays put
