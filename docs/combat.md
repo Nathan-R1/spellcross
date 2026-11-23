@@ -29,7 +29,7 @@ Numbers marked *(tune)* are starting values for playtesting.
   junk, Stones and **enemy tiles**. Each column refills from **its own position in the generator**: the k-th
   tile to enter a column is that column's cell in the k-th generated row above the board. Columns advance
   independently. When the generator runs out, it's normal rows forever.
-- **Tile pool** *(tune)*: the 4 tools at **70%**, shared equally, and the 2 junk tiles (Time, Space) at
+- **Tile pool** *(tune)*: your **3 chosen tools** (§2.1) at **70%**, shared by tile weight (Love fruit adds weight), and the 2 junk tiles (Time, Space) at
   **30%**, shared equally. Normal cells draw from it. Stones never come from it: they come only from the Word.
 - **Initial fill:** normal cells are rolled with no ready-made matches (re-roll until there are none).
 
@@ -37,7 +37,7 @@ Numbers marked *(tune)* are starting values for playtesting.
 
 | Kind | Examples | Matches? | Notes |
 |---|---|---|---|
-| **Tool** | Fasting, Prayer, Thanksgiving, The Word | Yes: 3+ of the same tool | The effect triggers when the set clears ([tools.md](tools.md)) |
+| **Tool** | Fasting, Prayer, Thanksgiving, The Word, Prophecy | Yes: 3+ of the same tool | The effect triggers when the set clears ([tools.md](tools.md)) |
 | **Junk** | Time, Space | Yes: 3+ of the same junk | Time has a small effect and Space has none |
 | **Stone** | Stone | Yes: 3+ Stones clear (damaged or not), with no effect | 2 HP. Blocks enemy tiles (§4.2) |
 | **Enemy** | Worry | **Never** | Blocks lines. Destroyed by damage, or transformed into a Stone by the Word (§5) |
@@ -52,7 +52,8 @@ There's no "remove" effect, only **damage**:
   have more.
 - **Damage ≥ remaining HP → the tile is deleted.** Otherwise it loses that much HP and stays where it is.
   Deleted tiles never trigger their own effects. Damage doesn't heal back.
-- Damage only comes from **effects**: Prayer, Time, abilities, Worries stepping down, and later Shining.
+- Damage only comes from **effects**: Prayer, the Word, Prophecy, Time, abilities, Shining, and Worries
+  stepping down.
   Matching a set isn't damage. The set just clears.
 - **Enemy tile badges:**
   - **HP** is a red number in the **top-right** corner.
@@ -63,12 +64,12 @@ There's no "remove" effect, only **damage**:
 ## 2. Turn structure
 
 ```
-battle start: build the board from the enemy's generator → Courage 20, Block 0, no statuses
+battle start: choose 3 tools (§2.1) → build the board from the enemy's generator → Block 0, no statuses
 ┌▶ PLAYER TURN
 │    Block clears
 │    moves = 3
 │    swap … resolve sets, placements, cascades … until moves = 0 or END TURN
-│    END OF PLAYER TURN: your tiles activate (none of the starting tiles do anything here yet)
+│    END OF PLAYER TURN: your tiles activate (Shining tiles damage adjacent enemy tiles)
 │  ENEMY TURN
 │    1. enemy actions, if it has any (default: none; Hard Choices has none)
 │    2. enemy tiles activate, bottom row first (Worry: move down 1, or hit you from the bottom row)
@@ -80,8 +81,17 @@ battle start: build the board from the enemy's generator → Courage 20, Block 0
   match**. Enemy tiles **can't** be swapped. Stones and junk can.
 - **When the third move resolves**, the turn ends by itself. **End Turn** ends it early, and any moves left
   are lost.
-- **"Your tiles activate"** is a hook at the end of your turn, for future tiles with an end-of-turn effect.
-  No tile has an end-of-turn effect yet. Tool effects trigger the moment their set clears.
+- **Abilities** can be used any time during your turn, outside a placement. They cost no move
+  ([tools.md § 5](tools.md#5-abilities)).
+- **"Your tiles activate"** is the end-of-turn step. Right now only **Shining** uses it: each tile of a tool
+  with Joy deals 1 damage per Shining to every **enemy** tile orthogonally next to it, in reading order. Then
+  the board settles. Tool sets themselves trigger the moment they clear, not here.
+
+### 2.1 Choosing tools
+
+Before every battle (run or quick fight), you pick **3** of your owned tools. The screen shows the enemy (with
+its setup description) and your tools with their fruit. FIGHT is enabled once 3 are picked. Your last pick is
+preselected.
 
 ## 3. Matching and tool effects
 
@@ -98,8 +108,11 @@ cells it covered).
    - a **tool** set → the tool's effect ([tools.md](tools.md)),
    - **Time** → you deal 1 damage to 1 tile,
    - **Space** or **Stone** → nothing.
-3. If the effect needs **placement** (Prayer's damage shape, the Word's Stones, Time's target), you
-   place it now (§5). The board is paused until you finish.
+3. If the effect needs **placement** (Prayer's damage shape, the Word's Stones, Prophecy's hits, Time's
+   target), you place it now (§5). The board is paused until you finish.
+
+**Supportive** tiles (Kindness fruit) orthogonally next to a set of a different tool are pulled into it before
+it clears ([tools.md § 2.1](tools.md#21-supportive-linked-tiles)).
 
 Sets are resolved in **reading order of their top-left tile**: top row first, then left to right. This order
 decides which set uses up a Critical.
@@ -110,6 +123,7 @@ decides which set uses up a Critical.
 
 - Prayer → you place its damage shape **twice**.
 - The Word → twice as many Stones.
+- Prophecy → twice the hits and twice the Foresight.
 - Thanksgiving → twice the Block.
 - Fasting → Critical 2: the next **two** tool sets are doubled.
 
@@ -181,10 +195,18 @@ A Time set deals **1 damage to 1 tile anywhere**, including an enemy tile.
 
 ### 5.3 Stone placement (The Word)
 
-Place the Stones **one at a time** on **any tile** on the board. The tile **transforms** into a full-HP Stone.
-This isn't damage and nothing is deleted, so nothing falls. Stones don't need to be adjacent. That includes an **enemy tile**: a Worry
-transformed into a Stone is no longer an enemy tile, so it counts towards victory. Placing on a Stone is allowed but does nothing
-(it doesn't repair a damaged Stone).
+Place the Stones **one at a time** on **any tile**. They don't need to be adjacent. Each placement is a
+**1-damage hit** on that tile (more with Faithfulness or Foresight):
+
+- If the hit **deletes** the tile, a full-HP **Stone** takes its place. It's a transformation, so nothing falls.
+  On an **enemy tile**, the Worry becomes a Stone, which counts towards victory.
+- If the tile **survives** (e.g. a Stone, which has 2 HP), it just takes the damage, and no Stone appears.
+
+### 5.4 Hits (Prophecy) and abilities
+
+Prophecy gives 1 hit per tile, placed one at a time on any tile (the same tile can be hit again). Abstain
+targets 1 tile, and Many Fish places a 3-tile line (you choose horizontal or vertical first). All of them are
+damage (§1.2).
 
 ## 6. Winning and losing
 
@@ -202,7 +224,8 @@ transformed into a Stone is no longer an enemy tile, so it counts towards victor
 | **Courage** | 20 *(tune)* | Replaces HP. Carries over between battles in a run (TBD with the run) |
 | **Moves** | 3 per turn | |
 | **Block** | 0 | Clears at the start of your turn |
-| **Statuses** | none | Critical. Full list: [tools.md § Statuses](tools.md#statuses) |
+| **Courage** max | 20 | Goodness fruit heals up to this |
+| **Statuses** | none | Critical, Foresight. Full list: [tools.md § 6](tools.md#6-statuses) |
 
 ## 8. Screen layout (portrait)
 
@@ -244,8 +267,8 @@ The battle screen is **portrait**: the board is on top, with two panels side by 
 ## 9. Quick fight from the main menu
 
 The main menu gets a **Fight** button. It opens an **enemy picker** listing every enemy (name, portrait, short
-description). Picking one starts a battle straight away with a fresh player (20 Courage, the 4 starting tools,
-no virtues or abilities). Win or lose, the result screen returns to the main menu. A quick fight never touches
+description). Picking one goes to the tool choice (§2.1) with a fresh player (20 Courage, the 5 starting tools,
+no fruit or abilities). Win or lose, the result screen returns to the main menu. A quick fight never touches
 the run save.
 
 ## 10. Feedback and animation
@@ -253,6 +276,6 @@ the run save.
 - Swaps, clears, falls and refills animate as before. During playback, input is locked, and a tap
   fast-forwards.
 - Enemy turn: enemy actions play (if any), then the Worries step down one at a time, bottom row first, and new
-  tiles slide in from the generator. A tile destroyed by a Worry shatters. A Stone that cracks shows a crack. A hit flashes the player
+  tiles slide in from the generator. A tile destroyed by a Worry shatters. A damaged Stone shows a crack. A hit flashes the player
   panel, with a "−1" floater.
 - Placement mode dims the board outside valid targets.

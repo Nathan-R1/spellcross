@@ -10,7 +10,7 @@ together with every resolved decision (D1–D26, plus the 2026-11 rework) into f
 doc.
 
 - Detailed **data** stays in the docs that own it, linked from each section: map tables, event text, enemy
-  roster, tool and virtue details.
+  roster, tool and fruit details.
 - **Why** a rule differs from Spellford is recorded in [features.md](features.md) (the Spellford reference and
   decision log) and in [open-questions.md](open-questions.md).
 - **How** to implement it is in [architecture/](architecture/).
@@ -80,7 +80,7 @@ Main menu ─New run─▶ Map (Start: Traveller event) ─travel─▶ … ─a
 
 ## 4. Events — TBD
 
-> **TBD.** Events are kept. Their rewards refer to the old systems (healing, virtues, Upgrades, abilities)
+> **TBD.** Events are kept. Their rewards refer to the old systems (healing, fruit, Upgrades, abilities)
 > and will be revisited as more events and enemies are made. Healing amounts below are % of max Courage.
 
 ### 4.1 Event rules
@@ -90,7 +90,7 @@ Main menu ─New run─▶ Map (Start: Traveller event) ─travel─▶ … ─a
 - Options with an unmet **condition** (not enough Talents or Courage, no abilities, …) are shown **disabled**.
 - **Randomness is rolled when an option is chosen**, from the run RNG (D7). Probabilities are as listed.
 - Options marked *stay* keep the event open, so you can do several things in one visit. Each *stay* option
-  works **once per visit** (Spellford). Cancelling the virtue pick gives the Purchase option back.
+  works **once per visit** (Spellford). Cancelling the fruit pick gives the Purchase option back.
 - **Healing between battles** (D25): **one heal per visit**, either **Patch up** (+20% max Courage, free) at
   Campfires, Villages and Towns, or the **Healer** (+50% for 50 Talents) at Villages and Towns. Taking one
   disables the other. The Peddler event also sells +50%. *TBD: the new combat has no healing in battle.*
@@ -102,9 +102,9 @@ Main menu ─New run─▶ Map (Start: Traveller event) ─travel─▶ … ─a
 |---|---|---|
 | Start | A Fellow Pilgrim | Pick 1 of 3 random abilities |
 | Campfire | Campfire | **One of:** Patch up (+20%), Resting (ability recharges) or **Reflect** (pick a tool: +1 level, free). Then Leave |
-| Village | Village | Patch up (+20%) *or* Healer (+50%, 50 Talents), Resting, Purchase (100 Talents: pick 1 of 3 random virtues), Discipleship (200 Talents, +1 random ability), Leave (all *stay*) |
-| Town | Town | As Village. While at a Town, the Toolbox also offers removing a virtue (50 Talents) |
-| Market | Market | Discipleship (200 Talents, +1 random ability), Purchase (100 Talents, pick 1 of 3 virtues), Study (100 Talents, +1 Upgrade), Leave (all *stay*) |
+| Village | Village | Patch up (+20%) *or* Healer (+50%, 50 Talents), Resting, Purchase (100 Talents: pick 1 of 3 random fruit), Discipleship (200 Talents, +1 random ability), Leave (all *stay*) |
+| Town | Town | As Village. While at a Town, the Toolbox also offers removing a fruit (50 Talents) |
+| Market | Market | Discipleship (200 Talents, +1 random ability), Purchase (100 Talents, pick 1 of 3 fruit), Study (100 Talents, +1 Upgrade), Leave (all *stay*) |
 | Encounter | random event | §4.3 |
 | Finish | the boss battle (TBD) | §2 |
 
@@ -116,9 +116,9 @@ under their Spellford names (Salesman, Wandering Warlock, Alchemist), and the cu
 `src/content/events.ts`. Spellcross changes:
 
 - **Gambler:** the wager is deducted, and the outcome is rolled 50/50 on choosing. On a win, *Insist* pays
-  **+201** Talents after Gamble Small and **+601** after Gamble Big *(tune)*; *Take some junk* = a random virtue.
+  **+201** Talents after Gamble Small and **+601** after Gamble Big *(tune)*; *Take some junk* = a random fruit.
 - **Peddler:** Pay for Healing restores 50% of **max** Courage (D6). Pay for a Tool gives a random ability.
-- **Wandering Hermit:** *Listen* = +1 Upgrade. *Take* = a **Devoted** virtue (D5).
+- **Wandering Hermit:** *Listen* = +1 Upgrade. *Take* = a **Love** fruit (D5).
 - **Fallen Shrine:** *Pray* → **[Take Heart]** = 3 ability recharges. (Renamed from [Courage] so it doesn't clash
   with the Courage stat.)
 - **Mysterious Chest:** success gives a random ability.
@@ -128,12 +128,13 @@ under their Spellford names (Salesman, Wandering Warlock, Alchemist), and the cu
   pillar (Faith for 100 Talents; Truth or Unity for your last ability). *TBD with pillars.*
 - **Holding 5 abilities:** paid ability options (Discipleship, the Peddler's Tool) are disabled. Free grants
   (Chest, Pilgrim) give nothing (D20). Duplicate abilities are allowed. **Random rolls are weighted by rarity:**
-  abilities common 3 : uncommon 1 (rare 0.5, legendary 0.2); virtues by drop weight (TBD).
+  abilities common 3 : uncommon 1 (rare 0.5, legendary 0.2); fruit by drop weight (TBD).
 
-## 5. Battle preparation (removed)
+## 5. Battle preparation
 
-There's no loadout anymore: every battle uses all four starting tools plus the junk tiles Time and Space.
-The enemy and its pattern are shown on the battle screen ([combat § 8](combat.md#8-screen-layout-portrait)).
+Before every battle you **choose 3 of your tools** ([combat § 2.1](combat.md#21-choosing-tools)). The enemy and
+its setup description are shown on the same screen. The tile pool is those 3 tools plus the junk tiles Time and
+Space.
 
 ## 6. Battle
 
@@ -154,35 +155,24 @@ Authoritative rules: **[combat.md](combat.md)**. In short:
 
 ## 7. Player tools
 
-The player starts with **Fasting, Prayer, Thanksgiving and The Word**. See [tools.md](tools.md). Healing,
-Serving, Fellowship and Worship are parked (TBD).
+The player starts owning **Fasting, Prayer, Thanksgiving, The Word and Prophecy**, and takes 3 into each battle.
+See [tools.md](tools.md). Healing, Serving, Fellowship and Worship are parked (TBD).
 
-## 8. Abilities — TBD
+## 8. Abilities
 
-> **TBD.** Kept, but every effect below refers to the old combat (poison, damage, the retired Kindled and
-> Steadfast statuses). New effects will be designed for the board-defence game.
-
-Powers outside the board. Each has **3 uses**, and triggering one costs no move. Hold at most **5**.
-
-| Ability | Old effect (pre-rework) |
-|---|---|
-| Abstain | Withering 6 → target |
-| Stand Firm | Block 20 → self |
-| Amen | 15 Faith damage |
-| Kindle Faith / Truth / Unity | Kindled Faith / Truth / Unity 2 → self |
-| Extended Fast | Triples the target's Withering |
-| Rooted in Love / Unity / Spirit | Steadfast in Love / Unity / Spirit 1 → self |
+Powers outside the board. Each has **3 uses**, and using one costs no move. Hold at most **5**. Effects:
+[tools.md § 5](tools.md#5-abilities): **Abstain** (10 damage to 1 tile), **Stand Firm** (5 Block), **Many Fish**
+(1 damage to 3 tiles in a line), **Revival** (+3 moves).
 
 - **Sources:** A Fellow Pilgrim (pick 1 of 3), Discipleship (200 Talents, random), the Peddler's Tool (100
-  Talents, random), Mysterious Chest (random).
+  Talents, random), Mysterious Chest (random). Rolls are weighted by rarity: common 3, uncommon 1, rare 0.5.
 - **Recharging:** Resting (1 per ability owned) and the Shrine's Take Heart (3). You assign each recharge to an
   ability in the recharge popup. Uses never exceed 3.
 
-## 9. Tool customisation — TBD
+## 9. Tool customisation
 
-Kept: each tool has a **level 1–5** (raised by Upgrades) and **3 virtue sockets**. The virtue names stay.
-**TBD:** what levels and virtues do in the new combat. Current notes: [tools.md § 5](tools.md#5-tbd-kept-waiting-for-redesign).
-The pre-rework rules are in git history.
+Each tool has **3 fruit sockets** and a **level 1–5** (raised by Upgrades). Fruit give flat bonuses and copies
+stack: [tools.md § 2](tools.md#2-fruit). **TBD:** what a level does.
 
 ## 10. Economy — TBD
 
@@ -198,7 +188,7 @@ The pre-rework rules are in git history.
 | Virtue (Purchase: pick 1 of 3) | 100 |
 | Upgrade (Market Study) | 100 |
 | Random ability (Discipleship) | 200 |
-| Remove a virtue (Town) | 50 |
+| Remove a fruit (Town) | 50 |
 | Peddler: Tool / Healing | 100 / 50 |
 | Mentor: grow in Faith | 100 (Truth and Unity cost your last ability instead) |
 | Healer +50% (Village, Town; instead of the free +20%) | 50 |

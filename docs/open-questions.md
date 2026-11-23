@@ -49,6 +49,17 @@ Confirmed in round 6: **no "remove" keyword, only damage.** Every tile has HP (t
 Damage that reaches a tile's HP deletes it. A Worry step is 1 damage to the tile below, which replaces the 2-hit
 Stone wording. Enemy tiles show HP as a red number top-right and speed as arrows bottom-middle.
 
+Confirmed in round 7: **fruit** replace virtues (9 fruits of the Spirit, flat bonuses, copies stack, no level
+scaling). Love (apple) +20% appear, Joy (orange) +1 Shining (end of turn: 1 damage to adjacent enemy tiles only),
+Peace (olive) +1 Block, Patience (fig) +1 HP on placed tiles, Kindness (pear) +1 Supportive (linked into adjacent
+sets of other tools, not junk or Stone sets), Faithfulness (grapes) +1 damage. Claude proposed the other three:
+Goodness (pomegranate) +1 Restore (heal 1 Courage per set), Gentleness (peach) +1 Sturdy (+1 HP on this tool's
+board tiles), Self-Control (dates) +1 Focus (+1 move the first time the set clears each turn). **The Word** is a
+1-damage hit per Stone, and it only transforms the tile into a Stone if the hit deletes it. **Prophecy** (Truth):
+1 hit per tile, plus Foresight 1 (+1 damage to Truth tools and +1 HP to the Word's Stones). **5 starting tools,
+choose 3 per battle.** Abilities replaced by Abstain (10 damage, uncommon), Stand Firm (5 Block, common), Many
+Fish (1 damage to a line of 3, common) and Revival (+3 moves, rare).
+
 Nothing is open for the combat rework.
 
 ## Pre-rework (mostly moot after the combat rework)
