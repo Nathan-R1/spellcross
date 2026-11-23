@@ -19,7 +19,8 @@ An enemy tile is a board tile owned by the enemy. Every enemy tile:
 - **activates** once per enemy turn, bottom row first ([combat § 4.1](combat.md#41-activation)),
 - **never destroys another enemy tile**. If its move is blocked by one, it stays put,
 - enters the board from the enemy's **generator** (§2), or from an enemy action (§3),
-- is removed only by **Prayer** removal shapes and **Time** ([combat § 5](combat.md#5-placement)).
+- leaves the board only through **Prayer** removal shapes and **Time**, or by being **transformed** into a
+  Stone by **the Word** ([combat § 5](combat.md#5-placement)).
 
 Each tile type has an **HP** value. For now nothing deals partial damage (removal is outright), so HP is
 recorded for future tools.
@@ -29,7 +30,7 @@ recorded for future tools.
 | | |
 |---|---|
 | HP | 1 |
-| On activate | On the bottom row: **1 damage** to the player, and it stays. Otherwise **move 1 down**. A tool or junk tile below is destroyed. A Stone below cracks, and the Worry stays. Another enemy tile below blocks it |
+| On activate | On the bottom row: **1 damage** to the player, and it stays. Otherwise **move 1 down**. A tool or junk tile below is destroyed. A Stone below cracks, and the Worry stays. A Cracked Stone below breaks, and the Worry moves in. Another enemy tile below blocks it |
 | Art | placeholder from the old junk art (e.g. `spells/dud/ash.png`) until drawn |
 
 ## 2. The generator
@@ -43,8 +44,8 @@ An enemy's main mechanic is its **generator**: the stack of rows the board is bu
   tile to drop into column *x* is column *x* of that column's next generated row
   ([combat § 1](combat.md#1-the-board)). Columns advance independently, so the rows break up as they come in.
 - When the list runs out, it's `normal` rows forever.
-- Generated rows can be written as a list or as a repeat. For example "7 × normal, then Worry, normal ×
-  3, then Worry" is the same as writing out every row.
+- Generated rows can be written as a list or with repeats. For example, Hard Choices is "7 × normal, then
+  3 × (Worry, normal), then Worry".
 
 The enemy's **setup description** must spell out the pattern **and the totals**, so a long-press on the
 enemy shows straight away how many enemy tiles are coming.

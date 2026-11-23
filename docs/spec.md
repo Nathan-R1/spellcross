@@ -6,16 +6,17 @@
 > but wait for redesign around the new combat.
 
 **The single source of truth for how Spellcross plays.** It folds Spellford's behaviour (commit `3f7b1a0`)
-together with every resolved decision (D1–D17) into final rules, one section per system. Build from this
+together with every resolved decision (D1–D26, plus the 2026-11 rework) into final rules, one section per system. Build from this
 doc.
 
 - Detailed **data** stays in the docs that own it, linked from each section: map tables, event text, enemy
-  roster, gem values.
+  roster, tool and virtue details.
 - **Why** a rule differs from Spellford is recorded in [features.md](features.md) (the Spellford reference and
   decision log) and in [open-questions.md](open-questions.md).
 - **How** to implement it is in [architecture/](architecture/).
 
-If this doc and another disagree, this doc wins. Fix the other one.
+If this doc and another disagree, this doc wins, **except for battle rules**: there, [combat.md](combat.md),
+[enemies.md](enemies.md) and [tools.md](tools.md) win. Either way, fix the other one.
 
 Numbers marked *(tune)* are starting values for playtesting.
 
@@ -46,7 +47,7 @@ Main menu ─New run─▶ Map (Start: Traveller event) ─travel─▶ … ─a
 ```
 
 - **Main menu** (D11): **Fight** = quick fight: pick any enemy and battle it straight away, outside the run
-  ([combat § 9](combat.md#9-quick-fight-from-the-main-menu)). **Pathway** = New run. **Hut** = Continue run (only when a save exists). **Chasm** =
+  ([combat § 9](combat.md#9-quick-fight-from-the-main-menu)). **Pathway** = New run. *(The illustrated menu scene was drawn for landscape: its portrait version is TBD.)* **Hut** = Continue run (only when a save exists). **Chasm** =
   Abandon run (only when a save exists, with confirmation). **Tree** = decorative. Spellford's debug
   shortcuts (random event) live in the dev-only debug panel (`?debug=1`).
 - **Start:** the player has **20 Courage**, 0 Talents, the four starting tools (§7), and **no abilities**. The run opens with the **Traveller** event: pick 1 of 3 random abilities.
@@ -79,52 +80,55 @@ Main menu ─New run─▶ Map (Start: Traveller event) ─travel─▶ … ─a
 
 ## 4. Events — TBD
 
-> **TBD.** Events are kept. Their rewards refer to the old systems (HP heals, gems, spell upgrades,
-> abilities) and will be revisited as more events and enemies are made. Gold is now **Talents**, HP is
-> **Courage**, gems are **virtues**, spells are **tools**.
+> **TBD.** Events are kept. Their rewards refer to the old systems (healing, virtues, Upgrades, abilities)
+> and will be revisited as more events and enemies are made. Healing amounts below are % of max Courage.
 
 ### 4.1 Event rules
 
 - An event has an image, title, text and options. An option has a label, a cost (red) and a reward (green),
   effects, and optionally a next event.
-- Options with an unmet **condition** (not enough gold or HP, no abilities, …) are shown **disabled**.
+- Options with an unmet **condition** (not enough Talents or Courage, no abilities, …) are shown **disabled**.
 - **Randomness is rolled when an option is chosen**, from the run RNG (D7). Probabilities are as listed.
 - Options marked *stay* keep the event open, so you can do several things in one visit. Each *stay* option
-  works **once per visit** (Spellford). Cancelling the gem pick gives the Buy gem option back.
-- **Healing between battles** (D25): **one heal per visit**, either **Patch up** (+20% max HP, free) at Campfires,
-  Villages and Towns, or the **Healer** (+50% max HP for 50gp) at Villages and Towns. Taking one disables the
-  other. The Salesman event also sells +50%. Otherwise HP only comes back in battle (Restore, Lifelink). "Rest" gives **1 ability recharge per ability owned**,
-  which you assign in the recharge popup.
+  works **once per visit** (Spellford). Cancelling the virtue pick gives the Purchase option back.
+- **Healing between battles** (D25): **one heal per visit**, either **Patch up** (+20% max Courage, free) at
+  Campfires, Villages and Towns, or the **Healer** (+50% for 50 Talents) at Villages and Towns. Taking one
+  disables the other. The Peddler event also sells +50%. *TBD: the new combat has no healing in battle.*
+  **Resting** gives **1 ability recharge per ability owned**, which you assign in the recharge popup.
 
 ### 4.2 Stop events
 
 | Stop | Event | Options |
 |---|---|---|
-| Start | Traveller | Pick 1 of 3 random abilities |
-| Campfire | Campfire | **One of:** Patch up (+20% HP), Rest (ability recharges) or **Meditate** (pick a spell: +1 level, free). Then Leave |
-| Village | Village | Patch up (+20%) *or* Healer (+50%, 50gp), Rest, Buy gem (100gp: pick 1 of 3 random gems), Train (200gp, +1 random ability), Leave (all *stay*) |
-| Town | Town | Patch up (+20%) *or* Healer (+50%, 50gp), Rest, Buy gem (100gp, pick 1 of 3), Train (200gp, +1 random ability), Leave (all *stay*). While at a Town, the Spellbook also offers Unsocket (50gp) |
-| Market | Market | Train (200gp, +random ability), Buy gem (100gp, pick 1 of 3), Study (100gp, +1 Spell Upgrade), Leave (all *stay*) |
+| Start | A Fellow Pilgrim | Pick 1 of 3 random abilities |
+| Campfire | Campfire | **One of:** Patch up (+20%), Resting (ability recharges) or **Reflect** (pick a tool: +1 level, free). Then Leave |
+| Village | Village | Patch up (+20%) *or* Healer (+50%, 50 Talents), Resting, Purchase (100 Talents: pick 1 of 3 random virtues), Discipleship (200 Talents, +1 random ability), Leave (all *stay*) |
+| Town | Town | As Village. While at a Town, the Toolbox also offers removing a virtue (50 Talents) |
+| Market | Market | Discipleship (200 Talents, +1 random ability), Purchase (100 Talents, pick 1 of 3 virtues), Study (100 Talents, +1 Upgrade), Leave (all *stay*) |
 | Encounter | random event | §4.3 |
-| Finish | the boss battle | §2 |
+| Finish | the boss battle (TBD) | §2 |
 
 ### 4.3 Random events
 
-The pool, in full: **Gambler, Salesman, Wandering Warlock, Fallen Shrine, Mysterious Chest, Abandoned Tavern,
-Fight for Loot, Alchemist**. The flows are in [features §4.2](features.md#42-event-content-must-port-verbatim),
-with the text ported word for word from Spellford's `EventLibrary.kt`. Spellcross changes:
+The pool, in full: **Gambler, Peddler, Wandering Hermit, Fallen Shrine, Mysterious Chest, Abandoned Tavern,
+Fight for Loot, the Mentor**. The flows are in [features §4.2](features.md#42-event-content-must-port-verbatim)
+under their Spellford names (Salesman, Wandering Warlock, Alchemist), and the current text is in
+`src/content/events.ts`. Spellcross changes:
 
 - **Gambler:** the wager is deducted, and the outcome is rolled 50/50 on choosing. On a win, *Insist* pays
-  **+201** gold after Gamble Small and **+601** after Gamble Big *(tune)*; *Take some junk* = a random gem.
-- **Salesman:** Pay for Healing restores 50% of **max** HP (D6).
-- **Wandering Warlock:** *Listen* = +1 Spell Upgrade. *Take* = a **Weight** gem (D5).
+  **+201** Talents after Gamble Small and **+601** after Gamble Big *(tune)*; *Take some junk* = a random virtue.
+- **Peddler:** Pay for Healing restores 50% of **max** Courage (D6). Pay for a Tool gives a random ability.
+- **Wandering Hermit:** *Listen* = +1 Upgrade. *Take* = a **Devoted** virtue (D5).
+- **Fallen Shrine:** *Pray* → **[Take Heart]** = 3 ability recharges. (Renamed from [Courage] so it doesn't clash
+  with the Courage stat.)
 - **Mysterious Chest:** success gives a random ability.
-- **Fight for Loot:** *Explore* gives the Wind Wall spell, then a normal-encounter battle (3 slots).
-- **Alchemist:** changes the **first element** of the first spell in your collection that isn't already that element.
-- **Holding 5 abilities:** paid ability options (Market Train, Salesman Weapon) are disabled. Free grants (Chest,
-  Traveller) give nothing. Spellford instead took the gold and gave nothing (D20). Duplicate abilities are
-  allowed. **Random rolls are weighted by rarity:** abilities common 3 : uncommon 1 (rare 0.5, legendary 0.2);
-  gems by drop weight (§9.3).
+- **Fight for Loot:** *Explore* gives a tool, then a battle. **The tool is a dud for now** (you get nothing)
+  until more tools exist.
+- **The Mentor:** changes the **first pillar** of the first tool in your collection that isn't already that
+  pillar (Faith for 100 Talents; Truth or Unity for your last ability). *TBD with pillars.*
+- **Holding 5 abilities:** paid ability options (Discipleship, the Peddler's Tool) are disabled. Free grants
+  (Chest, Pilgrim) give nothing (D20). Duplicate abilities are allowed. **Random rolls are weighted by rarity:**
+  abilities common 3 : uncommon 1 (rare 0.5, legendary 0.2); virtues by drop weight (TBD).
 
 ## 5. Battle preparation (removed)
 
@@ -136,12 +140,13 @@ The enemy and its pattern are shown on the battle screen ([combat § 8](combat.m
 Authoritative rules: **[combat.md](combat.md)**. In short:
 
 - **One enemy**, an **8×8 board**, **portrait** layout (board on top, player and enemy panels below).
-- Your turn: **3 swaps**. Tool sets trigger as they clear. Prayer, the Word and Time ask you to place
-  removals or Stones.
+- Your turn: **3 swaps**. Tool sets trigger as they clear. Prayer and Time ask you to place removals, and
+  the Word asks you to place Stones (it transforms tiles, including Worries).
 - The enemy's **generator** decides which rows the board is built and refilled from (Hard Choices: a row of
   Worries, a normal row, a row of Worries, …).
-- Enemy turn: enemy actions, if any (default none), then its **tiles activate**. A Worry steps down one row, destroying what's below. A Stone stops it and
-  cracks. From the bottom row it hits you for 1.
+- Enemy turn: enemy actions, if any (default none), then its **tiles activate**. A Worry steps down one row,
+  destroying what's below. A Stone takes two hits: the first cracks it and stops the Worry, the second breaks it.
+  From the bottom row a Worry hits you for 1.
 - **Win** when the enemy has no tiles left on the board. **Lose** when Courage hits 0.
 - Enemies and enemy tiles: [enemies.md](enemies.md). Tools, junk, Stones and statuses: [tools.md](tools.md).
 
@@ -152,23 +157,24 @@ Serving, Fellowship and Worship are parked (TBD).
 
 ## 8. Abilities — TBD
 
-> **TBD.** Kept, but every effect below refers to the old combat (Withering, damage, Kindled, Steadfast). New effects will be designed for the board-defence game.
+> **TBD.** Kept, but every effect below refers to the old combat (poison, damage, the retired Kindled and
+> Steadfast statuses). New effects will be designed for the board-defence game.
 
 Powers outside the board. Each has **3 uses**, and triggering one costs no move. Hold at most **5**.
 
-| Ability | Effect |
+| Ability | Old effect (pre-rework) |
 |---|---|
-| Low Blow | Poisoned 6 → target |
-| Crane Stance | Block 20 → self |
-| Finisher | 15 Fire damage × strength stat, element mods apply. Block absorbs it (Spellford bypassed Block: open-questions B4) |
-| Fuel of Fire / Lightning / Stone | Charge Fire / Lightning / Earth 2 → self |
-| Sicken | Triples the target's Poisoned (D12: description "Triple the target's Poisoned") |
-| Bulwark of Ice / Stone / Air | Fortify Water / Earth / Air 1 → self |
+| Abstain | Withering 6 → target |
+| Stand Firm | Block 20 → self |
+| Amen | 15 Faith damage |
+| Kindle Faith / Truth / Unity | Kindled Faith / Truth / Unity 2 → self |
+| Extended Fast | Triples the target's Withering |
+| Rooted in Love / Unity / Spirit | Steadfast in Love / Unity / Spirit 1 → self |
 
-- **Sources:** Traveller (pick 1 of 3), Market Train (200gp, random), Salesman Weapon (100gp, random),
-  Mysterious Chest (random).
-- **Recharging:** Rest (1 per ability owned) and Shrine Courage (3). You assign each recharge to an ability
-  in the recharge popup. Uses never exceed 3.
+- **Sources:** A Fellow Pilgrim (pick 1 of 3), Discipleship (200 Talents, random), the Peddler's Tool (100
+  Talents, random), Mysterious Chest (random).
+- **Recharging:** Resting (1 per ability owned) and the Shrine's Take Heart (3). You assign each recharge to an
+  ability in the recharge popup. Uses never exceed 3.
 
 ## 9. Tool customisation — TBD
 
@@ -178,34 +184,35 @@ The pre-rework rules are in git history.
 
 ## 10. Economy — TBD
 
-> **TBD.** Gold is now **Talents**. The prices below are pre-rework. Enemy reward ranges are gone with the old enemies.
+> **TBD.** The prices below are pre-rework and will be revisited.
 
-| Gold in | Amount |
+| Talents in | Amount |
 |---|---|
 | Battle victory | TBD: a Talents reward per enemy |
-| Events | Gambler, Tavern (see features §4.2) |
-| Enemy Steal intent | Takes gold. It returns when the thief dies (no v1 enemy uses it) |
+| Events | Gambler, Tavern (see `src/content/events.ts`) |
 
-| Gold out | Price |
+| Talents out | Price |
 |---|---|
-| Gem (pick 1 of 3) | 100 |
-| Spell Upgrade | 100 |
-| Random ability (Market) | 200 |
-| Unsocket | 50 |
-| Salesman: ability / heal | 100 / 50 |
-| Alchemist: change to Fire | 100 (Lightning and Earth cost your last ability instead) |
+| Virtue (Purchase: pick 1 of 3) | 100 |
+| Upgrade (Market Study) | 100 |
+| Random ability (Discipleship) | 200 |
+| Remove a virtue (Town) | 50 |
+| Peddler: Tool / Healing | 100 / 50 |
+| Mentor: grow in Faith | 100 (Truth and Unity cost your last ability instead) |
 | Healer +50% (Village, Town; instead of the free +20%) | 50 |
 
-Gold can't go negative. Unaffordable options are disabled.
+Talents can't go negative. Unaffordable options are disabled.
 
 ## 11. Saving and determinism
 
 - **One save slot** in `localStorage`. The whole run, including a battle in progress, is written after **every
-  action** (travel, event option, swap, ability, retarget). The RNG state is saved too, so reloading can't
-  re-roll anything.
+  action** (travel, event option, swap, placement, ability). The RNG state is saved too, so reloading can't
+  re-roll anything. A battle in the middle of a placement saves the pending placement too.
+- **Quick fights aren't saved.** Reloading during one returns you to the main menu, and the run save (if any)
+  is untouched.
 - Everything random comes from RNG streams forked from the run seed: `map`, `terrain`, `events` (event rolls
-  and offers), `run` (road-battle position, encounter picks, rewards) and `battle:N` (board and battle rolls).
-  The same seed and inputs always replay the same run.
+  and offers), `run` (road-battle position, enemy picks, rewards) and `battle:N` (normal generated rows and
+  battle rolls). A quick fight uses a fresh random seed. The same seed and inputs always replay the same run.
 - Save format and migrations: [04-content-data-and-persistence.md](architecture/04-content-data-and-persistence.md).
 
 ## 12. Out of scope for v1

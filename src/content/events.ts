@@ -172,8 +172,8 @@ export const events: Record<string, EventNode> = {
   }),
   shrine_pray: node({
     id: 'shrine_pray', title: 'Fallen Shrine', image: IMG,
-    text: 'You kneel beside the broken idol and pray to the living God. As you pray you see the face of your father for a moment. He looks old. How long have you been at this journey... nevertheless it gives you courage.',
-    options: () => [LEAVE, { label: '[Courage]', reward: '3 Ability Recharges', available: hasAbilities, effects: [{ type: 'recharge', count: 3 }], next: 'end' }],
+    text: 'You kneel beside the broken idol and pray to the living God. As you pray you see the face of your father for a moment. He looks old. How long have you been at this journey... nevertheless it gives you heart.',
+    options: () => [LEAVE, { label: '[Take Heart]', reward: '3 Ability Recharges', available: hasAbilities, effects: [{ type: 'recharge', count: 3 }], next: 'end' }],
   }),
   chest: node({
     id: 'chest', title: 'Mysterious Chest', image: IMG, text: 'A mysterious chest sits before you...',

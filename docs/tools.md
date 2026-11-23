@@ -42,8 +42,8 @@ the start of your next turn.
 
 ### The Word
 
-Match 3+ Word: create 1 **Stone** per tile, placed one at a time on any tile, even a Worry (which it replaces). Stones block Worries:
-a Worry trying to move into a Stone cracks it and stays put for that turn.
+Match 3+ Word: create 1 **Stone** per tile, placed one at a time on any tile, even a Worry. The tile **transforms** into a Stone. Stones block Worries:
+a Stone takes 2 hits. The first cracks it and stops the Worry for that turn, and the second breaks it.
 
 ## 2. Junk
 
@@ -62,9 +62,9 @@ Slime, Orb, Surge, Critical, Charge, Wall, Wild), which are retired. Their art i
 | Source | The Word only, never the tile pool |
 | Gravity | Falls like any tile |
 | Swappable | Yes |
-| Matches | 3+ Stones clear, with no effect |
-| Vs enemy tiles | Blocks a Worry's move. The Stone cracks (is destroyed) and the Worry stays put that turn |
-| Art (reused) | `spells/dud/rubble.png` |
+| Matches | 3+ Stones clear, with no effect. Cracked and uncracked Stones match each other |
+| Vs enemy tiles | Takes 2 hits. Hit 1: it becomes a **Cracked Stone**, and the Worry stays put. Hit 2: it breaks, and the Worry moves into its cell |
+| Art (reused) | `spells/dud/rubble.png`. Cracked Stone: the same art with a crack overlay |
 
 ## 4. Statuses
 
@@ -91,6 +91,6 @@ redesigning around the new tools once there are more enemies and events. Until t
   Joyful, Devoted, Fervent, Persevering, Sacrificial, Gracious). *TBD: new effects. Most old ones (+damage,
   +healing, +Withering) refer to things that no longer exist.*
 - **Abilities.** Powers outside the board, 3 uses each, hold at most 5. Names stay. *TBD: new effects.*
-- **Pillars.** These drive Kindled/Steadfast-style bonuses and the Gracious virtue. *TBD.*
+- **Pillars.** Each tool has one. *TBD: what they drive (future virtues such as Gracious, abilities).*
 
 The old values for all of these are in git history (`docs/spells-and-gems.md` before the rework) for reference.
