@@ -13,13 +13,13 @@ const base = (rows: Partial<Record<number, string>>) =>
   Array.from({ length: 8 }, (_, y) => rows[y] ?? (y === 0 ? 'X' + F1.slice(1) : y % 2 ? F2 : F1));
 
 describe('battle setup', () => {
-  it('Hard Choices: top row all Worries, 24 still to come, no ready-made matches', () => {
+  it('Hard Choices: Worry rows at rows 4 and 8 from the bottom, 16 still to come, no ready-made matches', () => {
     const p = createPlayer(content);
     const { state } = createBattle({ player: p, enemyId: 'hard_choices', loadout: ['t1', 't2', 't3'], seed: 7 }, content);
-    const top = state.board.cells.slice(0, 8);
-    expect(top.every((t) => t?.kind === 'enemy' && t.id === 'worry')).toBe(true);
-    expect(state.board.cells.slice(8).some((t) => t?.kind === 'enemy')).toBe(false);
-    expect(enemyToCome(state, content)).toBe(24);
+    const worryRows = [0, 1, 2, 3, 4, 5, 6, 7].filter((y) => state.board.cells.slice(y * 8, y * 8 + 8).every((t) => t?.kind === 'enemy'));
+    expect(worryRows).toEqual([0, 4]); // y = 0 is the top row (row 8), y = 4 is row 4 from the bottom
+    expect(state.board.cells.filter((t) => t?.kind === 'enemy')).toHaveLength(16);
+    expect(enemyToCome(state, content)).toBe(16);
     expect(findSets(state)).toEqual([]);
     expect(state.player.hp).toBe(20);
     expect(state.movesLeft).toBe(3);
@@ -233,15 +233,15 @@ describe('abilities', () => {
 });
 
 describe('pattern picture', () => {
-  it('Hard Choices: the starting board has Worries on the top row; the next 8 rows alternate, nearest at the bottom', () => {
+  it('Hard Choices: Worries on rows 4 and 8 of the board, then rows 12 and 16 coming (nearest at the bottom)', () => {
     const row = (r: (string | null)[]) => (r.every((x) => x === 'worry') ? 'W' : r.every((x) => x === null) ? '.' : '?');
-    expect(startingGrid(content, 'hard_choices').map(row).join('')).toBe('W.......');
-    expect(upcomingGrid(content, 'hard_choices', Array(8).fill(8)).map(row).join('')).toBe('..W.W.W.');
+    expect(startingGrid(content, 'hard_choices').map(row).join('')).toBe('W...W...');
+    expect(upcomingGrid(content, 'hard_choices', Array(8).fill(8)).map(row).join('')).toBe('W...W...');
   });
 
   it('columns advance independently: a column that pulled one tile in shows its next one at the bottom', () => {
-    const g = upcomingGrid(content, 'hard_choices', [9, 8, 8, 8, 8, 8, 8, 8]);
-    expect(g[7][0]).toBe('worry'); // column 0 is one row further on
+    const g = upcomingGrid(content, 'hard_choices', [11, 8, 8, 8, 8, 8, 8, 8]);
+    expect(g[7][0]).toBe('worry'); // column 0 is three rows further on: row 12 is next
     expect(g[7][1]).toBeNull();
   });
 });

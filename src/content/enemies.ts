@@ -15,8 +15,9 @@ const N: GeneratedRow = 'normal';
 export const enemies: Record<string, EnemyDef> = {
   hard_choices: {
     id: 'hard_choices', name: 'Hard Choices', tier: 'normal', portrait: 'portraits/boar.png', talents: [20, 30],
-    description: 'Rows of Worry with a normal row between each: 4 Worry rows, 32 Worries in all. The first row starts on the board.',
-    generator: [N, N, N, N, N, N, N, W('worry'), N, W('worry'), N, W('worry'), N, W('worry')],
+    description: 'A row of Worry every 4th row (rows 4, 8, 12 and 16 from the bottom): 4 Worry rows, 32 Worries in all. Rows 4 and 8 start on the board.',
+    // Row 1 is the bottom of the board.
+    generator: [N, N, N, W('worry'), N, N, N, W('worry'), N, N, N, W('worry'), N, N, N, W('worry')],
   },
 };
 

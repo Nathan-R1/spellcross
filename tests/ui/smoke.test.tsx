@@ -65,7 +65,7 @@ describe('UI smoke', () => {
     fireEvent.click(fight);
     await waitFor(() => screen.getByText('End Turn'));
     expect(screen.getAllByRole('gridcell')).toHaveLength(64);
-    expect(screen.getAllByLabelText(/^Worry/)).toHaveLength(8);
+    expect(screen.getAllByLabelText(/^Worry/)).toHaveLength(16);
     expect(screen.getByLabelText('Hard Choices: hold for details')).toBeTruthy();
     fireEvent.click(screen.getByText('End Turn'));
     await waitFor(() => expect(useStore.getState().run!.battle!.round).toBe(2));

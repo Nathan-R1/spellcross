@@ -46,8 +46,8 @@ An enemy's main mechanic is its **generator**: the stack of rows the board is bu
   tile to drop into column *x* is column *x* of that column's next generated row
   ([combat § 1](combat.md#1-the-board)). Columns advance independently, so the rows break up as they come in.
 - When the list runs out, it's `normal` rows forever.
-- Generated rows can be written as a list or with repeats. For example, Hard Choices is "7 × normal, then
-  3 × (Worry, normal), then Worry".
+- Generated rows can be written as a list or with repeats. For example, Hard Choices is "4 × (3 × normal,
+  Worry)".
 
 The game **draws the pattern as a picture** instead of describing it: an 8×8 grid of the next 8 generated tiles
 in each column, with the nearest at the bottom, enemy squares marked, plus the totals (on board, to come, in all).
@@ -74,9 +74,9 @@ Actions repeat in a fixed cycle and must be visible ahead of time ("Next: …" o
 
 | | |
 |---|---|
-| Generator | 7 × normal (the bottom of the board), then **Worry, normal, Worry, normal, Worry, normal, Worry**, then normal forever |
-| On the board at the start | The bottom 7 rows are normal, and the **top row is all Worries** |
-| Total | **4 Worry rows = 32 Worries**: 8 on the board at the start and 24 still to come |
+| Generator | A Worry row every 4th row: **rows 4, 8, 12 and 16** counting from the bottom of the board (3 normal rows between each), then normal forever |
+| On the board at the start | **Row 4** (the middle) and **row 8** (the top) are all Worries; the rest are normal |
+| Total | **4 Worry rows = 32 Worries**: 16 on the board at the start and 16 still to come |
 | Actions | None |
 | Reward *(tune)* | 20–30 Talents, 25% chance of a fruit (normal tier) |
 | Description (data; the picture is shown instead) | "Rows of Worry with a normal row between each: 4 Worry rows, **32 Worries** in all. The first row starts on the board." |
