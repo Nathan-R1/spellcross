@@ -99,9 +99,9 @@ You win the moment no Worries are on the board, even if more are still to come
 
 | | |
 |---|---|
-| Generator | Rows 1–6 normal. Rows **7–16**: **Worry in the far-left and far-right columns**. Rows **9–11** (just above the board): **Greed** in the middle four columns, a **4×3 block**. Then normal forever |
-| On the board at the start | 4 Worries: the edge columns of rows 7 and 8 |
-| Total | **32**: 20 Worries (4 on the board, 16 to come) and 12 Greed (all to come) |
+| Generator | Rows 1–6 normal. Rows **7–16**: **Worry in the far-left and far-right columns**. Rows **8–10**: **Greed** in the middle four columns, a **4×3 block** whose bottom row starts on the board's top row. Then normal forever |
+| On the board at the start | 4 Worries (the edge columns of rows 7 and 8) and 4 Greed (row 8, the middle four) |
+| Total | **32**: 20 Worries (4 on the board, 16 to come) and 12 Greed (4 on the board, 8 to come) |
 | Actions | None |
 | Reward *(tune)* | 25–40 Talents, 25% chance of a fruit |
 

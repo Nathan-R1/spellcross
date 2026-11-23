@@ -33,9 +33,9 @@ export const enemies: Record<string, EnemyDef> = {
   },
   financial_stress: {
     id: 'financial_stress', name: 'Financial Stress', tier: 'normal', portrait: 'portraits/financial_stress.svg', talents: [25, 40],
-    description: 'Worry down both edge columns from row 7 to row 16 (20 Worries; 4 start on the board) and 12 Greed in a 4×3 block just above the board (rows 9 to 11): 32 enemy tiles in all.',
-    // Rows 1–6 normal; rows 7–16 Worry in the edge columns; rows 9–11 Greed in the middle four (4×3).
-    generator: [N, N, N, N, N, N, edges(), edges(), edges('greed'), edges('greed'), edges('greed'), edges(), edges(), edges(), edges(), edges()],
+    description: 'Worry down both edge columns from row 7 to row 16 (20 Worries; 4 start on the board) and 12 Greed in a 4×3 block on rows 8 to 10 (4 start on the top row of the board): 32 enemy tiles in all.',
+    // Rows 1–6 normal; rows 7–16 Worry in the edge columns; rows 8–10 Greed in the middle four (4×3).
+    generator: [N, N, N, N, N, N, edges(), edges('greed'), edges('greed'), edges('greed'), edges(), edges(), edges(), edges(), edges(), edges()],
   },
 };
 

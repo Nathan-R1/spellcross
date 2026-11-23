@@ -270,15 +270,16 @@ describe('placing a group', () => {
 });
 
 describe('Greed and Financial Stress', () => {
-  it('Financial Stress: Worries in the edge columns on rows 7 and 8; 16 more Worries and 12 Greed to come', () => {
+  it('Financial Stress: Worries in the edge columns on rows 7 and 8, 4 Greed on row 8; 24 more to come', () => {
     const p = createPlayer(content);
     const { state } = createBattle({ player: p, enemyId: 'financial_stress', loadout: ['t1', 't2', 't3'], seed: 7 }, content);
     const enemyAt = state.board.cells.map((t, i) => (t?.kind === 'enemy' ? i : -1)).filter((i) => i >= 0);
-    expect(enemyAt).toEqual([0, 7, 8, 15]); // (0,0) (7,0) (0,1) (7,1): rows 8 and 7 from the bottom
-    expect(enemyToCome(state, content)).toBe(28);
+    expect(enemyAt).toEqual([0, 2, 3, 4, 5, 7, 8, 15]); // row 8 (top): Worry, 4 Greed, Worry; row 7: the edge Worries
+    expect(state.board.cells[2]?.id).toBe('greed');
+    expect(enemyToCome(state, content)).toBe(24);
     const next = upcomingGrid(content, 'financial_stress', Array(8).fill(8));
     expect(next[7]).toEqual(['worry', null, 'greed', 'greed', 'greed', 'greed', null, 'worry']); // row 9, next in
-    expect(next.slice(5).flat().filter((t) => t === 'greed')).toHaveLength(12); // rows 9–11: a 4×3 block
+    expect(next.slice(6).flat().filter((t) => t === 'greed')).toHaveLength(8); // rows 9–10 still to come (row 8 is on the board)
   });
 
   it('Greed has 3 HP and takes 2 steps down per enemy turn', () => {
