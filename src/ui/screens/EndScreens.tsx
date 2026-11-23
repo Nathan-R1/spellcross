@@ -1,6 +1,7 @@
 import { content } from '../../content';
 import { useStore } from '../../state/store';
 import { Asset, FruitIcon } from '../components/common';
+import { EnemyPatternPreview } from '../components/EnemyPattern';
 
 export function ResultScreen() {
   const run = useStore((s) => s.run)!;
@@ -70,7 +71,7 @@ export function EnemyPickerScreen() {
         {Object.values(content.enemies).map((e) => (
           <button key={e.id} className="btn enemy-pick" onClick={() => quickPick(e.id)}>
             <Asset path={e.portrait} alt={e.name} size={48} color="#5a2a2a" />
-            <span style={{ textAlign: 'left' }}><b>{e.name}</b><br /><span style={{ fontSize: 12 }}>{e.description}</span></span>
+            <span style={{ textAlign: 'left' }}><b>{e.name}</b><EnemyPatternPreview enemyId={e.id} cell={7} /></span>
           </button>
         ))}
       </div>

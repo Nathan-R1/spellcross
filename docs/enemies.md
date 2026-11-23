@@ -49,8 +49,11 @@ An enemy's main mechanic is its **generator**: the stack of rows the board is bu
 - Generated rows can be written as a list or with repeats. For example, Hard Choices is "7 × normal, then
   3 × (Worry, normal), then Worry".
 
-The enemy's **setup description** must spell out the pattern **and the totals**, so a long-press on the
-enemy shows straight away how many enemy tiles are coming.
+The game **draws the pattern as a picture** instead of describing it: an 8×8 grid of the next 8 generated tiles
+in each column, with the nearest at the bottom, enemy squares marked, plus the totals (on board, to come, in all).
+Before a battle (prep screen, Fight picker) the starting board is drawn beside it. In battle the picture is live:
+columns advance independently, so it follows each column's own position. The text `description` stays in the
+data for screen readers and must still state the total.
 
 ## 3. Enemy actions
 
@@ -76,7 +79,7 @@ Actions repeat in a fixed cycle and must be visible ahead of time ("Next: …" o
 | Total | **4 Worry rows = 32 Worries**: 8 on the board at the start and 24 still to come |
 | Actions | None |
 | Reward *(tune)* | 20–30 Talents, 25% chance of a fruit (normal tier) |
-| Setup description (shown on hold) | "Rows of Worry with a normal row between each: 4 Worry rows, **32 Worries** in all. The first row starts on the board." |
+| Description (data; the picture is shown instead) | "Rows of Worry with a normal row between each: 4 Worry rows, **32 Worries** in all. The first row starts on the board." |
 
 You win the moment no Worries are on the board, even if more are still to come
 ([combat § 6](combat.md#6-winning-and-losing)).
@@ -105,7 +108,7 @@ type EnemyAction =
 interface EnemyDef {
   id: string;              // 'hard_choices'
   name: string;            // 'Hard Choices'
-  description: string;     // the setup description: pattern + totals (shown on hold and in the picker)
+  description: string;     // pattern + totals as text (screen readers); the UI draws the picture instead
   portrait: string;
   generator: GeneratedRow[]; // bottom of the board upwards; normal forever after the end
   actions: EnemyAction[];    // default []

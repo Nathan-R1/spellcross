@@ -1,7 +1,7 @@
 // The combat rules (docs/combat.md, docs/tools.md, docs/enemies.md) on hand-drawn boards.
 
 import { content } from '../../src/content';
-import { createBattle, endTurn, enemyToCome, findSets, place, playerMove, useAbility } from '../../src/engine/combat';
+import { createBattle, endTurn, enemyToCome, findSets, place, playerMove, startingGrid, upcomingGrid, useAbility } from '../../src/engine/combat';
 import { createPlayer } from '../../src/engine/run';
 import { at, F1, F2, makeBattle } from '../helpers';
 import { tc } from '../helpers';
@@ -228,5 +228,19 @@ describe('abilities', () => {
     expect(() => place(r.state, { x: 0, y: 6 }, c, 'v')).toThrow(); // runs off the board
     r = place(r.state, { x: 0, y: 1 }, c, 'v');
     expect(r.state.phase).toBe('player');
+  });
+});
+
+describe('pattern picture', () => {
+  it('Hard Choices: the starting board has Worries on the top row; the next 8 rows alternate, nearest at the bottom', () => {
+    const row = (r: (string | null)[]) => (r.every((x) => x === 'worry') ? 'W' : r.every((x) => x === null) ? '.' : '?');
+    expect(startingGrid(content, 'hard_choices').map(row).join('')).toBe('W.......');
+    expect(upcomingGrid(content, 'hard_choices', Array(8).fill(8)).map(row).join('')).toBe('..W.W.W.');
+  });
+
+  it('columns advance independently: a column that pulled one tile in shows its next one at the bottom', () => {
+    const g = upcomingGrid(content, 'hard_choices', [9, 8, 8, 8, 8, 8, 8, 8]);
+    expect(g[7][0]).toBe('worry'); // column 0 is one row further on
+    expect(g[7][1]).toBeNull();
   });
 });

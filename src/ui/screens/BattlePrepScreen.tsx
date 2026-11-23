@@ -7,6 +7,7 @@ import { suggestedLoadout } from '../../engine/run';
 import type { ToolInstance } from '../../engine/types';
 import { useStore } from '../../state/store';
 import { AbilityBar, Asset, FruitIcon, Modal, PlayerStats, TopBar, useLongPress } from '../components/common';
+import { EnemyPatternPreview } from '../components/EnemyPattern';
 
 export function BattlePrepScreen() {
   const run = useStore((s) => s.run);
@@ -36,12 +37,10 @@ export function BattlePrepScreen() {
         <div className="panel prep-enemy">
           <div className="banner">{boss ? 'The final battle' : enemy.tier === 'elite' ? 'A dangerous foe!' : 'Enemy Encounter!'}</div>
           <div className="row">
-            <Asset path={enemy.portrait} alt={enemy.name} size={64} color="#5a2a2a" />
-            <div>
-              <h2 style={{ margin: 0 }}>{enemy.name}</h2>
-              <div style={{ fontSize: 14 }}>{enemy.description}</div>
-            </div>
+            <Asset path={enemy.portrait} alt={enemy.name} size={48} color="#5a2a2a" />
+            <h2 style={{ margin: 0 }}>{enemy.name}</h2>
           </div>
+          <EnemyPatternPreview enemyId={enemyId} cell={13} />
         </div>
         <div className="panel prep-col">
           <b>Choose {size} tools ({loadout.length}/{size}). Hold one for details.</b>

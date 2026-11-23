@@ -225,6 +225,8 @@ export interface ViewSnapshot {
   pending: Placement | null;
   enemyOnBoard: number;
   enemyToCome: number;
+  /** Each column's next generated-row index (for the pattern picture). */
+  genPos: number[];
 }
 
 export type BattleEvent =

@@ -78,6 +78,7 @@ export function snapshot(s: BattleState, c: Content): ViewSnapshot {
     pending: s.pending[0] ?? null,
     enemyOnBoard: enemyCount(s.board),
     enemyToCome: enemyToCome(s, c),
+    genPos: [...s.genPos],
   };
 }
 
@@ -616,3 +617,29 @@ export function place(state: BattleState, at: Pos, c: Content, orientation: 'h' 
   if (!checkVictory(ctx)) proceed(ctx);
   return finish(ctx);
 }
+
+// ---------------------------------------------------------------- pattern preview (enemy panel, prep, info)
+
+/**
+ * The next `depth` generated tiles for each column, as rows top → bottom: the bottom row is the next tile to
+ * drop into each column. Each cell is an enemy tile id, or null for a normal tile. Columns advance
+ * independently, so pass the battle's genPos (or all = board height before the battle).
+ */
+export function upcomingGrid(c: Content, enemyId: string, genPos: number[], depth = 8): (string | null)[][] {
+  const gen = c.enemies[enemyId].generator;
+  const cell = (x: number, d: number) => {
+    const r = gen[genPos[x] + d];
+    return r && r !== 'normal' ? r.tile : null;
+  };
+  return Array.from({ length: depth }, (_, i) => genPos.map((_, x) => cell(x, depth - 1 - i)));
+}
+
+/** The enemy tiles on the starting board, as rows top → bottom. */
+export function startingGrid(c: Content, enemyId: string): (string | null)[][] {
+  const { width, height } = c.config.board;
+  return upcomingGrid(c, enemyId, Array.from({ length: width }, () => 0), height);
+}
+
+/** Total enemy tiles still to come (sum over columns), given the columns' positions. */
+export const generatorTotal = (c: Content, enemyId: string) =>
+  c.enemies[enemyId].generator.filter((r) => r !== 'normal').length * c.config.board.width;

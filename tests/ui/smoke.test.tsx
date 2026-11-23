@@ -59,6 +59,8 @@ describe('UI smoke', () => {
     toPrep();
     render(<App />);
     expect(screen.getByText('Hard Choices')).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Coming next: 24 enemy tiles' })).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Starting board: 8 enemy tiles' })).toBeTruthy();
     const fight = screen.getByText('FIGHT!') as HTMLButtonElement;
     expect(fight.disabled).toBe(false); // the first three tools are preselected
     fireEvent.click(fight);

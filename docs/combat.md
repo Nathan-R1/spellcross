@@ -245,9 +245,9 @@ The battle screen is **portrait**: the board is on top, with two panels side by 
 │ ▢▢▢▢▢▢▢▢                     │
 ├──────────────┬───────────────┤
 │ YOU          │ HARD CHOICES  │
-│ ♥ Courage 17 │ portrait      │
-│ ◈ Block 2    │ On board: 11  │
-│ Critical ×1  │ To come: 16   │
+│ ♥ Courage 17 │ ▫▫▫▫▫▫▫▫ next │
+│ ◈ Block 2    │ ■■■■■■■■ 8×8  │
+│ Critical ×1  │ On 11 · To 16 │
 │ ●●○ moves    │ (hold: info)  │
 │ [END TURN]   │               │
 └──────────────┴───────────────┘
@@ -257,10 +257,10 @@ The battle screen is **portrait**: the board is on top, with two panels side by 
   still fit below. Tiles stay square.
 - **Player panel (left):** Courage, Block, statuses, move pips and End Turn. Abilities go here too once they're
   redesigned (TBD).
-- **Enemy panel (right):** name, portrait, its tiles **on the board**, and how many are still **to come** from
-  its generator. Long-press shows its setup description, which spells out the generation pattern and totals
-  (e.g. "Worry row, normal row, … 4 Worry rows, 32 Worries"), plus each tile type's description. Any enemy
-  actions are shown as "Next: …".
+- **Enemy panel (right):** name, a **picture of what's coming**: a small 8×8 grid of the next 8 tiles in each
+  column, nearest at the bottom, with enemy squares marked ([enemies.md § 2](enemies.md#2-the-generator)). Below
+  it, its tiles **on the board** and **to come**. Long-press shows the same picture larger, the totals, and each
+  tile type's description. Any enemy actions are shown as "Next: …".
 - **Long-press** any tile for its info popup.
 - **Danger cue:** Worries on the bottom row (about to hit you) pulse red. *(nice-to-have)*
 

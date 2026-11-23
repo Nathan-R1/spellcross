@@ -4,10 +4,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { content } from '../../content';
 import { STONE } from '../../content/tools';
-import { placementCells, snapshot } from '../../engine/combat';
+import { generatorTotal, placementCells, snapshot, upcomingGrid } from '../../engine/combat';
 import type { BattleState, Placement, Pos, Tile, TimedEvent, ViewSnapshot } from '../../engine/types';
 import { activeBattle, useStore } from '../../state/store';
 import { AbilityBar, Asset, HpBar, Modal, TopBar, useLongPress } from '../components/common';
+import { PatternGrid } from '../components/EnemyPattern';
 
 const DURATION: Record<TimedEvent['event']['type'], number> = {
   swapped: 200, matched: 280, effect: 420, damaged: 260, stone: 220, collapsed: 260, shining: 320, enemyStep: 160,
@@ -120,15 +121,14 @@ export function BattleScreen() {
           </div>
           <div className="panel enemy-panel" role="button" aria-label={`${enemy.name}: hold for details`} {...enemyPress}>
             <b>{enemy.name}</b>
-            <Asset path={enemy.portrait} alt={enemy.name} size={56} color="#5a2a2a" />
-            <div>On board: <b>{view.enemyOnBoard}</b></div>
-            <div>To come: <b>{view.enemyToCome}</b></div>
+            <PatternGrid rows={upcomingGrid(content, battle.enemyId, view.genPos)} cell={Math.max(6, Math.min(11, Math.floor(tile / 5)))} label="Coming next" />
+            <div style={{ fontSize: 12 }}>On board <b>{view.enemyOnBoard}</b> · To come <b>{view.enemyToCome}</b></div>
             <div className="dim" style={{ fontSize: 11 }}>(hold for info)</div>
           </div>
         </div>
       </div>
       {info && <TileInfo tile={info} battle={battle} onClose={() => setInfo(null)} />}
-      {enemyInfo && <EnemyInfo enemyId={battle.enemyId} onClose={() => setEnemyInfo(false)} />}
+      {enemyInfo && <EnemyInfo enemyId={battle.enemyId} genPos={view.genPos} onBoard={view.enemyOnBoard} toCome={view.enemyToCome} onClose={() => setEnemyInfo(false)} />}
       {battle.outcome && !busy && (
         <div className="modal-back" style={{ background: 'rgba(0,0,0,0.4)' }}>
           <h1 className="title" style={{ fontSize: 48 }}>{battle.outcome === 'victory' ? 'Victory!' : 'Defeated'}</h1>
@@ -249,8 +249,8 @@ function TileInfo({ tile, battle, onClose }: { tile: Tile; battle: BattleState; 
   );
 }
 
-/** Enemy popup: its setup description (pattern and totals) and its tile types. */
-export function EnemyInfo({ enemyId, onClose }: { enemyId: string; onClose: () => void }) {
+/** Enemy popup: a picture of the tiles still coming (per column, nearest at the bottom), totals, and its tile types. */
+export function EnemyInfo({ enemyId, genPos, onBoard, toCome, onClose }: { enemyId: string; genPos: number[]; onBoard: number; toCome: number; onClose: () => void }) {
   const def = content.enemies[enemyId];
   const tileIds = [...new Set(def.generator.flatMap((r) => (r === 'normal' ? [] : [r.tile])))];
   return (
@@ -259,7 +259,9 @@ export function EnemyInfo({ enemyId, onClose }: { enemyId: string; onClose: () =
         <Asset path={def.portrait} alt={def.name} size={64} color="#5a2a2a" />
         <div style={{ flex: 1 }}>
           <h2>{def.name} <span className="dim" style={{ fontSize: 14 }}>{def.tier}</span></h2>
-          <div>{def.description}</div>
+          <div className="dim pattern-cap">Coming next (the bottom row drops in first)</div>
+          <PatternGrid rows={upcomingGrid(content, enemyId, genPos)} cell={18} label="Coming next" />
+          <div style={{ fontSize: 13 }}>On board <b>{onBoard}</b> · To come <b>{toCome}</b> · <b>{generatorTotal(content, enemyId)}</b> in all</div>
           {tileIds.map((id) => {
             const t = content.enemyTiles[id];
             return <div key={id} className="dim" style={{ marginTop: 6 }}><b>{t.name}</b> (HP {t.hp}, speed {t.speed}): {t.description}</div>;
