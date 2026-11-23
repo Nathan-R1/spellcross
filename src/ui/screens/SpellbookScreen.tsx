@@ -115,7 +115,7 @@ export function SpellbookScreen() {
           <h2>{preview.kind === 'upgrade' ? 'Upgrade tool?' : 'Add virtue? (permanent)'}</h2>
           {preview.kind === 'socket' && run.player.gems[preview.gemIndex] === 'sunstone' && (
             <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 8 }}>
-              <span className="dim">Second element:</span>
+              <span className="dim">Second pillar:</span>
               {ELEMENTS.filter((e) => e !== inst.element).map((e) => (
                 <button key={e} className={`btn ${preview.element === e ? 'primary' : ''}`} style={{ minHeight: 28 }} onClick={() => setPreview({ ...preview, element: e })}>{ELEMENT_NAME[e]}</button>
               ))}

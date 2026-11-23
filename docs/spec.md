@@ -1,5 +1,10 @@
 # Spellcross Game Spec
 
+> **Combat rework (2026-11).** Battles now work completely differently: one enemy whose tiles march down an
+> 8×8 board, four starting tools, and Courage instead of HP. The authoritative combat rules are in
+> [combat.md](combat.md), [enemies.md](enemies.md) and [tools.md](tools.md). Sections marked **TBD** are kept
+> but wait for redesign around the new combat.
+
 **The single source of truth for how Spellcross plays.** It folds Spellford's behaviour (commit `3f7b1a0`)
 together with every resolved decision (D1–D17) into final rules, one section per system. Build from this
 doc.
@@ -18,14 +23,18 @@ Numbers marked *(tune)* are starting values for playtesting.
 
 ## 1. Platform
 
-- A React web app for **phone browsers held in landscape** (iOS Safari, Android Chrome), installable as a
-  PWA. Touch only. Desktop shows the same layout, letterboxed (D13).
-- Portrait shows a full-screen "Rotate your device" overlay. Nothing is lost.
+- A React web app for **phone browsers held in portrait** (iOS Safari, Android Chrome), installable as a
+  PWA. Touch only. Desktop shows the same layout, letterboxed. *(Changed from landscape by the combat
+  rework. The map and event screens need a portrait layout: TBD.)*
 - A **Full screen** button on the main menu hides the browser bars (Android Chrome, desktop). On iPhone,
   where Safari can't do this for web pages, it explains *Add to Home Screen* instead.
-- Layout, safe areas and touch rules: [03-frontend § Phone landscape layout](architecture/03-frontend.md#phone-landscape-layout).
 
-## 2. The run
+## 2. The run — TBD
+
+> **TBD.** The run structure is kept, but it was built for the old battles. Encounter tiers (normal, elite,
+> boss), rewards and the boss need new tile-based enemies. Until those exist, the run can only draw
+> **Hard Choices**. The text below describes the pre-rework run and still holds where it doesn't involve
+> combat.
 
 A **run** is one journey across a generated map, from Start to Finish.
 
@@ -33,31 +42,28 @@ A **run** is one journey across a generated map, from Start to Finish.
 Main menu ─New run─▶ Map (Start: Traveller event) ─travel─▶ … ─arrive at Finish─▶ Boss ─win─▶ Run won
                        │  Road/Trail trip → battle on the way
                        │  arrive at a stop → that stop's event
-                       └  HP 0 anywhere → Defeat → save deleted
+                       └  Courage 0 anywhere → Defeat → save deleted
 ```
 
-- **Main menu** (D11): **Pathway** = New run. **Hut** = Continue run (only when a save exists). **Chasm** =
+- **Main menu** (D11): **Fight** = quick fight: pick any enemy and battle it straight away, outside the run
+  ([combat § 9](combat.md#9-quick-fight-from-the-main-menu)). **Pathway** = New run. **Hut** = Continue run (only when a save exists). **Chasm** =
   Abandon run (only when a save exists, with confirmation). **Tree** = decorative. Spellford's debug
-  shortcuts (random event, quick battle) live in the dev-only debug panel (`?debug=1`).
-- **Start:** the player has 100 HP, 0 gold, six spells (§7), the junk pool Orb + Slime, and **no
-  abilities**. The run opens with the **Traveller** event: pick 1 of 3 random abilities.
+  shortcuts (random event) live in the dev-only debug panel (`?debug=1`).
+- **Start:** the player has **20 Courage**, 0 Talents, the four starting tools (§7), and **no abilities**. The run opens with the **Traveller** event: pick 1 of 3 random abilities.
 - **Travelling:** tap a stop directly connected to your current stop. The token follows the road's curve
   (1s).
-  - **The first battle of a run is always against a single enemy** (a lone Wolf or Bear, or the Spider if it's
-    a Trail).
-  - **Road** trip: a battle triggers at a random 30–70% of the way, drawing a random **normal** encounter
-    with **3 loadout slots**.
-  - **Trail** trip: the same, but a random **elite** encounter (still 3 loadout slots).
+  - **Road** trip: a battle triggers at a random 30–70% of the way, drawing a random **normal** enemy.
+  - **Trail** trip: the same, but a random **elite** enemy (TBD: none yet).
   - **Highway** trip: safe.
   - After the battle, travel resumes to the stop.
-- **Arriving at a stop** opens its event (§4.2). **Finish** starts the **boss** encounter.
+- **Arriving at a stop** opens its event (§4.2). **Finish** starts the **boss** battle (TBD: no boss yet).
 - **Winning the boss** shows the run-victory screen. The run ends and the save is deleted.
-- **Defeat:** HP reaches 0 in a battle or an event. "Your journey ends", the save is deleted, and you return
+- **Defeat:** Courage reaches 0 in a battle or an event. "Your journey ends", the save is deleted, and you return
   to the title (permadeath).
-- **Between battles:** HP carries over. All statuses clear after every battle. Ability uses refill only
+- **Between battles:** Courage carries over. All statuses clear after every battle. Ability uses refill only
   through Rest and the Shrine.
 
-## 3. World map
+## 3. World map — TBD (needs a portrait layout)
 
 - Generated from the run seed: 3 parallel paths of 4–6 stops between Start (left) and Finish (right), with
   cross-path connector roads. Stop and road types are chosen by weighted chance per phase, with link boosts,
@@ -71,7 +77,11 @@ Main menu ─New run─▶ Map (Start: Traveller event) ─travel─▶ … ─a
   Only connected stops are tappable, and each stop has a hit area of at least 44px.
 - **Legend** panel (top bar) explains the road and stop types.
 
-## 4. Events
+## 4. Events — TBD
+
+> **TBD.** Events are kept. Their rewards refer to the old systems (HP heals, gems, spell upgrades,
+> abilities) and will be revisited as more events and enemies are made. Gold is now **Talents**, HP is
+> **Courage**, gems are **virtues**, spells are **tools**.
 
 ### 4.1 Event rules
 
@@ -116,207 +126,33 @@ with the text ported word for word from Spellford's `EventLibrary.kt`. Spellcros
   allowed. **Random rolls are weighted by rarity:** abilities common 3 : uncommon 1 (rare 0.5, legendary 0.2);
   gems by drop weight (§9.3).
 
-## 5. Battle preparation
+## 5. Battle preparation (removed)
 
-Before every battle:
-
-- **Loadout:** fill **3** slots from your spells, in every battle (Spellford gave Trail battles 4).
-  FIGHT is enabled only when every slot is filled.
-- **Remembered loadout:** the spells you used last battle are preselected (any you no longer own are
-  swapped for the next spells in your list). Change them freely before FIGHT.
-- **Junk:** fill up to **2** junk slots from your junk pool (starting pool: Orb, Slime). Junk starts
-  **unselected**; empty is allowed. Hold any spell, junk tile or enemy to see its description (enemies show
-  their intent cycle).
-- Spells show their final stats and icons (§9).
+There's no loadout anymore: every battle uses all four starting tools plus the junk tiles Time and Space.
+The enemy and its pattern are shown on the battle screen ([combat § 8](combat.md#8-screen-layout-portrait)).
 
 ## 6. Battle
 
-### 6.1 Overview
+Authoritative rules: **[combat.md](combat.md)**. In short:
 
-The player makes **3 swaps per turn** on a match-3 board to cast spells at **1–4 enemies**. Each enemy repeats a
-fixed, visible cycle of intents. The board belongs to the player alone, and enemies never swap on it (D14).
+- **One enemy**, an **8×8 board**, **portrait** layout (board on top, player and enemy panels below).
+- Your turn: **3 swaps**. Tool sets trigger as they clear. Prayer, the Word and Time ask you to place
+  removals or Stones.
+- The enemy's **generator** decides which rows the board is built and refilled from (Hard Choices: a row of
+  Worries, a normal row, a row of Worries, …).
+- Enemy turn: enemy actions, if any (default none), then its **tiles activate**. A Worry steps down one row, destroying what's below. A Stone stops it and
+  cracks. From the bottom row it hits you for 1.
+- **Win** when the enemy has no tiles left on the board. **Lose** when Courage hits 0.
+- Enemies and enemy tiles: [enemies.md](enemies.md). Tools, junk, Stones and statuses: [tools.md](tools.md).
 
-### 6.2 Board
+## 7. Player tools
 
-- **8 columns × 6 visible rows** (48 tiles), plus a hidden 6-row refill buffer above (D15).
-- **Tile pool:** loadout spells, base duds (Ash, Rubble, Mist), base novas (Surge, Critical) and selected
-  junk. Weights *(tune)*:
-  - **Loadout spells: 60%**, shared by each spell's weight. Weight = 1 + 0.2 per Weight gem (additive). The
-    share stays 60% in total, so with 3 spells one Weight gem takes a spell from 20% to 22.5% of tiles.
-  - **Duds: 25%**, shared equally (base duds + selected dud junk).
-  - **Novas: 15%**, shared equally (base novas + selected nova junk).
-- **The initial fill** has no ready-made matches (re-roll until there are none).
-- **Spell classes:**
-  - *player*: matchable.
-  - *dud*: 3+ of the **same type** clear as a set, with **no effect** (no cast: no Critical, Fortify or
-    Darkstone). Different duds don't match each other, and duds block spell lines (D22).
-  - *nova*: never matches, and blocks lines.
-  - *both*: goes in the nova share but can match (Critical).
-- **Linked tiles** (Ash, Slime, Orb, Surge, Charge, Wall): a linked tile orthogonally next to a triggered set is
-  pulled in and cleared, but only if it's **available** (not locked or hidden). A pulled **Surge** turns into
-  the adjacent spell and adds +1 power (spell sets only, never a dud set). Other linked tiles just clear (D10).
-- **Locks:** swapping **doesn't** lock tiles (D23). Only enemy intents lock them (the Spider's Spin Web).
-  Locked tiles can't be swapped or matched, and they free up at the end of the player's next turn. Hidden
-  tiles can't be swapped. A lock belongs to the **tile**, not the cell: it falls with the tile, and clears when
-  the tile is cleared.
-- **Cast order within a cascade step:** groups cast in reading order of their top-left tile (top row first, then
-  left to right). This decides which cast uses up a Critical. A Surge next to two matched spells joins the
-  first one found looking down, up, right, then left.
+The player starts with **Fasting, Prayer, Thanksgiving and The Word**. See [tools.md](tools.md). Healing,
+Serving, Fellowship and Worship are parked (TBD).
 
-### 6.3 Turn structure
+## 8. Abilities — TBD
 
-```
-battle start: enemies placed left→right in slots 0..n-1; intent cursors set (0, or random if start:'random')
-┌▶ PLAYER TURN
-│    player statuses onTurnStart  (Block clears, Poisoned ticks)
-│    moves = 3
-│    swap / use abilities / retarget … until moves = 0 (auto-end after the cascade) or END TURN
-│    player statuses onTurnEnd   (Weak ticks)
-│    board locks advance
-│  ENEMY PHASE — each living enemy, left to right:
-│    statuses onTurnStart (Block clears, Poisoned ticks — it may die)
-│    perform its current intent; advance its cursor (wraps)
-│    statuses onTurnEnd (Weak ticks)
-│  ROUND START: all statuses onRoundStart
-└──┘
-```
-
-- **Moves:** one move = one swap of two orthogonally adjacent, available tiles. A swap costs a move **even
-  without a match**. Because any such swap is legal, there's **no reshuffle** (C4).
-- **Free actions:** retargeting, info popups, and triggering abilities (each spends its own uses).
-- **Win:** the battle ends **the moment the last enemy dies**, even mid-cascade. The killing cast's healing and
-  statuses still apply, but its self-damage and extra move don't, and no later casts happen (the board still
-  settles). Remaining moves are lost.
-- **Loss:** player HP 0 at any moment. The battle stops immediately.
-- **Ties:** if both happen at once, **victory wins**.
-
-### 6.4 Input
-
-- **Tap** a tile to select it. Tap an orthogonally adjacent available tile to swap. Tap the selection again to
-  deselect. Tap another tile to reselect. Locked or hidden tiles shake.
-- **Long-press** (~400ms) a tile, enemy, status or ability for its info popup.
-- **Tap an enemy** to make it the target (reticle). The target defaults to the leftmost living enemy, and
-  moves there when the target dies.
-- During the playback of a move or the enemy phase, input is locked. A tap fast-forwards.
-
-### 6.5 Casting
-
-When a move resolves, matched sets are found (3+ in a row, horizontally or vertically; L and T shapes merge
-at the shared tile). Within one cascade step, **all matched tiles of the same spell instance form one cast**.
-Its **power** = number of tiles, including pulled Surges. Then tiles clear, gravity drops the rest, the
-buffer refills, and new sets cascade until the board is stable.
-
-Each cast hits targets by the spell's **target** type:
-- `single`: the current target,
-- `all`: every living enemy, each taking the full formula,
-- `random`: one living enemy (battle RNG),
-- `self`: no enemy.
-
-Statuses carry their own *self* or *target* flag.
-
-**Formula, per target** (statuses' hooks run in this order: target's then actor's `onSpellActivated` → compute →
-target's then actor's `onSpellApplied`):
-
-```
-spell stats are FINAL stats (base + gems at the spell's level; §9)
-chaos         : if the spell has Chaos C, roll damage | block | healing ONCE per cast (battle RNG, before targets)
-                and add C per tile to that channel. Chaos damage counts as damage (gets Strength/Charge);
-                a self spell with Chaos targets an enemy, since it may roll damage
-
-mult          = actor.strengthStat (1) × 1.5 if actor has Critical (then Critical expires)
-elementMod    = 2 if target weak to the spell's element, 0.5 if resistant, else 1   (either element with Sunstone;
-                by element, not spell name as in Spellford, D21. No v1 enemy has weaknesses or resistances)
-dmgPerTile    = if spell.damage > 0:
-                  max(0, spell.damage × mult × elementMod
-                         + Strength + Charge + Charge‹spell element›)              (D1, D4)
-                else 0
-healPerTile   = spell.healing × mult
-damage        = floor(dmgPerTile × power), then × 0.75 (floor) if actor is Weak
-                → reduced by target's Perma Block per hit → absorbed by target's Block
-healing       = floor(healPerTile × power), applied to the actor (clamped to max HP)
-statuses      = each spell status at value × power if per-tile, else value
-                (Block per tile → actor; Poisoned per tile → target; Charge Lightning on Strike → actor, flat)
-on cast       : Fortify → actor gains Block = power × value; Fortify‹spell element› likewise
-                Darkstone → actor takes its self-damage (ignores Block); +1 move, at most once per turn
-                across all spells. Several Darkstones on one spell add their damage, not more moves
-Critical      : ×1.5 to damage and healing only (not Block or statuses, as in Spellford), consumed by the
-                next cast even if that cast does neither
-```
-
-Healing applies once per cast, not once per target. If the target dies mid-cascade, later casts retarget to
-the leftmost living enemy.
-
-### 6.6 Statuses (authoritative)
-
-Statuses on the same entity merge. Stacking statuses add values. Statuses with a duration add values and keep
-the longer duration. **All statuses clear after every battle.**
-
-| Status | Lasts | Effect |
-|---|---|---|
-| **Critical** | until used | Next cast ×1.5, then expires. Source: the Critical tile (flat 1) |
-| **Strength** | whole battle, stacks | Player: +value damage per tile on spells with damage. Enemy: +value per attack hit. (Nothing grants the player Strength in v1; C2) |
-| **Weak** | value = turns, ticks at owner's turn end | Damage dealt ×0.75 (floor), for both sides |
-| **Charge** | whole battle, stacks | +value damage per tile on all damaging spells |
-| **Charge ‹element›** (all six elements) | whole battle, stacks | +value damage per tile on spells of that element |
-| **Fortify** | whole battle, stacks | On every cast: gain Block = tiles × value |
-| **Fortify ‹element›** (all six elements) | whole battle, stacks | On casting that element: gain Block = tiles × value |
-| **Block** | until owner's next turn start | Absorbs incoming damage, then expires. Protects through the opponent's turn (D8) |
-| **Perma Block** | whole battle | Reduces each incoming hit by value |
-| **Poisoned** | until 0 | At the owner's turn start: take value damage, then value **drops by 1** (D24). Poisoned 3 deals 3 + 2 + 1 |
-
-Charge Fire/Lightning/Earth and Fortify Water/Earth/Air come from Spellford. The other element variants are
-new (for Chargestone and Stormstone) and use placeholder icons.
-
-### 6.7 Enemies and intents
-
-- Each enemy has a tier (normal, elite, boss), HP, a gold reward range, and an **ordered list of intents** it
-  cycles through forever. There's no AI and no conditions (D14).
-- An **intent** is generic (Attack X, Attack scaled by HP (Stone Giant), Defend X, Defend Allies X, Heal X, Heal Ally X, Heal Allies X, Buff, Buff
-  Allies, Debuff, Steal X, Lock N, Add Tiles) or **named**: a name and icon around any number of intents, run
-  in order.
-- **Allies** = living enemies, including the one acting. *Heal Ally* picks the lowest HP fraction (ties go to
-  the leftmost). Heals can't revive.
-- **Board intents** (Lock, Add Tiles) are allowed on **elite and boss** enemies only.
-- Each enemy shows its **current intent** as a badge: an icon per part, with numbers after its own Strength
-  and Weak (not after your Block). The numbers also include Strength from **allies acting earlier** in the
-  same enemy phase (e.g. the Harbinger's Rally before the Bear's Maul), so the badge always matches the hit.
-  Long-press shows the whole cycle.
-- **Lock** picks free visible tiles. **Add Tiles** picks visible tiles that aren't locked and never places a tile
-  that completes a set (duds can match, D22).
-- **Roster, cycles, encounters and data format:** [enemies.md](enemies.md). Wolf and Bear (normal), Spider and
-  Stone Giant (elite), Harbinger (boss, with a Wolf and a Bear).
-
-### 6.8 Battle end
-
-- **Victory:** gold = sum of each enemy's reward roll. **Gem drop** *(tune)*: normal encounter 25%, elite
-  100%, boss 0%. Shown on the ResultScreen, then back to travel. After the boss, the ResultScreen leads to
-  run victory (§2).
-- **Defeat:** the run ends (§2).
-
-### 6.9 Battle screen
-
-Board on the left, filling the height (tiles `min((height − top bar − 8px)/6, 48px)`). The right column holds
-the enemy zone (1–4 equal slots: intent badge, portrait, HP, statuses) above the player strip (portrait, HP,
-Block, statuses, move pips ●●○, End Turn). The top bar holds Exit and the ability bar. Sketch:
-[combat.md §6](combat.md#6-screen-layout-phone-landscape).
-
-## 7. Player spells
-
-The player starts with the first six. Wind Wall comes from Fight for Loot.
-
-| Spell | Element | Damage | Healing | Statuses | Target |
-|---|---|---|---|---|---|
-| Scorch | Fire | 4 | | | single |
-| Restore | **Water** (D3) | | 2 | | self |
-| Strike | Lightning | 2 | | Charge Lightning 1 → self (flat, each cast) | single |
-| Ice Bolt | Water | 3 | | | single |
-| Venom | Acid | | | Poisoned 1 per tile → target | single |
-| Shield | Earth | 1 | | Block 2 per tile → self | single |
-| Wind Wall | Air | | | Fortify Air 1 → self (flat) | self |
-
-Values are per tile. **Icons** are generated from stats (§9.5).
-
-## 8. Abilities
+> **TBD.** Kept, but every effect below refers to the old combat (Withering, damage, Kindled, Steadfast). New effects will be designed for the board-defence game.
 
 Powers outside the board. Each has **3 uses**, and triggering one costs no move. Hold at most **5**.
 
@@ -334,64 +170,19 @@ Powers outside the board. Each has **3 uses**, and triggering one costs no move.
 - **Recharging:** Rest (1 per ability owned) and Shrine Courage (3). You assign each recharge to an ability
   in the recharge popup. Uses never exceed 3.
 
-## 9. Spell customisation
+## 9. Tool customisation — TBD
 
-Full detail: [spells-and-gems.md](spells-and-gems.md) (D16).
+Kept: each tool has a **level 1–5** (raised by Upgrades) and **3 virtue sockets**. The virtue names stay.
+**TBD:** what levels and virtues do in the new combat. Current notes: [tools.md § 5](tools.md#5-tbd-kept-waiting-for-redesign).
+The pre-rework rules are in git history.
 
-### 9.1 Spell instances
+## 10. Economy — TBD
 
-Each owned spell is an instance with its own **element** (the Alchemist changes the first element), a
-**level 1–5**, and **3 gem sockets**. Final stats = base stats + each gem's value at the spell's level.
-
-### 9.2 Levels
-
-A **Spell Upgrade** (Market Study, Warlock) raises one spell's level by 1, as does **Meditate** at a Campfire, up to 5. For now a level
-only changes the spell's gem values.
-
-### 9.3 Gems
-
-Gems have no level of their own. Each value is read from the spell's level (1 / 2 / 3 / 4 / 5):
-
-| Gem | Effect |
-|---|---|
-| Strikecut | +damage per tile: 2 / 2 / 3 / 4 / 5 |
-| Lifelink | +healing per tile: 1 / 1 / 2 / 3 / 4 |
-| Walled | +Block per tile to self: 2 / 2 / 3 / 3 / 4 |
-| Toxicut | +Poisoned per tile to target: 1 / 1 / 1 / 2 / 3 |
-| Cracked | +Chaos per tile: 2 / 2 / 2 / 4 / 4. Each cast, Chaos becomes damage, Block or healing at random |
-| Weight | Tile weight +0.2, within the 60% loadout share (with 3 spells: 20% → 22.5% of tiles) |
-| Chargestone | Each cast: Charge ‹spell's element› 1 / 1 / 1 / 2 / 3 → self |
-| Stormstone | Each cast: Fortify ‹spell's element› 1 / 1 / 1 / 2 / 3 → self |
-| Darkstone | Each cast: take 3 / 3 / 4 / 4 / 5 self-damage. +1 move, at most once per turn |
-| Sunstone | The spell gains a second element, chosen when socketing. Both elements' Charge, Fortify and element mods apply |
-
-- **Sockets:** all 3 open. Any gem in any socket. The same gem can repeat (values add). **No cap on effect
-  types.**
-- **Sources:** battle drops (§6.8), shops (pick 1 of 3 distinct gems for 100gp), and the Gambler. Every roll is
-  weighted *(tune)*: **Weight 6, Cracked 6** (most common), Strikecut / Lifelink / Walled / Toxicut 4,
-  Chargestone / Stormstone 2, Darkstone / Sunstone 1.
-- **Unsocket:** in the Spellbook while at a Town, 50gp, gem returned.
-- **Sunstone details:** a second Sunstone on the same spell adds nothing. If the Alchemist later makes the
-  first element equal the second, the spell simply has one element. Chargestone and Stormstone grant their
-  status for **each** of the spell's elements.
-
-### 9.4 Spellbook
-
-The screen for socketing and upgrading. It opens from the World top bar, not during battle. Every change shows
-a before → after preview (stats and icon) and asks to confirm.
-
-### 9.5 Spell icons
-
-Built from final stats: categories damage, healing, Block, Poison, Chaos. Each gets a tier from its value
-(1–3 → 1, 4–7 → 2, 8+ → 3). The **top two** give `spells/<element>/<cat1>[-<cat2>]-<tier>.png`, falling back to
-`<element>/default.png` and then a placeholder. A spell with more than two categories shows a **"+n"
-pip** on its tiles. Exact rule: [spells-and-gems §2](spells-and-gems.md#2-spell-icons-from-stats).
-
-## 10. Economy
+> **TBD.** Gold is now **Talents**. The prices below are pre-rework. Enemy reward ranges are gone with the old enemies.
 
 | Gold in | Amount |
 |---|---|
-| Battle victory | Sum of enemy reward rolls (Wolf 25–40, Bear 35–50, Spider 45–65) |
+| Battle victory | TBD: a Talents reward per enemy |
 | Events | Gambler, Tavern (see features §4.2) |
 | Enemy Steal intent | Takes gold. It returns when the thief dies (no v1 enemy uses it) |
 
@@ -419,6 +210,4 @@ Gold can't go negative. Unaffordable options are disabled.
 
 ## 12. Out of scope for v1
 
-Relics (R7), XP and levelling, dialogue, item effects beyond gems and upgrades, more enemies, hidden boss
-intents, linked-tile effects other than Surge, sound and music, portrait or tablet layouts, and a player
-Strength source (C2).
+Relics (R7), XP, dialogue, sound and music, and tablet layouts.

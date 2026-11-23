@@ -1,273 +1,119 @@
-# Enemies and Intents
+# Enemies and Enemy Tiles
 
-Enemy and intent content for the combat loop in [combat.md](combat.md). All numbers are starting
-values *(tune after the M2 sim)*.
+Enemy content for the combat rules in [combat.md](combat.md). An enemy doesn't attack directly. Its
+**generator** feeds **enemy tiles** onto the board in a **predictable pattern**, and those tiles do the damage. All numbers are
+starting values *(tune)*.
 
-## 1. How intents are built
-
-An **intent** is what an enemy does on its turn. There are two kinds:
-
-- **Generic intents**: parameterised building blocks such as *Attack 5* or *Defend 8*. They need no name
-  or definition and can be used directly in an enemy's cycle.
-- **Named intents**: a name, icon and description wrapped around **a list of any number of intents**,
-  generic or named. *Disable* = [Attack 5, Weaken 1]. Named intents can contain other named intents.
-
-When an intent runs, its parts run in order. Each part is resolved at that moment, so an *Attack* after a
-*Buff Strength* in the same intent already benefits from the Strength.
-
-A multi-hit attack is just a repeated attack: *Lunge* = [Attack 4, Attack 4]. Strength and Block apply
-to each hit separately.
-
-### 1.1 Generic intents
-
-| Generic intent | Effect | Badge | Board? |
-|---|---|---|---|
-| `attackScaled(X)` | Deal up to X damage, scaled by the attacker's HP fraction (rounded up, at least 1). X at full HP | ⚔ current value | |
-| `attack(X)` | Deal X damage to the player (+Strength, ×0.75 if Weak, then absorbed by the player's Block). The badge shows the number before Block | ⚔ X | |
-| `defend(X)` | Gain X Block | 🛡 X | |
-| `defendAllies(X)` | Every living ally (including self) gains X Block | 🛡 X all | |
-| `heal(X)` | Heal self X | ♥ X | |
-| `healAlly(X)` | Heal the living ally with the lowest HP fraction (ties go to the leftmost; may be self) | ♥ X ally | |
-| `healAllies(X)` | Heal every living ally (including self) | ♥ X all | |
-| `buff(status, X)` | Apply a status to self (e.g. Strength) | ▲ | |
-| `buffAllies(status, X)` | Apply a status to every living ally | ▲ all | |
-| `debuff(status, X)` | Apply a status to the player (e.g. Weak, Poisoned) | ▼ | |
-| `steal(X)` | Take up to X gold from the player. **All stolen gold is returned if this enemy is defeated** | 💰 X | |
-| `lock(N)` | Lock N random free, visible tiles (freed after the player's next turn) | ▦ N | **yes** |
-| `addTiles(spell, N)` | Turn N random visible tiles into `spell` (e.g. Rubble), without triggering matches | ▦ N | **yes** |
-
-`steal` isn't used by the starting roster. It's kept for a future thief-type enemy.
-
-Shorthands for common debuffs and buffs: `weaken(X)` = `debuff('weakness', X)`, `poison(X)` =
-`debuff('poisoned', X)`, `enrage(X)` = `buff('strength', X)`.
-
-**Board rule:** `lock` and `addTiles` may appear (directly or inside a named intent) only in `elite` and
-`boss` enemies. Content validation fails the build otherwise.
-
-### 1.2 Intent badge
-
-The badge above an enemy shows one icon per part, in order, with **final numbers**, e.g. Disable shows
-`⚔ 5  ▼`. Identical consecutive attacks collapse, so Lunge shows `⚔ 4×2`. Long-pressing the enemy lists
-the full cycle with names and descriptions (combat §3.4).
-
-### 1.3 Statuses intents use
-
-Intents only use statuses that already exist in Spellford, with existing icons in `assets/status/`.
-No new art is needed.
-
-| Status | Used as | Rule (combat §4) |
-|---|---|---|
-| Strength | buff | +X damage per attack hit, permanent, stacks |
-| Weakness ("Weak") | debuff | Damage dealt ×0.75. Value = turns left, ticks at the owner's turn end |
-| Block | `defend` | Absorbs damage, clears at the owner's next turn start |
-| Poisoned | debuff | X damage at the owner's turn start, then drops by 1 (D24) |
+The old roster (Strife, Greed, Lust, Sloth, Pride) and the intent system are **retired**. Those names are free
+to reuse for new tile-based enemies later.
 
 ---
 
-## 2. Enemies
+## 1. Enemy tiles
 
-On 2026-11-22 normal enemies' HP was halved (Wolf 60 → 30, Bear 90 → 45). Elites and the boss kept their original HP
-(Spider 76, Harbinger 180), and the Stone Giant was added.
+An enemy tile is a board tile owned by the enemy. Every enemy tile:
 
-| Enemy | Tier | HP | Start | Gold | Portrait |
-|---|---|---|---|---|---|
-| **Wolf** | normal | 30 | random | 25–40 | `portraits/wolf.png` ✓ |
-| **Bear** | normal | 45 | first | 35–50 | `portraits/bear.png` ✓ |
-| **Spider** | elite | 76 | first (Spin Web) | 45–65 | **needs art** (no Spellford asset; placeholder until drawn, U5) |
-| **Stone Giant** | elite | 100 | first | 50–70 | **needs art** (placeholder) |
-| **Harbinger** (boss) | boss | 180 | first (Rally) | 100–150 | `portraits/harbinger.png` ✓ |
+- **never matches** and breaks lines of other tiles,
+- **can't be swapped**,
+- **falls with gravity** like any tile,
+- **activates** once per enemy turn, bottom row first ([combat § 4.1](combat.md#41-activation)),
+- **never destroys another enemy tile**. If its move is blocked by one, it stays put,
+- enters the board from the enemy's **generator** (§2), or from an enemy action (§3),
+- is removed only by **Prayer** removal shapes and **Time** ([combat § 5](combat.md#5-placement)).
 
-### Wolf: pack hunter that ramps up
+Each tile type has an **HP** value. For now nothing deals partial damage (removal is outright), so HP is
+recorded for future tools.
 
-| # | Intent | Made of | Notes |
-|---|---|---|---|
-| 1 | **Fangs** | Attack 5 | |
-| 2 | **Disable** | Attack 5, Weaken 1 | |
-| 3 | **Rage** | Enrage 1 | Permanent Strength. Every loop it hits 1 harder |
+### Worry (base enemy tile)
 
-`start: random`, so a pack of wolves doesn't attack in sync.
+| | |
+|---|---|
+| HP | 1 |
+| On activate | On the bottom row: **1 damage** to the player, and it stays. Otherwise **move 1 down**. A tool or junk tile below is destroyed. A Stone below cracks, and the Worry stays. Another enemy tile below blocks it |
+| Art | placeholder from the old junk art (e.g. `spells/dud/ash.png`) until drawn |
 
-### Bear: slow and tanky, hits hard
+## 2. The generator
 
-| # | Intent | Made of | Notes |
-|---|---|---|---|
-| 1 | **Swipe** | Attack 6 | |
-| 2 | *Defend 10* | Defend 10 | Generic intent, used inline without a name |
-| 3 | **Maul** | Attack 12 | The big telegraphed hit. Have Block ready |
-| 4 | **Roar** | Enrage 1, Weaken 1 | |
+An enemy's main mechanic is its **generator**: the stack of rows the board is built from and refills from.
 
-### Spider (elite): poison and webs on your board
+- The generator is an ordered list of **generated rows**, from the **bottom of the board upwards**. Each row
+  is `normal` (8 tiles from the tile pool) or an **enemy row** (e.g. 8 Worries).
+- The first 8 entries are the **initial board**: entry 1 is the bottom row and entry 8 is the top row.
+- Entries 9 onwards sit **above the board**. Each column refills from its own position in the list: the next
+  tile to drop into column *x* is column *x* of that column's next generated row
+  ([combat § 1](combat.md#1-the-board)). Columns advance independently, so the rows break up as they come in.
+- When the list runs out, it's `normal` rows forever.
+- Generated rows can be written as a list or as a repeat. For example "7 × normal, then Worry, normal ×
+  3, then Worry" is the same as writing out every row.
 
-| # | Intent | Made of | Notes |
-|---|---|---|---|
-| 1 | **Spin Web** | Lock 8, Defend 6 | Board effect (elite only). Opens the fight |
-| 2 | **Lunge** | Attack 4, Attack 4 | Shows `⚔ 4×2` |
-| 3 | **Feed** | Attack 6, Heal 6 | |
-| 4 | **Venom Bite** | Attack 4, Poison 3 | |
+The enemy's **setup description** must spell out the pattern **and the totals**, so a long-press on the
+enemy shows straight away how many enemy tiles are coming.
 
-### Stone Giant (elite): hits hardest first, alone
+## 3. Enemy actions
 
-| # | Intent | Made of | Notes |
-|---|---|---|---|
-| 1 | **Crush** | Attack scaled by HP: 30 at full health, proportionally less (rounded up) | Its only move, every turn. Kill it fast or block |
+On top of its generator, an enemy can take an **action** at the start of each enemy turn. **The default is
+none.** No current enemy has actions. Planned action types, for later enemies:
 
-### Harbinger (boss): commander that heals and buffs its pack, then corrupts the board
+| Action | Effect |
+|---|---|
+| `spawnRow(tile, row)` | Fills a board row with that tile. Tools, junk and Stones there are destroyed with no effect. Cells holding enemy tiles are skipped |
+| `spawn(tile, cells)` | The same, for specific cells |
+| `spawnRandom(tile, count, rows?)` | Places `count` tiles in random non-enemy cells (battle RNG) |
 
-Always fought with allies (see encounters), so the ally heals and buffs matter.
+Actions repeat in a fixed cycle and must be visible ahead of time ("Next: …" on the enemy panel).
 
-| # | Intent | Made of | Notes |
-|---|---|---|---|
-| 1 | **Rally** | Heal Allies 10, Buff Allies Strength 2 | Heals and enrages the whole pack. Opens the fight, so scaling starts on turn 1 |
-| 2 | **Corrupt** | Add 4 Rubble, Weaken 2 | Board effect (boss only) |
-| 3 | **Ward** | Defend 15, Heal 10 | |
-| 4 | **Doom** | Attack 6, Attack 6, Attack 6 | Shows `⚔ 6×3`. Telegraphed big hit |
-| 5 | **Dark Bolt** | Attack 12 | |
+## 4. Roster
 
-## 3. Encounters
+### Hard Choices (the base enemy)
 
-| Encounter | Tier | Enemies (left → right) |
-|---|---|---|
-| `wolf` | normal | Wolf |
-| `wolf_pair` | normal | Wolf, Wolf |
-| `bear` | normal | Bear |
-| `wilds` | normal | Wolf, Bear |
-| `hunting_party` | normal | Wolf, Bear, Wolf |
-| `pack` | normal | Wolf, Wolf, Wolf, Wolf |
-| `spider` | elite | Spider |
-| `stone_giant` | elite | Stone Giant |
-| `nest` | elite | Wolf, Spider |
-| `boss` | boss | Wolf, Harbinger, Bear |
+| | |
+|---|---|
+| Generator | 7 × normal (the bottom of the board), then **Worry, normal, Worry, normal, Worry, normal, Worry**, then normal forever |
+| On the board at the start | The bottom 7 rows are normal, and the **top row is all Worries** |
+| Total | **4 Worry rows = 32 Worries**: 8 on the board at the start and 24 still to come |
+| Actions | None |
+| Setup description (shown on hold) | "Rows of Worry with a normal row between each: 4 Worry rows, **32 Worries** in all. The first row starts on the board." |
 
-**How encounters are picked (D17):**
-- A **Road** battle draws a random **normal** encounter, with 3 loadout slots.
-- A **Trail** battle draws a random **elite** encounter, with 3 loadout slots like every battle.
-- Arriving at **Finish** starts the **boss** encounter. Winning it wins the run.
+You win the moment no Worries are on the board, even if more are still to come
+([combat § 6](combat.md#6-winning-and-losing)).
 
-All picks use the run RNG. Weighting normal encounters by distance from Start is a tuning option, not v1.
-
----
-
-## 4. Data files
-
-Everything lives in **`src/content/enemies.ts`**: the generic-intent helpers (`attack()`, `defend()`, …), the
-named intents, the enemies (each listing its cycle **in order**, mixing named intents by id and generic intents
-inline) and the encounters. The snippets below show the shape; the file is the source of truth. The boss's id
-is `harbinger`, and the Spider has no portrait (placeholder, open-questions U5).
+## 5. Data files
 
 ```ts
-// src/content/intents.ts
-import { defineIntents, attack, defend, heal, healAllies, buffAllies,
-         weaken, poison, enrage, lock, addTiles } from '../engine/intents/dsl';
+// src/content/enemyTiles.ts
+interface EnemyTileDef {
+  id: string;              // 'worry'
+  name: string;            // 'Worry'
+  description: string;
+  icon: string;            // asset path
+  hp: number;
+  onActivate: TileBehaviour; // 'stepDownOrHit' for Worry; more behaviours added as needed
+  damage: number;          // damage when it hits from the bottom row (Worry: 1)
+}
 
-export const intents = defineIntents({
-  // Wolf
-  fangs:      { name: 'Fangs',       icon: 'intents/fangs.png',  description: 'Bites for 5.',
-                do: [attack(5)] },
-  disable:    { name: 'Disable',     icon: 'intents/claw.png',   description: 'Hits for 5 and leaves you Weak.',
-                do: [attack(5), weaken(1)] },
-  rage:       { name: 'Rage',        icon: 'intents/howl.png',   description: 'Gains 1 Strength.',
-                do: [enrage(1)] },
-
-  // Bear
-  swipe:      { name: 'Swipe',       icon: 'intents/claw.png',   description: 'Hits for 6.',
-                do: [attack(6)] },
-  maul:       { name: 'Maul',        icon: 'intents/maul.png',   description: 'Hits for 12.',
-                do: [attack(12)] },
-  roar:       { name: 'Roar',        icon: 'intents/roar.png',   description: 'Gains 1 Strength and leaves you Weak.',
-                do: [enrage(1), weaken(1)] },
-
-  // Spider
-  venomBite:  { name: 'Venom Bite',  icon: 'intents/fang-green.png', description: 'Hits for 4 and poisons you.',
-                do: [attack(4), poison(3)] },
-  spinWeb:    { name: 'Spin Web',    icon: 'intents/web.png',    description: 'Webs 4 of your tiles and gains 6 Block.',
-                do: [lock(4), defend(6)] },
-  lunge:      { name: 'Lunge',       icon: 'intents/lunge.png',  description: 'Hits twice for 4.',
-                do: [attack(4), attack(4)] },
-  feed:       { name: 'Feed',        icon: 'intents/drain.png',  description: 'Hits for 6 and heals 6.',
-                do: [attack(6), heal(6)] },
-
-  // Boss
-  darkBolt:   { name: 'Dark Bolt',   icon: 'intents/bolt.png',   description: 'Hits for 12.',
-                do: [attack(12)] },
-  rally:      { name: 'Rally',       icon: 'intents/banner.png', description: 'Heals all allies 10 and gives them 1 Strength.',
-                do: [healAllies(10), buffAllies('strength', 1)] },
-  corrupt:    { name: 'Corrupt',     icon: 'intents/rot.png',    description: 'Turns 4 tiles to Rubble and leaves you Weak.',
-                do: [addTiles('rubble', 4), weaken(2)] },
-  ward:       { name: 'Ward',        icon: 'intents/ward.png',   description: 'Gains 15 Block and heals 10.',
-                do: [defend(15), heal(10)] },
-  doom:       { name: 'Doom',        icon: 'intents/skull.png',  description: 'Hits three times for 6.',
-                do: [attack(6), attack(6), attack(6)] },
-});
-```
-
-```ts
 // src/content/enemies.ts
-import { defineEnemies, defend } from '../engine/intents/dsl';
-
-export const enemies = defineEnemies({
-  wolf: {
-    name: 'Wolf', tier: 'normal', hp: 30, portrait: 'portraits/wolf.png',
-    start: 'random', gold: [25, 40],
-    intents: ['fangs', 'disable', 'rage'],
-  },
-  bear: {
-    name: 'Bear', tier: 'normal', hp: 45, portrait: 'portraits/bear.png',
-    gold: [35, 50],
-    intents: ['swipe', defend(10), 'maul', 'roar'],   // a generic intent used inline
-  },
-  spider: {
-    name: 'Spider', tier: 'elite', hp: 38, // no portrait yet (U5)
-    gold: [45, 65],
-    intents: ['venomBite', 'spinWeb', 'lunge', 'feed'],
-  },
-  harbinger: {
-    name: 'Harbinger', tier: 'boss', hp: 90, portrait: 'portraits/harbinger.png',
-    gold: [100, 150],
-    intents: ['darkBolt', 'rally', 'corrupt', 'ward', 'doom'],
-  },
-});
-```
-
-Bear's second intent shows both styles side by side: a generic intent used inline without a name, next
-to named intents for anything with flavour. An inline generic intent gets an auto label ("Defend 10") and
-the generic icon.
-
-### Types
-
-```ts
-type IntentRef = string /* named intent id */ | GenericIntent;
-
-type GenericIntent =
-  | { type: 'attack'; amount: number }
-  | { type: 'defend' | 'defendAllies'; amount: number }
-  | { type: 'heal' | 'healAlly' | 'healAllies'; amount: number }
-  | { type: 'buff' | 'buffAllies' | 'debuff'; status: StatusId; value: number }
-  | { type: 'steal'; amount: number }
-  | { type: 'lock'; count: number }                       // elite/boss
-  | { type: 'addTiles'; spell: SpellId; count: number };  // elite/boss
-
-interface NamedIntent { name: string; icon: string; description: string; do: IntentRef[] }   // any length, nests
+type GeneratedRow = 'normal' | { tile: string };       // an enemy row: 8 of that tile
+type EnemyAction =
+  | { type: 'spawnRow'; tile: string; row: number }
+  | { type: 'spawn'; tile: string; cells: { x: number; y: number }[] }
+  | { type: 'spawnRandom'; tile: string; count: number; rows?: number[] };
 
 interface EnemyDef {
-  name: string; tier: 'normal' | 'elite' | 'boss'; hp: number; portrait: string;
-  start?: 'first' | 'random'; gold: [min: number, max: number];
-  intents: IntentRef[];               // the cycle, in order, repeating
-  weaknesses?: Element[]; resistances?: Element[]; startingStatuses?: StatusInstance[];
+  id: string;              // 'hard_choices'
+  name: string;            // 'Hard Choices'
+  description: string;     // the setup description: pattern + totals (shown on hold and in the picker)
+  portrait: string;
+  generator: GeneratedRow[]; // bottom of the board upwards; normal forever after the end
+  actions: EnemyAction[];    // default []
 }
 ```
 
-### Validation
+**Validation** (content tests):
+- every tile id exists,
+- at least one enemy tile is in the first 8 rows, so the enemy isn't defeated at the start,
+- the description's totals match the generator (a test counts the enemy tiles).
 
-- Every intent id exists, and named intents contain no cycles (an intent can't contain itself, directly
-  or through other intents).
-- Every status and spell referenced exists.
-- `lock` and `addTiles` appear only in elite and boss enemies, at any nesting depth.
-- Every enemy has at least one intent, and every encounter has 1–4 enemies.
-- Each intent's `description` numbers match its parts. A test renders the auto-description and compares,
-  so the text can't drift from the data (the Sicken problem, D12).
+## 6. Assets needed
 
-## 5. Assets needed
-
-- Portraits: **spider**. Wolf, Bear and Harbinger exist.
-- Intent icons (`assets/intents/`): one per named intent, plus generic icons for attack, defend, heal,
-  buff, debuff, steal and board. Until art exists, badges fall back to the generic icons.
+- Worry tile art (placeholder until drawn).
+- Hard Choices portrait (placeholder until drawn).

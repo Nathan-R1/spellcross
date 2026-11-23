@@ -1,5 +1,7 @@
 # 03: Frontend (React)
 
+> **Pre-rework.** This doc describes the engine/UI built for the old combat (1–4 enemies, intents, landscape). The 2026-11 combat rework ([combat.md](../combat.md)) supersedes its battle sections. It will be updated when the rework is built.
+
 ## Screens
 
 There's no router. `App.tsx` shows the screen named by `run.screen` (`map`, `event`, `prep`, `battle`,

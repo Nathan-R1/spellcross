@@ -4,7 +4,44 @@ Design decisions still to make, with a recommendation that the other docs assume
 decisions already made are logged at the end. When something is decided, move it to the log and update the
 doc it points to.
 
-## Still open
+## Combat rework (2026-11)
+
+Decided by the designer:
+
+| Rule | Decision |
+|---|---|
+| Board | 8×8, one enemy, portrait layout (board on top; player panel left, enemy panel right) |
+| Turn | 3 swaps → your tiles activate → enemy action (default: nothing) → enemy tiles activate |
+| Worry | 1 HP. Moves 1 down per activation, destroying what's below. On the bottom row: 1 damage, and it stays |
+| Enemy tiles | Never match. Never destroy each other: blocked like by a Stone. Fall with gravity |
+| Damage | 1 damage = 1 Courage. Block absorbs first |
+| Win | The enemy has no tiles left on the board |
+| Killing Worries | Prayer removal shapes, and Time |
+| Tools | Fasting (Critical: next set ×2), Prayer (removal in the set's shape), Thanksgiving (1 Block per tile), The Word (1 Stone per tile, placed individually) |
+| Critical | Doubles the next set: Prayer → two removal shapes, Word → double Stones, etc. |
+| Removal shape | Same shape as the completed set (3 horizontal → 3 horizontal). Removes anything under it |
+| Stones | Fall, match (3+ clear), block Worries |
+| Junk | Old duds and novas retired (art reused). New: Time (3+ → remove 1 tile anywhere), Space (no effect) |
+| Stats | 3 moves per turn, 20 Courage |
+| Main menu | A Fight button → pick an enemy → battle |
+| Kept, TBD | Run, map, events, virtues, abilities, tool levels: kept, redesigned later |
+
+Confirmed in round 2: the **generator** (Hard Choices = Worry row, normal row, Worry row, … 4 Worry rows,
+32 Worries, then normal; the setup description shows the totals). Worries fall with gravity. No tile has
+end-of-turn effects yet. Time can remove a Worry (R1). A Stone cracks in one hit and the Worry stays put (R3).
+Activation goes bottom-up (R4). You win as soon as the board has no enemy tiles (R6). The whole app goes
+portrait (R15).
+
+Confirmed in round 3: removal shapes keep the set's orientation (R7). Placements are mandatory and immediate (R8).
+Fasting gives Critical 1 per set, Critical stacks, and junk and Stone sets don't use it up (R9). The tile pool
+is 70% tools and 30% junk (R12). **Stones can be placed on any tile, including a Worry, which they replace (R13).**
+Thanksgiving's pillar is Spirit (R14).
+
+Confirmed in round 4: sets formed during the enemy turn trigger straight away, for free, and any placement is asked for then (R11).
+
+Nothing is open for the combat rework.
+
+## Pre-rework (mostly moot after the combat rework)
 
 | ID | Question | Recommendation | Blocks |
 |---|---|---|---|

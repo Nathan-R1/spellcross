@@ -1,6 +1,6 @@
 # Spellcross Feature Set (Parity with Spellford)
 
-> **For the final Spellcross rules, read [spec.md](spec.md).** This doc is the Spellford reference and decision log.
+> **For the final Spellcross rules, read [spec.md](spec.md).** This doc is the Spellford reference and decision log. Its battle sections (§5) are historical: combat was replaced by the 2026-11 rework ([combat.md](combat.md)).
 
 This document lists every feature in Spellford (`../spellford`, commit `3f7b1a0`, re-baselined from `9b0a7bb`) that Spellcross
 must reproduce. Each feature has a **status in Spellford** so we don't "port" things that were never
@@ -269,7 +269,7 @@ Hook order: target `onSpellActivated` → actor `onSpellActivated` → compute �
 - Missing file → `spells/<element>/default.png`.
 
 So an upgraded spell's icon changes as its numbers grow. Full rule, quirks, art coverage and the Spellcross
-port: [spells-and-gems.md §2](spells-and-gems.md#2-spell-icons-from-stats). Note: the spell info popup
+port: [spells-and-gems.md §2](tools.md). Note: the spell info popup
 still loads the blank `iconPath`, so player spells show no icon there (bug, not ported). Tiles are now
 tinted by `spellColor` (pastels per spell) instead of team colour.
 
@@ -377,7 +377,7 @@ battles have 1–4 of them.
 | # | Feature | Status | Notes |
 |---|---|---|---|
 | 6.1 | Gold (shown in the top bar with an icon) | Done | Earned through events and 🆕 +50 per battle. Spent at stops and events. 🆕 Costs are gated by option availability, so it no longer goes negative |
-| 6.2 | Items as plain strings: Gemstone, Spell Upgrade | Partial | 🆕 Gemstones are sold at Village/Town/Market (100gp), and Spell Upgrades at Town/Market (100gp, spelled "Spellupgrade" there and "Spell Upgrade" in the Warlock event). "Weapon", "Recharge" and "Ability" are no longer items (they became real effects). Still **no item has any effect**, and there's no inventory screen. **→ D16**: Gemstones, Weight Gems and Spell Upgrades get effects ([spells-and-gems.md](spells-and-gems.md)) |
+| 6.2 | Items as plain strings: Gemstone, Spell Upgrade | Partial | 🆕 Gemstones are sold at Village/Town/Market (100gp), and Spell Upgrades at Town/Market (100gp, spelled "Spellupgrade" there and "Spell Upgrade" in the Warlock event). "Weapon", "Recharge" and "Ability" are no longer items (they became real effects). Still **no item has any effect**, and there's no inventory screen. **→ D16**: Gemstones, Weight Gems and Spell Upgrades get effects ([spells-and-gems.md](tools.md)) |
 | 6.3 | HP persists between events in the same chain | Done | |
 | 6.4 | HP and player state carried across World → Event → Battle → World | Done 🆕 | Road battles and set events share the run's Player. Statuses are cleared after a battle. Menu shortcuts still create a fresh Player |
 | 6.5 | XP, levels, spell unlocks, max HP growth | Planned | `ProgressionSystem.kt` empty. `Constants.PLAYER_START_XP` |
@@ -446,7 +446,7 @@ Fix gets a unit test that names this entry (e.g. `// features.md D1`).
 | D14 | 1v1 battle where the enemy plays on the shared board using a behaviour tree. 2 energy per turn | **Change** (design) | Intent-based combat against **1–4 enemies**. The board is the player's alone, with **3 moves per turn** by tap-tap swap. Each enemy repeats a fixed, visible intent cycle that can damage the player, heal itself or its allies, buff, debuff, or (elite and boss only) alter the board. Full spec: [combat.md](combat.md) |
 | D15 | Board is 8×8 visible (8 columns × 16 rows including the hidden buffer) | **Change** (platform) | **8 columns × 6 visible rows** (8 × 12 with the buffer). On a landscape phone, height limits tile size: 8 rows gives ~34px tiles on the 320px-tall minimum, 6 rows gives ~45px, which meets the 44pt guideline everywhere. Tiles are capped at 48px so the enemy zone keeps its width. Cost: 48 tiles instead of 64, so fewer matches and cascades. Pool weights, loadout size and the no-move rule (combat §2.4) are checked by the M2 sim |
 
-| D16 | Gemstones, Spell Upgrades and the Weight Gem are sold or given but do nothing. Ice Bolt has `TODO have 3 gemstone slots` | **Change** (design) | **Spell customisation:** each owned spell is an instance with an element, a **level 1–5** and 3 open gem sockets. **10 gems**, which have no level of their own: each value is read from the spell's level (Strikecut, Lifelink, Walled, Toxicut, Cracked/Chaos, Weight, Chargestone, Stormstone, Darkstone, Sunstone; Trapstone cut). No cap on effect types (the icon shows the top two, plus a "+n" pip). Spell Upgrades raise the level, which for now only raises gem values. Gems come from battle drops and shops (pick 1 of 3). Customise in the new Spellbook screen. Icons come from final stats. Full spec and open questions: [spells-and-gems.md](spells-and-gems.md) |
+| D16 | Gemstones, Spell Upgrades and the Weight Gem are sold or given but do nothing. Ice Bolt has `TODO have 3 gemstone slots` | **Change** (design) | **Spell customisation:** each owned spell is an instance with an element, a **level 1–5** and 3 open gem sockets. **10 gems**, which have no level of their own: each value is read from the spell's level (Strikecut, Lifelink, Walled, Toxicut, Cracked/Chaos, Weight, Chargestone, Stormstone, Darkstone, Sunstone; Trapstone cut). No cap on effect types (the icon shows the top two, plus a "+n" pip). Spell Upgrades raise the level, which for now only raises gem values. Gems come from battle drops and shops (pick 1 of 3). Customise in the new Spellbook screen. Icons come from final stats. Full spec and open questions: [spells-and-gems.md](tools.md) |
 | D17 | Arriving at stops and road battles work, but every battle is the same Dummy/Wolf. Finish does nothing. Battles pay a flat +50 gold | **Change** (design) | **Run structure:** Road battles draw a random **normal** encounter (3 slots), and Trail battles a random **elite** encounter (also 3 slots; Spellford gave Trails 4). Arriving at **Finish** starts the **Harbinger** boss encounter, and winning it wins the run. Battle gold = the sum of each enemy's reward roll (D9), and a battle can drop a random gem (normal 25%, elite 100%). Shop prices stay as Spellford, and "+Gemstone" purchases become pick 1 of 3 random gems. The first battle of a run is always a single-enemy encounter. Defeat = permadeath. No relics. See [enemies.md §3](enemies.md#3-encounters) |
 | D18 | Map minimums can fail (3.1.8) | **Fix** | Converting a stop never removes the only stop of another required type. Minimums always hold |
 | D19 | Fight for Loot never shows its options or grants Wind Wall (4.2) | **Fix** | Show Leave / Explore. Explore grants Wind Wall, then a normal battle (3 slots) |

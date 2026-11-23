@@ -46,7 +46,7 @@ and `boss` enemies may have board effects** (combat §3.2). Starting spell insta
 **Items:** Spellford uses raw strings (`"Gemstone"`, `"Spell Upgrade"`, spelled `"Spellupgrade"` in shops).
 In Spellcross, gems are their own content (`content/gems.ts`), held as `inventory.gems` (no rank). Spell
 Upgrades are a counter (`inventory.spellUpgrades`). Spellford's "+Gemstone" shop purchases become "pick 1 of
-3 random gems", and battles can drop gems (spells-and-gems §3.2) and its Weight Gem becomes the **Weight** gem ([spells-and-gems.md](../spells-and-gems.md), D16).
+3 random gems", and battles can drop gems (spells-and-gems §3.2) and its Weight Gem becomes the **Weight** gem ([spells-and-gems.md](../tools.md), D16).
 `content/items.ts` remains for any other items and is empty at launch.
 
 **Set events:** `content/events/set/*.ts` hold the stop-arrival events (Traveller, Campfire, Village, Town,

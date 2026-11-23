@@ -1,5 +1,7 @@
 # 02: Game Engine (pure TypeScript)
 
+> **Pre-rework.** This doc describes the engine/UI built for the old combat (1–4 enemies, intents, landscape). The 2026-11 combat rework ([combat.md](../combat.md)) supersedes its battle sections. It will be updated when the rework is built.
+
 `src/engine/` holds all game rules. It has **no React, DOM or timers**. Every public function is
 `(state, input, ctx) → { state, events }`, where `ctx` carries the content registry and RNG.
 
