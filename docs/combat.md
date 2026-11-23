@@ -186,8 +186,9 @@ holes to aim at.
   will take ("−1"), tiles that will break get a ✕, and for the Word a faint Stone shows where one will appear.
   Tapping elsewhere moves the choice.
 - **Several hits are chosen together.** Prophecy's hits, the Word's Stones and a doubled Prayer's two shapes are
-  picked one tap each, with a counter ("2 / 3 chosen"), then applied together. The same tile can be chosen more
-  than once (Prophecy: "−2").
+  picked one tap each, with a counter ("2 / 3 chosen"), then applied together.
+- **Tapping a chosen tile again unselects it** (for shapes and lines, any tile inside it). So each tile can be
+  chosen once per group.
 - Then **Continue** or **Select again**.
 - Shapes and lines are centred on the tile you tap and kept on the board. Placements are **mandatory** and can't be saved for later.
 

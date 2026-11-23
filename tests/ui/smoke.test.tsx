@@ -122,6 +122,10 @@ describe('UI smoke', () => {
     tap(screen.getAllByRole('gridcell')[0]);
     await waitFor(() => screen.getByText('Continue'));
     expect(document.querySelectorAll('.tile.aimed')).toHaveLength(3);
+    tap(screen.getAllByRole('gridcell')[0]); // tapping a chosen tile unselects it
+    await waitFor(() => expect(document.querySelectorAll('.tile.aimed')).toHaveLength(0));
+    tap(screen.getAllByRole('gridcell')[0]);
+    await waitFor(() => screen.getByText('Continue'));
     fireEvent.click(screen.getByText('Continue'));
     await waitFor(() => expect(useStore.getState().run!.battle!.phase).toBe('player'));
   }, 20000);

@@ -4,7 +4,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { content } from '../../content';
 import { STONE } from '../../content/tools';
-import { generatorTotal, pendingGroupSize, previewPlacements, snapshot, upcomingGrid } from '../../engine/combat';
+import { generatorTotal, pendingGroupSize, placementCells, previewPlacements, snapshot, upcomingGrid } from '../../engine/combat';
 import type { BattleState, Placement, Pos, Tile, TimedEvent, ViewSnapshot } from '../../engine/types';
 import { activeBattle, useStore } from '../../state/store';
 import { AbilityBar, Asset, HpBar, Modal, TopBar, useLongPress } from '../components/common';
@@ -81,7 +81,13 @@ export function BattleScreen() {
     if (busy) return;
     if (battle.phase === 'placing') {
       const tap = { x, y };
-      const next = group <= 1 ? [tap] : taps.length < group ? [...taps, tap] : [...taps.slice(0, -1), tap];
+      // Tapping a tile that's already chosen (or inside a chosen shape or line) unselects that choice.
+      let hitIndex = -1;
+      targets.forEach((t, i) => {
+        if (pending && (placementCells(battle, pending, t, orientation) ?? []).some((c) => c.x === x && c.y === y)) hitIndex = i;
+      });
+      const next = hitIndex >= 0 ? taps.filter((_, i) => i !== hitIndex)
+        : group <= 1 ? [tap] : taps.length < group ? [...taps, tap] : [...taps.slice(0, -1), tap];
       setPickState({ key: pickKey, taps: next });
       return;
     }
@@ -189,7 +195,7 @@ function PlacingBanner({ pending, group, chosen, orientation, onOrientation, onC
         <button className="btn" onClick={() => onOrientation(orientation === 'h' ? 'v' : 'h')}>{orientation === 'h' ? '↔ Horizontal' : '↕ Vertical'}</button>
       )}
       {chosen === 0 ? (
-        <span className="dim">Tap the board to choose where{group > 1 ? ' (the same tile can be chosen again)' : ''}.</span>
+        <span className="dim">Tap the board to choose where. Tap a chosen tile again to unselect it.</span>
       ) : (
         <span className="placing-actions">
           {group > 1 && <span className={ready ? '' : 'dim'}>{chosen} / {group} chosen</span>}
