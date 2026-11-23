@@ -20,7 +20,7 @@ describe('content validation', () => {
 
   it("every enemy's setup description states its enemy-tile total", () => {
     for (const e of Object.values(c.enemies)) expect(e.description).toContain(String(generatorEnemyTiles(e, c.config.board.width)));
-    expect(generatorEnemyTiles(c.enemies.hard_choices)).toBe(64);
+    expect(generatorEnemyTiles(c.enemies.hard_choices)).toBe(24);
     expect(generatorEnemyTiles(c.enemies.financial_stress)).toBe(32);
   });
 

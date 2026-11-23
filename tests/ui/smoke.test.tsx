@@ -59,7 +59,7 @@ describe('UI smoke', () => {
     toPrep();
     render(<App />);
     expect(screen.getByText('Hard Choices')).toBeTruthy();
-    expect(screen.getByRole('img', { name: 'Coming next and starting board: 56 enemy tiles' })).toBeTruthy(); // rows 1–16
+    expect(screen.getByRole('img', { name: 'Coming next and starting board: 24 enemy tiles' })).toBeTruthy();
     const fight = screen.getByText('FIGHT!') as HTMLButtonElement;
     expect(fight.disabled).toBe(false); // the first three tools are preselected
     fireEvent.click(fight);
@@ -126,8 +126,10 @@ describe('UI smoke', () => {
     await waitFor(() => expect(document.querySelectorAll('.tile.aimed')).toHaveLength(0));
     tap(screen.getAllByRole('gridcell')[0]);
     await waitFor(() => screen.getByText('Continue'));
+    const before = useStore.getState().run!.battle!.nextUid;
     fireEvent.click(screen.getByText('Continue'));
-    await waitFor(() => expect(useStore.getState().run!.battle!.phase).toBe('player'));
+    // The shape was applied: tiles broke and the board refilled (a new set may now be waiting to be placed).
+    await waitFor(() => expect(useStore.getState().run!.battle!.nextUid).toBeGreaterThan(before));
   }, 20000);
 
   it('continue run restores a mid-battle save', async () => {
