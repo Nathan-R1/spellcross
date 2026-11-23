@@ -23,7 +23,7 @@ Numbers marked *(tune)* are starting values for playtesting.
 - **The enemy's generator:** above the board, the enemy defines a stack of **generated rows**. Each one is
   either a **normal** row (tiles drawn from the tile pool) or an **enemy** row (e.g. 8 Worries). The board's
   own 8 rows are the bottom of that stack, so the generator also decides the initial board. Hard Choices:
-  a Worry row every 4th row (rows 4, 8, 12 and 16 from the bottom), so two Worry rows start on the board
+  pairs of Worry rows (rows 4, 5, 8, 9, 12, 13, 16 and 17 from the bottom), so three Worry rows start on the board
   ([enemies.md § 2](enemies.md#2-the-generator)).
 - **Gravity and refill:** every tile falls straight down into empty cells below it. That includes tools,
   junk, Stones and **enemy tiles**. Each column refills from **its own position in the generator**: the k-th

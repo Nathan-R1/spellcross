@@ -59,19 +59,20 @@ describe('UI smoke', () => {
     toPrep();
     render(<App />);
     expect(screen.getByText('Hard Choices')).toBeTruthy();
-    expect(screen.getByRole('img', { name: 'Coming next and starting board: 32 enemy tiles' })).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Coming next and starting board: 56 enemy tiles' })).toBeTruthy(); // rows 1–16
     const fight = screen.getByText('FIGHT!') as HTMLButtonElement;
     expect(fight.disabled).toBe(false); // the first three tools are preselected
     fireEvent.click(fight);
     await waitFor(() => screen.getByText('End Turn'));
     expect(screen.getAllByRole('gridcell')).toHaveLength(64);
-    expect(screen.getAllByLabelText(/^Worry/)).toHaveLength(16);
+    expect(screen.getAllByLabelText(/^Worry/)).toHaveLength(24);
     expect(screen.getByLabelText('Hard Choices: hold for details')).toBeTruthy();
     fireEvent.click(screen.getByText('End Turn'));
-    await waitFor(() => expect(useStore.getState().run!.battle!.round).toBe(2));
-    await waitFor(() => expect(useStore.getState().playback.queue).toHaveLength(0), { timeout: 15000 });
+    // The enemy turn ran: either your next turn started, or a set formed during it and is waiting for a placement.
+    await waitFor(() => { const b = useStore.getState().run!.battle!; expect(b.round === 2 || b.phase === 'placing').toBe(true); });
+    await waitFor(() => expect(useStore.getState().playback.queue).toHaveLength(0), { timeout: 45000 });
     expect(useStore.getState().run!.player.hp).toBe(20); // run Courage updates only when the battle ends
-  }, 20000);
+  }, 60000);
 
   it('battle prep: tapping a selected tool deselects it and FIGHT needs 3', async () => {
     toPrep();

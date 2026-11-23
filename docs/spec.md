@@ -145,7 +145,7 @@ Authoritative rules: **[combat.md](combat.md)**. In short:
   the Word asks you to place Stones (it transforms tiles, including Worries).
 - **Every tile has HP** (1, Stones 2). Damage that reaches a tile's HP deletes it. There's no separate
   "remove" effect.
-- The enemy's **generator** decides which rows the board is built and refilled from (Hard Choices: a Worry row every 4th row, rows 4, 8, 12 and 16 from the bottom).
+- The enemy's **generator** decides which rows the board is built and refilled from (Hard Choices: pairs of Worry rows: rows 4, 5, 8, 9, 12, 13, 16 and 17 from the bottom).
 - Enemy turn: enemy actions, if any (default none), then its **tiles activate**. A Worry steps down one row,
   dealing 1 damage to the tile below and moving in if it's deleted. A Stone (2 HP) stops it for one turn.
   From the bottom row a Worry hits you for 1.

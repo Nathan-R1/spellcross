@@ -27,9 +27,9 @@ const edges = (middle: string | null = null): GeneratedRow => ({ cells: ['worry'
 export const enemies: Record<string, EnemyDef> = {
   hard_choices: {
     id: 'hard_choices', name: 'Hard Choices', tier: 'normal', portrait: 'portraits/hard_choices.svg', talents: [20, 30],
-    description: 'A row of Worry every 4th row (rows 4, 8, 12 and 16 from the bottom): 4 Worry rows, 32 Worries in all. Rows 4 and 8 start on the board.',
+    description: 'Pairs of Worry rows (rows 4, 5, 8, 9, 12, 13, 16 and 17 from the bottom): 8 Worry rows, 64 Worries in all. Rows 4, 5 and 8 start on the board.',
     // Row 1 is the bottom of the board.
-    generator: [N, N, N, W('worry'), N, N, N, W('worry'), N, N, N, W('worry'), N, N, N, W('worry')],
+    generator: [N, N, N, W('worry'), W('worry'), N, N, W('worry'), W('worry'), N, N, W('worry'), W('worry'), N, N, W('worry'), W('worry')],
   },
   financial_stress: {
     id: 'financial_stress', name: 'Financial Stress', tier: 'normal', portrait: 'portraits/financial_stress.svg', talents: [25, 40],
