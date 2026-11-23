@@ -212,6 +212,8 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 .pattern span { display: flex; align-items: center; justify-content: center; border-radius: 2px; overflow: hidden; }
 .pattern .p-normal { background: #3a2a18; }
 .pattern .p-enemy { box-shadow: inset 0 0 0 1px #ff3b30; }
+.pattern .p-board-top { margin-top: 3px; position: relative; }
+.pattern .p-board-top::before { content: ''; position: absolute; left: -2px; right: -2px; top: -3px; height: 2px; background: var(--accent); }
 .pattern img { width: 100%; height: 100%; object-fit: contain; }
 .pattern-preview { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
 .pattern-cap { font-size: 11px; margin-bottom: 2px; }

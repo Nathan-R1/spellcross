@@ -51,7 +51,7 @@ An enemy's main mechanic is its **generator**: the stack of rows the board is bu
 
 The game **draws the pattern as a picture** instead of describing it: an 8×8 grid of the next 8 generated tiles
 in each column, with the nearest at the bottom, enemy squares marked, plus the totals (on board, to come, in all).
-Before a battle (prep screen, Fight picker) the starting board is drawn beside it. In battle the picture is live:
+Before a battle (prep screen, Fight picker) it's one smaller 16×8 picture: the next 8 rows on top, the starting board below, with a line marking the top of the board. In battle the picture is live:
 columns advance independently, so it follows each column's own position. The text `description` stays in the
 data for screen readers and must still state the total.
 

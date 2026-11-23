@@ -40,7 +40,7 @@ export function BattlePrepScreen() {
             <Asset path={enemy.portrait} alt={enemy.name} size={48} color="#5a2a2a" />
             <h2 style={{ margin: 0 }}>{enemy.name}</h2>
           </div>
-          <EnemyPatternPreview enemyId={enemyId} cell={13} />
+          <EnemyPatternPreview enemyId={enemyId} cell={9} />
         </div>
         <div className="panel prep-col">
           <b>Choose {size} tools ({loadout.length}/{size}). Hold one for details.</b>
