@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "assets:manifest": "node scripts/build-asset-manifest.mjs",
-    "coverage": "vitest run --exclude \"tests/sim/**\" --coverage --coverage.include=\"src/**\" --coverage.reporter=text"
+    "coverage": "vitest run --exclude \"tests/sim/**\" --coverage --coverage.include=\"src/**\" --coverage.reporter=text",
+    "sim": "vitest run tests/sim --silent=false"
   },
   "dependencies": {
     "react": "19",

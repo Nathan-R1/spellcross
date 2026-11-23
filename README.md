@@ -62,6 +62,7 @@ or an HTTPS tunnel for that.
 | `pnpm test` | All unit, integration and UI tests (Vitest) |
 | `pnpm test:watch` | Tests in watch mode |
 | `pnpm coverage` | Tests plus a line/branch coverage report for `src/` |
+| `pnpm sim` | Balance sim: a bot plays every 3-tool loadout against each enemy and prints win rate, damage taken and turns (`SEEDS=20`, `ENEMY=financial_stress`; slow) |
 | `pnpm lint` / `pnpm typecheck` | ESLint (with the engine/UI boundary rule) and TypeScript |
 | `pnpm assets:manifest` | Regenerate `src/content/assets.manifest.json` after adding files to `public/assets/` |
 
@@ -89,7 +90,7 @@ src/
   content/   game data: spells, statuses, abilities, gems, enemies & intents, encounters, events, config
   state/     Zustand store (actions the UI calls) and localStorage persistence
   ui/        React screens: menu, world map, events, battle prep, battle, spellbook, results
-tests/       Vitest suites (combat engine, run, content validation, UI smoke tests)
+tests/       Vitest suites (combat engine, run, content validation, UI smoke tests, balance sim)
 public/assets/   art and fonts, copied from Spellford
 ```
 
