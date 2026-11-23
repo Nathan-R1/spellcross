@@ -88,10 +88,15 @@ export interface EnemyTileDef {
   speed: number;
   /** Damage dealt to the player when it steps from the bottom row. */
   damage: number;
+  /** Effect at the end of each enemy turn, after every enemy tile has moved. */
+  onEnemyTurnEnd?: 'junkAdjacentTools';
 }
 
-/** One generated row: normal (from the tile pool) or a row of 8 enemy tiles (enemies.md §2). */
-export type GeneratedRow = 'normal' | { tile: string };
+/**
+ * One generated row (enemies.md §2): normal (from the tile pool), a full row of one enemy tile, or a row given cell
+ * by cell (an enemy tile id, or null for a normal cell).
+ */
+export type GeneratedRow = 'normal' | { tile: string } | { cells: (string | null)[] };
 
 export interface EnemyDef {
   id: EnemyId;
@@ -239,6 +244,8 @@ export type BattleEvent =
   | { type: 'shining'; uids: number[] }
   | { type: 'enemyStep'; uid: number }
   | { type: 'playerHit'; amount: number; blocked: number }
+  /** Greed turned these tool tiles into junk. */
+  | { type: 'junked'; uids: number[] }
   | { type: 'ability'; id: AbilityId }
   | { type: 'turnStart'; round: number }
   | { type: 'battleEnd'; outcome: 'victory' | 'defeat' };

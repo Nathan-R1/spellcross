@@ -73,6 +73,7 @@ battle start: choose 3 tools (§2.1) → build the board from the enemy's genera
 │  ENEMY TURN
 │    1. enemy actions, if it has any (default: none; Hard Choices has none)
 │    2. enemy tiles activate, bottom row first (Worry: move down 1, or hit you from the bottom row)
+│       then end-of-enemy-turn effects (Greed turns adjacent tool tiles into junk)
 │    3. the board settles: gravity, refill from the generator, cascades (§3.4)
 └──┘
 ```

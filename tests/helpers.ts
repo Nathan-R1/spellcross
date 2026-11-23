@@ -18,12 +18,12 @@ export const tc: Content = {
 /**
  * Board letters. Tools use createPlayer()'s uids in starting order:
  *   F Fasting (t1)  P Prayer (t2)  T Thanksgiving (t3)  W The Word (t4)  R Prophecy (t5)
- *   i Time  s Space  m Mud  O Stone  X Worry
+ *   i Time  s Space  m Mud  O Stone  X Worry  G Greed (3 HP)
  */
 const LETTER: Record<string, { kind: Tile['kind']; id: string; hp?: number }> = {
   F: { kind: 'tool', id: 't1' }, P: { kind: 'tool', id: 't2' }, T: { kind: 'tool', id: 't3' }, W: { kind: 'tool', id: 't4' }, R: { kind: 'tool', id: 't5' },
   i: { kind: 'junk', id: 'time' }, s: { kind: 'junk', id: 'space' }, m: { kind: 'junk', id: 'mud' },
-  O: { kind: 'stone', id: 'stone', hp: 2 }, X: { kind: 'enemy', id: 'worry' },
+  O: { kind: 'stone', id: 'stone', hp: 2 }, X: { kind: 'enemy', id: 'worry' }, G: { kind: 'enemy', id: 'greed', hp: 3 },
 };
 
 /** Neutral filler rows: no two equal neighbours, so nothing ever lines up with them. */

@@ -6,6 +6,7 @@
 // and carries on from where the battle left off (`stage`).
 
 import type { Content } from '../content';
+import { genCell, generatorEnemyTiles } from '../content/enemies';
 import { FRUIT_IDS } from '../content/fruits';
 import { createRng, type Rng } from './rng';
 import type {
@@ -63,7 +64,7 @@ const enemyCount = (b: Board) => b.cells.filter((t) => t?.kind === 'enemy').leng
 export function enemyToCome(s: BattleState, c: Content): number {
   const gen = c.enemies[s.enemyId].generator;
   let n = 0;
-  for (let x = 0; x < s.board.width; x++) for (let r = s.genPos[x]; r < gen.length; r++) if (gen[r] !== 'normal') n += 1;
+  for (let x = 0; x < s.board.width; x++) for (let r = s.genPos[x]; r < gen.length; r++) if (genCell(gen[r], x)) n += 1;
   return n;
 }
 
@@ -113,10 +114,10 @@ function stoneTile(ctx: Ctx, hp: number): Tile {
   return { uid: ctx.s.nextUid++, kind: 'stone', id: 'stone', hp, maxHp: hp };
 }
 
-/** The tile for generated row `row` (0 = the bottom row of the board). */
-function generatedTile(ctx: Ctx, row: number): Tile {
-  const r = ctx.c.enemies[ctx.s.enemyId].generator[row];
-  return r && r !== 'normal' ? enemyTile(ctx, r.tile) : poolTile(ctx);
+/** The tile for column `x` of generated row `row` (0 = the bottom row of the board). */
+function generatedTile(ctx: Ctx, row: number, x: number): Tile {
+  const id = genCell(ctx.c.enemies[ctx.s.enemyId].generator[row], x);
+  return id ? enemyTile(ctx, id) : poolTile(ctx);
 }
 
 // ---------------------------------------------------------------- creation
@@ -162,9 +163,9 @@ export function createBattle(setup: BattleSetup, c: Content): BattleResult {
   for (let y = height - 1; y >= 0; y--) {
     const row = height - 1 - y;
     for (let x = 0; x < width; x++) {
-      const gen = enemy.generator[row];
-      if (gen && gen !== 'normal') {
-        s.board.cells[idx(s.board, x, y)] = enemyTile(ctx, gen.tile);
+      const id = genCell(enemy.generator[row], x);
+      if (id) {
+        s.board.cells[idx(s.board, x, y)] = enemyTile(ctx, id);
         continue;
       }
       let t = poolTile(ctx);
@@ -396,7 +397,7 @@ function gravity(ctx: Ctx) {
     changed = true;
     for (let y = b.height - 1, i = col.length - 1; y >= empty; y--, i--) b.cells[idx(b, x, y)] = col[i];
     // The lowest gap gets the next generated row for this column, the one above it the row after, …
-    for (let y = empty - 1; y >= 0; y--) b.cells[idx(b, x, y)] = generatedTile(ctx, ctx.s.genPos[x]++);
+    for (let y = empty - 1; y >= 0; y--) b.cells[idx(b, x, y)] = generatedTile(ctx, ctx.s.genPos[x]++, x);
   }
   if (changed) emit(ctx, { type: 'collapsed' });
 }
@@ -518,6 +519,33 @@ function activateEnemies(ctx: Ctx) {
       emit(ctx, { type: 'enemyStep', uid });
     }
   }
+  enemyTurnEndEffects(ctx);
+}
+
+/** Greed: every tool tile orthogonally next to it turns into a random junk tile (from the junk in play). */
+function enemyTurnEndEffects(ctx: Ctx) {
+  const { s, c } = ctx;
+  const b = s.board;
+  const junkIds = s.pool.filter((e) => e.kind === 'junk').map((e) => e.id);
+  if (junkIds.length === 0) return;
+  const targets = new Set<number>();
+  for (let y = 0; y < b.height; y++) for (let x = 0; x < b.width; x++) {
+    const t = tileAt(b, x, y);
+    if (t?.kind !== 'enemy' || c.enemyTiles[t.id].onEnemyTurnEnd !== 'junkAdjacentTools') continue;
+    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      const n = tileAt(b, x + dx, y + dy);
+      if (n?.kind === 'tool') targets.add(idx(b, x + dx, y + dy));
+    }
+  }
+  if (targets.size === 0) return;
+  const uids: number[] = [];
+  for (const i of [...targets].sort((a, z) => a - z)) {
+    const id = ctx.rng.pick(junkIds);
+    const t: Tile = { uid: s.nextUid++, kind: 'junk', id, hp: 1, maxHp: 1 };
+    b.cells[i] = t;
+    uids.push(t.uid);
+  }
+  emit(ctx, { type: 'junked', uids });
 }
 
 function hitPlayer(ctx: Ctx, amount: number) {
@@ -685,10 +713,7 @@ export function previewPlacements(s: BattleState, targets: Pos[], orientation: '
  */
 export function upcomingGrid(c: Content, enemyId: string, genPos: number[], depth = 8): (string | null)[][] {
   const gen = c.enemies[enemyId].generator;
-  const cell = (x: number, d: number) => {
-    const r = gen[genPos[x] + d];
-    return r && r !== 'normal' ? r.tile : null;
-  };
+  const cell = (x: number, d: number) => genCell(gen[genPos[x] + d], x);
   return Array.from({ length: depth }, (_, i) => genPos.map((_, x) => cell(x, depth - 1 - i)));
 }
 
@@ -699,5 +724,4 @@ export function startingGrid(c: Content, enemyId: string): (string | null)[][] {
 }
 
 /** Total enemy tiles still to come (sum over columns), given the columns' positions. */
-export const generatorTotal = (c: Content, enemyId: string) =>
-  c.enemies[enemyId].generator.filter((r) => r !== 'normal').length * c.config.board.width;
+export const generatorTotal = (c: Content, enemyId: string) => generatorEnemyTiles(c.enemies[enemyId], c.config.board.width);

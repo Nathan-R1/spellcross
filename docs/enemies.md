@@ -35,12 +35,23 @@ the board with less HP.
 | On activate | On the bottom row: **1 damage** to the player, and it stays. Otherwise it deals **1 damage** to the tile below. If that tile is deleted, the Worry moves in. If it survives (a full-HP Stone), the Worry stays. Another enemy tile below blocks it, with no damage |
 | Art | placeholder from the old junk art (e.g. `spells/dud/ash.png`) until drawn |
 
+### Greed
+
+| | |
+|---|---|
+| HP | 3 |
+| Speed | 2 (↓↓): two steps per enemy turn, each dealing 1 damage to the tile below and moving in if it breaks. It stops as soon as a step doesn't break the tile |
+| On the bottom row | Hits the player for 1 (once per enemy turn) |
+| End of the enemy turn | After every enemy tile has moved, each **tool tile** orthogonally next to a Greed turns into a **random junk tile** from the junk in play (Time or Space). Junk, Stones and enemy tiles are untouched |
+| Art | placeholder: the gold coin icon (`icons/gold.png`) |
+
 ## 2. The generator
 
 An enemy's main mechanic is its **generator**: the stack of rows the board is built from and refills from.
 
 - The generator is an ordered list of **generated rows**, from the **bottom of the board upwards**. Each row
-  is `normal` (8 tiles from the tile pool) or an **enemy row** (e.g. 8 Worries).
+  is `normal` (8 tiles from the tile pool), a full **enemy row** (e.g. 8 Worries), or a row given **cell by cell**
+  (each cell an enemy tile or normal), e.g. Worry in the two edge columns only.
 - The first 8 entries are the **initial board**: entry 1 is the bottom row and entry 8 is the top row.
 - Entries 9 onwards sit **above the board**. Each column refills from its own position in the list: the next
   tile to drop into column *x* is column *x* of that column's next generated row
@@ -84,6 +95,16 @@ Actions repeat in a fixed cycle and must be visible ahead of time ("Next: …" o
 You win the moment no Worries are on the board, even if more are still to come
 ([combat § 6](combat.md#6-winning-and-losing)).
 
+### Financial Stress
+
+| | |
+|---|---|
+| Generator | Rows 1–6 normal. Rows **7–16**: **Worry in the far-left and far-right columns**. Rows **9 and 10** (just above the board): **Greed** in the six middle columns. Then normal forever |
+| On the board at the start | 4 Worries: the edge columns of rows 7 and 8 |
+| Total | **32**: 20 Worries (4 on the board, 16 to come) and 12 Greed (all to come) |
+| Actions | None |
+| Reward *(tune)* | 25–40 Talents, 25% chance of a fruit |
+
 ## 5. Data files
 
 ```ts
@@ -94,12 +115,16 @@ interface EnemyTileDef {
   description: string;
   icon: string;            // asset path
   hp: number;
-  onActivate: TileBehaviour; // 'stepDownOrHit' for Worry; more behaviours added as needed
+  speed: number;           // steps per enemy turn (Greed: 2)
+  onEnemyTurnEnd?: 'junkAdjacentTools'; // Greed
   damage: number;          // damage when it hits from the bottom row (Worry: 1)
 }
 
 // src/content/enemies.ts
-type GeneratedRow = 'normal' | { tile: string };       // an enemy row: 8 of that tile
+type GeneratedRow =
+  | 'normal'
+  | { tile: string }                 // a full row of that tile
+  | { cells: (string | null)[] };   // 8 cells: an enemy tile id, or null for normal
 type EnemyAction =
   | { type: 'spawnRow'; tile: string; row: number }
   | { type: 'spawn'; tile: string; cells: { x: number; y: number }[] }
@@ -124,3 +149,4 @@ interface EnemyDef {
 
 - Worry tile art (placeholder until drawn).
 - Hard Choices portrait (placeholder until drawn).
+- Greed tile art and Financial Stress portrait (placeholders: the gold coin and the old bear portrait).

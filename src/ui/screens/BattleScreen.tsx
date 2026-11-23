@@ -3,6 +3,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { content } from '../../content';
+import { genCell } from '../../content/enemies';
 import { STONE } from '../../content/tools';
 import { generatorTotal, pendingGroupSize, placementCells, previewPlacements, snapshot, upcomingGrid } from '../../engine/combat';
 import type { BattleState, Placement, Pos, Tile, TimedEvent, ViewSnapshot } from '../../engine/types';
@@ -12,7 +13,7 @@ import { PatternGrid } from '../components/EnemyPattern';
 
 const DURATION: Record<TimedEvent['event']['type'], number> = {
   swapped: 200, matched: 280, effect: 420, damaged: 260, stone: 220, collapsed: 260, shining: 320, enemyStep: 160,
-  playerHit: 320, ability: 200, turnStart: 160, battleEnd: 700,
+  playerHit: 320, junked: 400, ability: 200, turnStart: 160, battleEnd: 700,
 };
 
 interface Floater { id: number; text: string; cls: string }
@@ -97,7 +98,7 @@ export function BattleScreen() {
     if (targets.length === group) confirmPlacement(targets);
   };
 
-  const highlight = new Set<number>(current?.type === 'matched' ? current.uids : current?.type === 'shining' ? current.uids : []);
+  const highlight = new Set<number>(current?.type === 'matched' || current?.type === 'shining' || current?.type === 'junked' ? current.uids : []);
   const hurt = new Set<number>(current?.type === 'damaged' ? current.uids : []);
   const [info, setInfo] = useState<Tile | null>(null);
   const [enemyInfo, setEnemyInfo] = useState(false);
@@ -302,7 +303,7 @@ function TileInfo({ tile, battle, onClose }: { tile: Tile; battle: BattleState; 
 /** Enemy popup: a picture of the tiles still coming (per column, nearest at the bottom), totals, and its tile types. */
 export function EnemyInfo({ enemyId, genPos, onBoard, toCome, onClose }: { enemyId: string; genPos: number[]; onBoard: number; toCome: number; onClose: () => void }) {
   const def = content.enemies[enemyId];
-  const tileIds = [...new Set(def.generator.flatMap((r) => (r === 'normal' ? [] : [r.tile])))];
+  const tileIds = [...new Set(def.generator.flatMap((r) => Array.from({ length: content.config.board.width }, (_, x) => genCell(r, x)).filter((id): id is string => !!id)))];
   return (
     <Modal onClose={onClose}>
       <div className="row">

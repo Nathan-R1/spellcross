@@ -261,3 +261,32 @@ describe('placing a group', () => {
     expect(done.state.phase).toBe('player');
   });
 });
+
+describe('Greed and Financial Stress', () => {
+  it('Financial Stress: Worries in the edge columns on rows 7 and 8; 16 more Worries and 12 Greed to come', () => {
+    const p = createPlayer(content);
+    const { state } = createBattle({ player: p, enemyId: 'financial_stress', loadout: ['t1', 't2', 't3'], seed: 7 }, content);
+    const enemyAt = state.board.cells.map((t, i) => (t?.kind === 'enemy' ? i : -1)).filter((i) => i >= 0);
+    expect(enemyAt).toEqual([0, 7, 8, 15]); // (0,0) (7,0) (0,1) (7,1): rows 8 and 7 from the bottom
+    expect(enemyToCome(state, content)).toBe(28);
+    const next = upcomingGrid(content, 'financial_stress', Array(8).fill(8));
+    expect(next[7]).toEqual(['worry', 'greed', 'greed', 'greed', 'greed', 'greed', 'greed', 'worry']); // row 9, next in
+  });
+
+  it('Greed has 3 HP and takes 2 steps down per enemy turn', () => {
+    const s = makeBattle({ rows: base({ 1: 'sGsmsmsm' }) });
+    const r = endTurn(s, c);
+    const g = r.state.board.cells.findIndex((t) => t?.id === 'greed');
+    expect(g).toBe(3 * 8 + 1); // from row y=1 to y=3
+    expect(r.state.board.cells[g]?.hp).toBe(3);
+  });
+
+  it('at the end of the enemy turn, tool tiles next to Greed turn into junk', () => {
+    // Greed at (4,6) stays put on a Stone; tools to its left and right become Time or Space.
+    const s = makeBattle({ rows: base({ 6: 'msmTGTms', 7: 'smsmOmsm' }) });
+    const r = endTurn(s, c);
+    expect(at(r.state, 4, 6)?.id).toBe('greed');
+    for (const x of [3, 5]) expect(['time', 'space']).toContain(at(r.state, x, 6)?.id);
+    expect(r.events.some((e) => e.event.type === 'junked')).toBe(true);
+  });
+});
