@@ -5,7 +5,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { content } from '../../content';
 import { genCell } from '../../content/enemies';
 import { STONE } from '../../content/tools';
-import { generatorTotal, pendingGroupSize, placementCells, previewPlacements, snapshot, upcomingGrid } from '../../engine/combat';
+import { pendingGroupSize, placementCells, previewPlacements, snapshot, upcomingGrid } from '../../engine/combat';
 import type { BattleState, Placement, Pos, Tile, TimedEvent, ViewSnapshot } from '../../engine/types';
 import { activeBattle, useStore } from '../../state/store';
 import { AbilityBar, Asset, HpBar, Modal, TopBar, useLongPress } from '../components/common';
@@ -149,7 +149,7 @@ export function BattleScreen() {
         </div>
       </div>
       {info && <TileInfo tile={info} battle={battle} onClose={() => setInfo(null)} />}
-      {enemyInfo && <EnemyInfo enemyId={battle.enemyId} genPos={view.genPos} onBoard={view.enemyOnBoard} toCome={view.enemyToCome} onClose={() => setEnemyInfo(false)} />}
+      {enemyInfo && <EnemyInfo enemyId={battle.enemyId} view={view} onClose={() => setEnemyInfo(false)} />}
       {battle.outcome && !busy && (
         <div className="modal-back" style={{ background: 'rgba(0,0,0,0.4)' }}>
           <h1 className="title" style={{ fontSize: 48 }}>{battle.outcome === 'victory' ? 'Victory!' : 'Defeated'}</h1>
@@ -300,10 +300,25 @@ function TileInfo({ tile, battle, onClose }: { tile: Tile; battle: BattleState; 
   );
 }
 
-/** Enemy popup: a picture of the tiles still coming (per column, nearest at the bottom), totals, and its tile types. */
-export function EnemyInfo({ enemyId, genPos, onBoard, toCome, onClose }: { enemyId: string; genPos: number[]; onBoard: number; toCome: number; onClose: () => void }) {
+/**
+ * Enemy popup: the picture of what's coming, then each enemy tile type as its icon with how many are left
+ * (on the board + still to come) out of the total. Hold or tap an icon for that tile's description.
+ */
+export function EnemyInfo({ enemyId, view, onClose }: { enemyId: string; view: ViewSnapshot; onClose: () => void }) {
   const def = content.enemies[enemyId];
-  const tileIds = [...new Set(def.generator.flatMap((r) => Array.from({ length: content.config.board.width }, (_, x) => genCell(r, x)).filter((id): id is string => !!id)))];
+  const width = content.config.board.width;
+  const [tileInfo, setTileInfo] = useState<string | null>(null);
+  const total = new Map<string, number>();
+  const toCome = new Map<string, number>();
+  def.generator.forEach((r, row) => {
+    for (let x = 0; x < width; x++) {
+      const id = genCell(r, x);
+      if (!id) continue;
+      total.set(id, (total.get(id) ?? 0) + 1);
+      if (row >= view.genPos[x]) toCome.set(id, (toCome.get(id) ?? 0) + 1);
+    }
+  });
+  const onBoard = (id: string) => view.board.cells.filter((t) => t?.kind === 'enemy' && t.id === id).length;
   return (
     <Modal onClose={onClose}>
       <div className="row">
@@ -311,12 +326,43 @@ export function EnemyInfo({ enemyId, genPos, onBoard, toCome, onClose }: { enemy
         <div style={{ flex: 1 }}>
           <h2>{def.name} <span className="dim" style={{ fontSize: 14 }}>{def.tier}</span></h2>
           <div className="dim pattern-cap">Coming next (the bottom row drops in first)</div>
-          <PatternGrid rows={upcomingGrid(content, enemyId, genPos)} cell={18} label="Coming next" />
-          <div style={{ fontSize: 13 }}>On board <b>{onBoard}</b> · To come <b>{toCome}</b> · <b>{generatorTotal(content, enemyId)}</b> in all</div>
-          {tileIds.map((id) => {
-            const t = content.enemyTiles[id];
-            return <div key={id} className="dim" style={{ marginTop: 6 }}><b>{t.name}</b> (HP {t.hp}, speed {t.speed}): {t.description}</div>;
-          })}
+          <PatternGrid rows={upcomingGrid(content, enemyId, view.genPos)} cell={18} label="Coming next" />
+          <div className="enemy-tile-counts">
+            {[...total].map(([id, n]) => (
+              <EnemyTileCount key={id} id={id} left={onBoard(id) + (toCome.get(id) ?? 0)} total={n} onInfo={() => setTileInfo(id)} />
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="actions"><button className="btn" onClick={onClose}>OK</button></div>
+      {tileInfo && <EnemyTileInfo id={tileInfo} onClose={() => setTileInfo(null)} />}
+    </Modal>
+  );
+}
+
+function EnemyTileCount({ id, left, total, onInfo }: { id: string; left: number; total: number; onInfo: () => void }) {
+  const t = content.enemyTiles[id];
+  const press = useLongPress(onInfo, onInfo);
+  return (
+    <div className="enemy-tile-count">
+      <span className="tile-icon" style={{ background: t.color }} role="button" aria-label={`${t.name}: hold for details`} {...press}>
+        <Asset path={t.icon} alt={t.name} size={30} color="transparent" />
+      </span>
+      <span>× <b>{left}</b> of {total} left</span>
+    </div>
+  );
+}
+
+/** The same details as holding that tile on the board. */
+function EnemyTileInfo({ id, onClose }: { id: string; onClose: () => void }) {
+  const t = content.enemyTiles[id];
+  return (
+    <Modal onClose={onClose}>
+      <div className="row">
+        <span className="tile-icon" style={{ background: t.color }}><Asset path={t.icon} alt={t.name} size={44} color="transparent" /></span>
+        <div>
+          <h2>{t.name} <span className="dim" style={{ fontSize: 14 }}>HP {t.hp} · speed {'↓'.repeat(t.speed)}</span></h2>
+          <div>{t.description}</div>
         </div>
       </div>
       <div className="actions"><button className="btn" onClick={onClose}>OK</button></div>

@@ -271,8 +271,9 @@ The battle screen is **portrait**: the board is on top, with two panels side by 
   redesigned (TBD).
 - **Enemy panel (right):** name, a **picture of what's coming**: a small 8×8 grid of the next 8 tiles in each
   column, nearest at the bottom, with enemy squares marked ([enemies.md § 2](enemies.md#2-the-generator)). Below
-  it, its tiles **on the board** and **to come**. Long-press shows the same picture larger, the totals, and each
-  tile type's description. Any enemy actions are shown as "Next: …".
+  it, its tiles **on the board** and **to come**. Long-press shows the same picture larger, then each enemy tile type as
+  its **icon with "× 18 of 20 left"** (on the board + still to come, out of the total). Hold or tap an icon for
+  that tile's details, as when holding it on the board. Any enemy actions are shown as "Next: …".
 - **Long-press** any tile for its info popup.
 - **Danger cue:** Worries on the bottom row (about to hit you) pulse red. *(nice-to-have)*
 

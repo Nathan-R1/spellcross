@@ -224,3 +224,8 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 .tile .incoming { position: absolute; left: 1px; bottom: 0; font-size: 12px; font-weight: bold; color: #fff; background: #ff3b30; border-radius: 6px; padding: 0 3px; }
 .tile .breaks { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #ff3b30; text-shadow: 0 0 3px #000, 0 0 3px #000; }
 .tile .stone-ghost { position: absolute; inset: 15%; background: center/contain no-repeat; opacity: 0.55; }
+
+/* Enemy popup: each enemy tile type with how many are left; hold the icon for details. */
+.enemy-tile-counts { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 8px; }
+.enemy-tile-count { display: flex; align-items: center; gap: 6px; font-size: 15px; }
+.tile-icon { display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; padding: 2px; box-shadow: inset 0 0 0 2px #a33; cursor: pointer; }
