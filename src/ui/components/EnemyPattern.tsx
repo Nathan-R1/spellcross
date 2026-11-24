@@ -49,7 +49,7 @@ export function EnemyPatternPreview({ enemyId, cell = 8 }: { enemyId: string; ce
       <div className="pattern-totals">
         <b>{total}</b> in all: {tileNames.join(', ')}
         <br /><span className="dim">{onBoard} on the board, {total - onBoard} to come</span>
-        <br /><span className="dim" style={{ fontSize: 11 }}>Above the line: coming next.<br />Below: the starting board.</span>
+        <br /><span className="dim pattern-note">Above the line: coming next.<br />Below: the starting board.</span>
       </div>
     </div>
   );

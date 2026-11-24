@@ -47,7 +47,7 @@ describe('new run', () => {
     expect(r.event!.nodeId).toBe('traveller');
     expect(new Set(r.event!.offer).size).toBe(3);
     expect(r.player.abilities).toEqual([]);
-    expect(r.player.tools.map((s) => s.toolId)).toEqual(['fasting', 'prayer', 'thanksgiving', 'word', 'prophecy']);
+    expect(r.player.tools.map((s) => s.toolId)).toEqual(['anoint', 'prayer', 'thanksgiving', 'word', 'prophecy', 'worship', 'preaching']);
     expect(r.player.hp).toBe(20);
     expect(r.map.stops[r.currentStopId].type).toBe('start');
   });

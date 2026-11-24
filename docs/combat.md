@@ -24,7 +24,7 @@ Numbers marked *(tune)* are starting values for playtesting.
 - **The enemy's generator:** above the board, the enemy defines a stack of **generated rows**. Each one is
   either a **normal** row (tiles drawn from the tile pool) or an **enemy** row (e.g. 8 Worries). The board's
   own 8 rows are the bottom of that stack, so the generator also decides the initial board. Hard Choices:
-  three Worry rows (rows 4, 5 and 6 from the bottom), all on the board from the start
+  four Worry rows (rows 5 to 8 from the bottom, the top half), all on the board from the start
   ([enemies.md § 2](enemies.md#2-the-generator)).
 - **Gravity and refill:** every tile falls straight down into empty cells below it. That includes tools,
   junk, Stones and **enemy tiles**. Each column refills from **its own position in the generator**: the k-th
@@ -38,12 +38,12 @@ Numbers marked *(tune)* are starting values for playtesting.
 
 | Kind | Examples | Matches? | Notes |
 |---|---|---|---|
-| **Tool** | Fasting, Prayer, Thanksgiving, The Word, Prophecy | Yes: 3+ of the same tool | The effect triggers when the set clears ([tools.md](tools.md)) |
-| **Junk** | Time, Space | Yes: 3+ of the same junk | Time has a small effect and Space has none |
+| **Tool** | Prayer, Thanksgiving, The Word, Prophecy, Worship, Preaching, Anoint | Yes: 3+ of the same tool | The effect triggers when the set clears ([tools.md](tools.md)) |
+| **Junk** | Time, Space | Time: 3+ Time. **Space never matches** | Time has a small effect. Space is inert: only damage clears it, and it breaks lines like an enemy tile |
 | **Stone** | Stone | Yes: 3+ Stones clear (damaged or not), with no effect | 2 HP. Blocks enemy tiles (§4.2) |
 | **Enemy** | Worry | **Never** | Blocks lines. Destroyed by damage, or transformed into a Stone by the Word (§5) |
 
-Different kinds never match each other. An enemy tile in the middle of a line breaks the line.
+Different kinds never match each other. An enemy tile or a Space in the middle of a line breaks the line.
 
 ### 1.2 HP and damage
 
@@ -109,9 +109,8 @@ cells it covered).
 2. Its effect triggers:
    - a **tool** set → the tool's effect ([tools.md](tools.md)),
    - **Time** → you deal 1 damage to 1 tile,
-   - **Space** or **Stone** → nothing.
-3. If the effect needs **placement** (Prayer's damage shape, the Word's Stones, Prophecy's hits, Time's
-   target), the board first **falls and refills**, then you place it (§5). The board waits until you finish.
+   - **Stone** → nothing. (Space never forms sets.)
+3. If the effect needs **placement** (Prayer's or Prophecy's shape, the Word's or Time's picks), the board first **falls and refills**, then you place it (§5). The board waits until you finish.
 
 **Supportive** tiles (Kindness fruit) orthogonally next to a set of a different tool are pulled into it before
 it clears ([tools.md § 2.1](tools.md#21-supportive-linked-tiles)).
@@ -121,11 +120,12 @@ decides which set uses up a Critical.
 
 ### 3.3 Critical
 
-**Critical** doubles the **next tool set**, then expires. See [tools.md § Fasting](tools.md#fasting).
+**Critical** doubles the **next tool set**, then expires. Its only source, Fasting, is parked, so it doesn't come up
+right now. See [tools.md § Fasting](tools.md#fasting-parked).
 
-- Prayer → you place its damage shape **twice**.
-- The Word → twice as many Stones.
-- Prophecy → twice the hits and twice the Foresight.
+- Prayer → you place the set's shape **twice**.
+- The Word → you pick twice as many tiles.
+- Prophecy → you place the set's shape **twice**, and gain twice the Foresight.
 - Thanksgiving → twice the Block.
 - Fasting → Critical 2: the next **two** tool sets are doubled.
 
@@ -175,18 +175,30 @@ effect, whether they're damaged or not.
 
 Against a Worry, the first step leaves the Stone at 1 HP and stops the Worry for that turn. The second step
 deletes it, and the Worry moves into its cell. So a Stone holds a Worry back for one turn and protects the tile
-below it for two. The same 2 HP means a Prayer or Time hit (1 damage) only cracks a Stone.
+below it for two. The same 2 HP means a Time hit or a Word pick (1 damage) only cracks a Stone, while Prayer (3 damage) breaks it.
 
 ### 4.3 Damage and Block
 
 - Damage to **you** works like this. Each Worry hit is **1 damage**. **Block** absorbs damage first, point for point, and the rest comes off
   **Courage**.
-- **Block holds the line.** Enemy tiles are processed bottom row first, so Block goes to bottom-row hits first.
-  Every point left then **stops one enemy step**: the tile stays put and the tile below takes no damage. 1 Block
-  stops 1 step, so a speed-2 Greed needs 2 Block to stay completely still. A step already blocked by another
-  enemy tile uses no Block.
-- Block is gained on your turn (Thanksgiving, Peace, Stand Firm), lasts through the enemy turn, and **clears at
-  the start of your next turn**.
+- Block **only absorbs damage**. It doesn't stop enemy tiles moving. (Until 2026-11-24 leftover Block also stopped
+  enemy steps.)
+- Block is gained on your turn (Thanksgiving, Worship, Peace, Stand Firm), lasts through the enemy turn, and **clears
+  at the start of your next turn**.
+
+### 4.4 Locked
+
+Preaching **Locks** enemy tiles ([tools.md](tools.md#preaching)). Through the next enemy turn a Locked tile:
+
+- **doesn't move**: no steps, so it doesn't damage the tile below. Enemy tiles above it in its column stop behind it
+  as usual, so locking the lowest one holds the column;
+- **doesn't activate**: no On activate (Greed's junking, Depression's spread);
+- **deals no damage**: no At bottom hit on you.
+
+A lock made on your turn lasts through that round's enemy turn. One made after the enemy turn (a set that cascades
+while the board settles) lasts through the next one. It wears off at the start of the following turn; locking a
+Locked tile again only refreshes it. Gravity still applies: a Locked tile falls into gaps below it. It shows a
+padlock.
 
 ## 5. Placement
 
@@ -196,39 +208,44 @@ holes to aim at.
 - **Tap where it goes.** The tiles it will hit light up (the rest of the board dims). Each shows the damage it
   will take ("−1"), tiles that will break get a ✕, and for the Word a faint Stone shows where one will appear.
   Tapping elsewhere moves the choice.
-- **Several hits are chosen together.** Prophecy's hits, the Word's Stones and a doubled Prayer's two shapes are
+- **Several placements are chosen together.** The Word's picks and a doubled Prayer's or Prophecy's two shapes are
   picked one tap each, with a counter ("2 / 3 chosen"), then applied together.
 - **Tapping a chosen tile again unselects it** (for shapes and lines, any tile inside it). So each tile can be
   chosen once per group.
 - Then **Continue** or **Select again**.
 - Shapes and lines are centred on the tile you tap and kept on the board. Placements are **mandatory** and can't be saved for later.
 
-### 5.1 Damage shapes (Prayer)
+Every placement is described by the three damage attributes **Targets** (*Choose shape* or *Choose anywhere*),
+**Dmg** and **On destroy** ([tools § 1.1](tools.md#11-owned-tools-and-the-battle-loadout)). The placing banner
+shows them, e.g. *"Prayer: Targets: Choose shape (3 tiles) · Dmg: 3"*; On destroy appears only when a broken
+tile becomes another tile, shown as that tile's icon (tap it for its popup).
 
-- A Prayer set gives one **damage shape**: the **same shape as the completed set**. A horizontal 3 gives a
-  horizontal line of 3, a vertical 4 gives a vertical line of 4, and an L of 5 gives that same L.
-- You choose where the shape goes. It can sit anywhere it fits entirely on the board, with the **same
-  orientation** (no rotating).
-- **Every tile under the shape takes 1 damage** (§1.2): enemy tiles, tools, junk and Stones alike.
+### 5.1 Choose shape (Prayer, Prophecy)
 
-### 5.2 Single-target damage (Time)
+- A Prayer or Prophecy set gives one copy of **the set's shape**: a horizontal 3 gives a horizontal line of 3, a
+  vertical 4 gives a vertical line of 4, and an L of 5 gives that same L.
+- You choose where it goes. It can sit anywhere it fits entirely on the board, the **same way round** (no
+  rotating).
+- **Every tile under it takes damage** (§1.2): enemy tiles, tools, junk and Stones alike. Prayer deals **3**
+  *(tune)*; Prophecy deals **1**, and a tile Prophecy breaks becomes **Space** in place (nothing falls).
 
-A Time set deals **1 damage to 1 tile anywhere**, including an enemy tile.
+### 5.2 Choose anywhere (Time)
 
-### 5.3 Stone placement (The Word)
+A Time set: **pick 1 tile** anywhere, including an enemy tile. It takes **1 damage**.
 
-Place the Stones **one at a time** on **any tile**. They don't need to be adjacent. Each placement is a
-**1-damage hit** on that tile (more with Faithfulness, or with every 3 Foresight):
+### 5.3 Choose anywhere, On destroy: Create Stone (The Word)
+
+**Pick tiles**, 1 per tile in the set, **anywhere** on the board. They don't need to be adjacent. Each takes
+**1 damage** (more with Faithfulness, or with every 3 Foresight):
 
 - If the hit **deletes** the tile, a full-HP **Stone** takes its place. It's a transformation, so nothing falls.
   On an **enemy tile**, the Worry becomes a Stone, which counts towards victory.
 - If the tile **survives** (e.g. a Stone, which has 2 HP), it just takes the damage, and no Stone appears.
 
-### 5.4 Hits (Prophecy) and abilities
+### 5.4 Abilities
 
-Prophecy gives 1 hit per tile matched, each on a different tile; a tile it breaks turns into Space. Abstain
-targets 1 tile, and Many Fish places a 3-tile line (you choose horizontal or vertical first). All of them are
-damage (§1.2).
+Abstain: **pick 1 tile**. Many Fish: place a **line of 3** (you choose horizontal or vertical first), and every
+tile under it takes damage. All of them are damage (§1.2).
 
 ## 6. Winning and losing
 

@@ -6,13 +6,16 @@ import { PILLAR_NAME } from '../../content/tools';
 import { suggestedLoadout } from '../../engine/run';
 import type { ToolInstance } from '../../engine/types';
 import { useStore } from '../../state/store';
-import { AbilityBar, Asset, FruitIcon, Modal, PlayerStats, TopBar, useLongPress } from '../components/common';
+import { AbilityBar, Asset, EffectText, FruitIcon, Modal, PlayerStats, TopBar, useLongPress } from '../components/common';
+import { describeTile } from '../../content/describe';
 import { EnemyPatternPreview } from '../components/EnemyPattern';
+import { useUiScale } from '../scale';
 
 export function BattlePrepScreen() {
   const run = useStore((s) => s.run);
   const quick = useStore((s) => s.quick);
   const startBattle = useStore((s) => s.startBattle);
+  const s = useUiScale();
   const player = quick?.player ?? run!.player;
   const enemyId = quick?.enemyId ?? run!.prep!.enemyId;
   const boss = run?.prep?.source === 'boss';
@@ -37,13 +40,13 @@ export function BattlePrepScreen() {
         <div className="panel prep-enemy">
           <div className="banner">{boss ? 'The final battle' : enemy.tier === 'elite' ? 'A dangerous foe!' : 'Enemy Encounter!'}</div>
           <div className="row">
-            <Asset path={enemy.portrait} alt={enemy.name} size={48} color="#5a2a2a" />
+            <Asset path={enemy.portrait} alt={enemy.name} size={Math.round(56 * s)} color="#5a2a2a" />
             <h2 style={{ margin: 0 }}>{enemy.name}</h2>
           </div>
-          <EnemyPatternPreview enemyId={enemyId} cell={9} />
+          <EnemyPatternPreview enemyId={enemyId} cell={Math.round(9 * s)} />
         </div>
         <div className="panel prep-col">
-          <b>Choose {size} tools ({loadout.length}/{size}). Hold one for details.</b>
+          <b className="prep-heading">Choose {size} tools ({loadout.length}/{size}). Hold one for details.</b>
           <div className="tool-grid">
             {player.tools.map((t) => (
               <ToolCard key={t.uid} tool={t} selected={loadout.includes(t.uid)} onTap={() => toggle(t.uid)} onLong={() => setInfo(t)} />
@@ -60,13 +63,14 @@ export function BattlePrepScreen() {
 export function ToolCard({ tool, selected, onTap, onLong }: { tool: ToolInstance; selected?: boolean; onTap: () => void; onLong: () => void }) {
   const def = content.tools[tool.toolId];
   const press = useLongPress(onTap, onLong);
+  const s = useUiScale();
   return (
     <button className={`tool-card ${selected ? 'selected' : ''}`} style={{ background: def.color + '33' }} aria-pressed={!!selected} {...press}>
       <span className="lvl">Lv{tool.level}</span>
-      <Asset path={def.icon} alt={def.name} size={36} color={def.color} />
+      <Asset path={def.icon} alt={def.name} size={Math.round(36 * s)} color={def.color} />
       <span>{def.name}</span>
-      <span className="dim" style={{ fontSize: 11 }}>{PILLAR_NAME[tool.pillar]}</span>
-      <span className="fruit-row">{tool.sockets.map((f, i) => (f ? <FruitIcon key={i} fruit={f} size={14} /> : <i key={i} className="socket" />))}</span>
+      <span className="dim pillar">{PILLAR_NAME[tool.pillar]}</span>
+      <span className="fruit-row">{tool.sockets.map((f, i) => (f ? <FruitIcon key={i} fruit={f} size={Math.round(14 * s)} /> : <i key={i} className="socket" />))}</span>
     </button>
   );
 }
@@ -80,7 +84,7 @@ export function ToolInfo({ tool, onClose }: { tool: ToolInstance; onClose: () =>
         <Asset path={def.icon} alt={def.name} size={56} color={def.color} />
         <div>
           <h2>{def.name} <span className="dim" style={{ fontSize: 15 }}>Lv {tool.level} · {PILLAR_NAME[tool.pillar]}</span></h2>
-          <div>{def.description}</div>
+          <EffectText description={def.description} rows={describeTile({ kind: 'tool', id: tool.toolId, uid: tool.uid }, { instance: tool }).attrs} />
           {fruits.length > 0 && (
             <ul style={{ margin: '6px 0', paddingLeft: 18 }}>
               {fruits.map((f, i) => <li key={i}><b>{content.fruits[f].name}</b> ({content.fruits[f].keyword}): {content.fruits[f].description}</li>)}

@@ -4,6 +4,7 @@
 
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { App } from '../../src/ui/App';
+import { closeTiles, openTile } from '../../src/ui/components/common';
 import { useStore } from '../../src/state/store';
 import { SAVE_KEY } from '../../src/state/persistence';
 
@@ -18,7 +19,7 @@ beforeEach(() => {
   localStorage.clear();
   useStore.setState({ run: null, quick: null, hasSave: false, toolboxOpen: false, playback: { queue: [], view: null, current: null, log: '' }, selection: null, debug: false });
 });
-afterEach(() => cleanup());
+afterEach(() => { cleanup(); act(() => closeTiles()); });
 
 const tap = (el: Element) => {
   fireEvent.pointerDown(el);
@@ -45,12 +46,12 @@ describe('UI smoke', () => {
     expect(localStorage.getItem(SAVE_KEY)).toContain('"screen":"map"');
   });
 
-  it('the toolbox lists the five starting tools', async () => {
+  it('the toolbox lists the seven starting tools', async () => {
     act(() => useStore.getState().newRun(42));
     act(() => useStore.getState().chooseOption(0));
     render(<App />);
     fireEvent.click(screen.getByText('Toolbox'));
-    for (const name of ['Fasting', 'Prayer', 'Thanksgiving', 'The Word', 'Prophecy']) await waitFor(() => screen.getAllByText(name));
+    for (const name of ['Anoint', 'Prayer', 'Thanksgiving', 'The Word', 'Prophecy', 'Worship', 'Preaching']) await waitFor(() => screen.getAllByText(name));
     fireEvent.click(screen.getByLabelText('Close toolbox'));
     await waitFor(() => expect(useStore.getState().toolboxOpen).toBe(false));
   });
@@ -59,13 +60,13 @@ describe('UI smoke', () => {
     toPrep();
     render(<App />);
     expect(screen.getByText('Hard Choices')).toBeTruthy();
-    expect(screen.getByRole('img', { name: 'Coming next and starting board: 24 enemy tiles' })).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Coming next and starting board: 32 enemy tiles' })).toBeTruthy();
     const fight = screen.getByText('FIGHT!') as HTMLButtonElement;
     expect(fight.disabled).toBe(false); // the first three tools are preselected
     fireEvent.click(fight);
     await waitFor(() => screen.getByText('End Turn'));
     expect(screen.getAllByRole('gridcell')).toHaveLength(64);
-    expect(screen.getAllByLabelText(/^Worry/)).toHaveLength(24);
+    expect(screen.getAllByLabelText(/^Worry/)).toHaveLength(32);
     expect(screen.getByLabelText('Hard Choices: hold for details')).toBeTruthy();
     fireEvent.click(screen.getByText('End Turn'));
     // The enemy turn ran: either your next turn started, or a set formed during it and is waiting for a placement.
@@ -118,7 +119,7 @@ describe('UI smoke', () => {
     });
     render(<App />);
     act(() => { useStore.getState().selectTile({ x: 2, y: 7 }); useStore.getState().selectTile({ x: 3, y: 7 }); });
-    await waitFor(() => expect(document.querySelector('.instruction')?.textContent).toMatch(/Prayer: 3-tile shape.*Tap the board/), { timeout: 8000 });
+    await waitFor(() => expect(document.querySelector('.instruction')?.textContent).toMatch(/Prayer: Targets: Choose shape \(3 tiles\) · Dmg: 3Tap the board/), { timeout: 8000 });
     tap(screen.getAllByRole('gridcell')[0]);
     await waitFor(() => screen.getByText('Continue'));
     expect(document.querySelectorAll('.tile.aimed')).toHaveLength(3);
@@ -131,6 +132,36 @@ describe('UI smoke', () => {
     // The shape was applied: tiles broke and the board refilled (a new set may now be waiting to be placed).
     await waitFor(() => expect(useStore.getState().run!.battle!.nextUid).toBeGreaterThan(before));
   }, 20000);
+
+  it('tile popups: follow an On destroy icon to its tile and back, as deep as you like', async () => {
+    toPrep();
+    render(<App />);
+    const title = () => document.querySelector('.tile-popup h2')?.textContent ?? '';
+    act(() => openTile({ kind: 'tool', id: 'word' }));
+    await waitFor(() => expect(title()).toMatch(/^The Word/));
+    expect(document.querySelector('.tile-popup')?.textContent).toMatch(/Set formed:\s*Attack\s*Targets: Choose anywhere \(1 tile per tile in the set\)\s*Dmg: 1\s*On destroy: Create/);
+    tap(screen.getByLabelText('Stone: hold for details'));
+    await waitFor(() => expect(title()).toMatch(/^Stone/));
+    expect(document.querySelector('.tile-popup')?.textContent).not.toMatch(/On destroy/);
+    expect(document.querySelector('.tile-popup')?.textContent).toMatch(/Set formed:\s*Clears self/);
+    fireEvent.click(screen.getByText('Back'));
+    await waitFor(() => expect(title()).toMatch(/^The Word/));
+    expect(screen.queryByText('Back')).toBeNull();
+    // Prayer creates nothing, so its popup has no On destroy row.
+    act(() => openTile({ kind: 'tool', id: 'prayer' }));
+    await waitFor(() => expect(title()).toMatch(/^Prayer/));
+    expect(document.querySelector('.tile-popup')?.textContent).not.toMatch(/On destroy/);
+    // Enemy tiles: Speed in the header, then Each step / On activate / At bottom. Depression's On activate links to itself.
+    act(() => openTile({ kind: 'enemy', id: 'depression' }));
+    await waitFor(() => expect(title()).toMatch(/^Depression/));
+    expect(document.querySelector('.tile-popup')?.textContent).toMatch(/HP 3\/3 · Speed: 0.*On activate:\s*Create\s+on 1 random adjacent tool or junk\s*At bottom:\s*Attack\s*Targets: You\s*Dmg: 1/);
+    expect(document.querySelector('.tile-popup')?.textContent).not.toMatch(/Each step|Move:/);
+    tap(screen.getByLabelText('Depression: hold for details'));
+    await waitFor(() => expect(screen.getAllByText('Back')).toHaveLength(1));
+    expect(title()).toMatch(/^Depression/);
+    fireEvent.click(screen.getByText('OK'));
+    await waitFor(() => expect(document.querySelector('.tile-popup')).toBeNull());
+  });
 
   it('continue run restores a mid-battle save', async () => {
     toPrep();

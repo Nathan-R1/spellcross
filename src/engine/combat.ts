@@ -1,16 +1,20 @@
 // The battle engine for the 2026-11 combat rework (docs/combat.md). Pure functions: state in, { state, events } out.
 // One enemy feeds tiles onto an 8×8 board from its generator; the player matches tools to hold them off.
 //
-// Resolution is resumable: effects that need the player to pick tiles (Prayer's shape, the Word's Stones,
-// Prophecy and Time hits, Abstain, Many Fish) queue a Placement and pause in phase 'placing'. place() applies it
-// and carries on from where the battle left off (`stage`).
+// Every tile's behaviour is its triggers and effects (docs/tile-effects.md): runSetEffects runs Set formed and On
+// use, activateEnemies runs Each step and At bottom, onActivate runs On activate.
+//
+// Resolution is resumable: an Attack the player aims (Choose anywhere / Choose shape) queues a Placement and pauses
+// in phase 'placing'. place() applies it and carries on from where the battle left off (`stage`).
 
 import type { Content } from '../content';
 import { genCell, generatorEnemyTiles } from '../content/enemies';
 import { FRUIT_IDS } from '../content/fruits';
+import { junk as JUNK, STONE } from '../content/tools';
 import { createRng, type Rng } from './rng';
 import type {
-  BattleEvent, BattleResult, BattleState, BattleTool, Board, FruitId, Placement, Player, Pos, Tile, TimedEvent, ToolInstance, ViewSnapshot,
+  Amount, BattleEvent, Gainable, Targets, BattleResult, BattleState, BattleTool, Board, Effect, FruitId, Placement, Player, Pos, Tile, TileRef, TimedEvent,
+  ToolInstance, ViewSnapshot,
 } from './types';
 
 export interface BattleSetup {
@@ -35,7 +39,7 @@ export function resolveTool(inst: ToolInstance, c: Content): BattleTool {
   const fruit = Object.fromEntries(FRUIT_IDS.map((f) => [f, 0])) as Record<FruitId, number>;
   for (const f of inst.sockets) if (f) fruit[f] += 1;
   return {
-    uid: inst.uid, toolId: inst.toolId, name: def.name, pillar: inst.pillar, effect: def.effect, icon: def.icon, color: def.color,
+    uid: inst.uid, toolId: inst.toolId, name: def.name, pillar: inst.pillar, icon: def.icon, color: def.color,
     weight: 1 + c.config.pool.weightPerLove * fruit.love, fruit,
   };
 }
@@ -45,13 +49,29 @@ export const tileAt = (b: Board, x: number, y: number): Tile | null =>
   x < 0 || y < 0 || x >= b.width || y >= b.height ? null : b.cells[idx(b, x, y)];
 const inBounds = (b: Board, p: Pos) => p.x >= 0 && p.y >= 0 && p.x < b.width && p.y < b.height;
 
-/** What a tile matches with: tools by instance, junk by type, Stones together. Enemy tiles never match. */
+/**
+ * What a tile matches with: tools by instance, junk by type, Stones together. Only tiles with a Set formed trigger
+ * form sets (so never enemy tiles or Space).
+ */
 export function matchKey(t: Tile | null): string | null {
   if (!t) return null;
   if (t.kind === 'tool') return `tool:${t.id}`;
-  if (t.kind === 'junk') return `junk:${t.id}`;
-  if (t.kind === 'stone') return 'stone';
+  // Junk not in the built-in table (test content) matches, as before.
+  if (t.kind === 'junk') return !JUNK[t.id] || JUNK[t.id].triggers.setFormed ? `junk:${t.id}` : null;
+  if (t.kind === 'stone') return STONE.triggers.setFormed ? 'stone' : null;
   return null;
+}
+
+/**
+ * Extra Set formed effects a tool's fruit adds, after the tool's own (tools.md § 2): Peace (Block per tile),
+ * Goodness (heal), Self-Control (a move, once per turn).
+ */
+export function fruitSetEffects(fruit: Record<FruitId, number>): Effect[] {
+  const out: Effect[] = [];
+  if (fruit.peace > 0) out.push({ type: 'gain', what: 'block', amount: { perSetTile: fruit.peace }, source: 'Peace' });
+  if (fruit.goodness > 0) out.push({ type: 'gain', what: 'courage', amount: fruit.goodness, source: 'Goodness' });
+  if (fruit.self_control > 0) out.push({ type: 'gain', what: 'moves', amount: fruit.self_control, oncePerTurn: true, source: 'Self-Control' });
+  return out;
 }
 
 function posOf(b: Board, uid: number): Pos | null {
@@ -62,6 +82,9 @@ function posOf(b: Board, uid: number): Pos | null {
 /** Steps per enemy turn for an enemy tile in this fight: the fight's override, else the tile's own speed. */
 export const enemyTileSpeed = (c: Content, enemyId: string, tileId: string): number =>
   c.enemies[enemyId]?.tileSpeed?.[tileId] ?? c.enemyTiles[tileId].speed;
+
+/** Is this tile Locked right now (combat § 4.4)? */
+export const isLocked = (t: Tile | null, round: number) => !!t && t.lockedUntil !== undefined && t.lockedUntil >= round;
 
 const enemyCount = (b: Board) => b.cells.filter((t) => t?.kind === 'enemy').length;
 
@@ -114,8 +137,19 @@ function enemyTile(ctx: Ctx, id: string): Tile {
   return { uid: ctx.s.nextUid++, kind: 'enemy', id, hp: def.hp, maxHp: def.hp };
 }
 
-function stoneTile(ctx: Ctx, hp: number): Tile {
-  return { uid: ctx.s.nextUid++, kind: 'stone', id: 'stone', hp, maxHp: hp };
+/** A new tile for a Create or On destroy effect, or null if it can't exist here (a tool not in this battle). */
+function createTile(ctx: Ctx, ref: TileRef, hpBonus = 0): Tile | null {
+  const { s, c } = ctx;
+  const make = (kind: Tile['kind'], id: string, hp: number): Tile => ({ uid: s.nextUid++, kind, id, hp: hp + hpBonus, maxHp: hp + hpBonus });
+  switch (ref.kind) {
+    case 'stone': return make('stone', 'stone', c.config.stoneHp);
+    case 'junk': return make('junk', ref.id, c.junk[ref.id]?.hp ?? 1);
+    case 'enemy': return make('enemy', ref.id, c.enemyTiles[ref.id].hp);
+    case 'tool': {
+      const t = (ref.uid && s.tools[ref.uid]) || Object.values(s.tools).find((bt) => bt.toolId === ref.id);
+      return t ? make('tool', t.uid, 1 + t.fruit.gentleness) : null;
+    }
+  }
 }
 
 /** The tile for column `x` of generated row `row` (0 = the bottom row of the board). */
@@ -199,8 +233,10 @@ export interface FoundSet {
   cells: Pos[];
   /** Supportive tiles pulled in (tool sets only). */
   support: Pos[];
-  /** Extra size from Supportive (sum of their Kindness). */
+  /** Extra size from Supportive (sum of their Kindness) and Strengthen (sum over the set's tiles). */
   bonus: number;
+  /** Strengthened tiles in the set and their points: each point also grows a placed shape by 1 cell. */
+  strengthened: { p: Pos; n: number }[];
 }
 
 export function findSets(s: BattleState): FoundSet[] {
@@ -245,6 +281,7 @@ export function findSets(s: BattleState): FoundSet[] {
       cells: cells.map((i) => ({ x: i % b.width, y: Math.floor(i / b.width) })),
       support: [],
       bonus: 0,
+      strengthened: [],
     }));
 
   // Supportive (Kindness): adjacent tiles of other tools join tool sets, first set in reading order wins.
@@ -266,6 +303,15 @@ export function findSets(s: BattleState): FoundSet[] {
       }
     }
   }
+  // Strengthen (Anoint): each point on a tile in the set (or pulled in by Supportive) counts +1 tile.
+  for (const st of sets) {
+    for (const p of [...st.cells, ...st.support]) {
+      const n = tileAt(b, p.x, p.y)?.strength ?? 0;
+      if (n <= 0) continue;
+      st.bonus += n;
+      st.strengthened.push({ p, n });
+    }
+  }
   return sets;
 }
 
@@ -274,6 +320,44 @@ function normalise(cells: Pos[]): Pos[] {
   const minX = Math.min(...cells.map((p) => p.x));
   const minY = Math.min(...cells.map((p) => p.y));
   return cells.map((p) => ({ x: p.x - minX, y: p.y - minY })).sort((a, b) => a.y - b.y || a.x - b.x);
+}
+
+/**
+ * Strengthen grows a set's shape by 1 cell per point, always along the set's longest straight line, at the end nearest
+ * the Strengthened tile. So a row of 3 with +2 is a row of 5 wherever the points were; L and T sets grow along their
+ * longest arm. Ties: horizontal before vertical, then the top-left line; the right/bottom end when both are as near.
+ */
+function grow(cells: Pos[], strengthened: { p: Pos; n: number }[]): Pos[] {
+  if (strengthened.length === 0) return cells;
+  const has = (q: Pos) => cells.some((c) => c.x === q.x && c.y === q.y);
+  // The longest run: from each cell that starts one (no cell before it), count along +x and +y.
+  let best = { from: cells[0], dx: 1, dy: 0, len: 1 };
+  for (const [dx, dy] of [[1, 0], [0, 1]]) {
+    for (const c of [...cells].sort((a, b) => a.y - b.y || a.x - b.x)) {
+      if (has({ x: c.x - dx, y: c.y - dy })) continue;
+      let len = 1;
+      while (has({ x: c.x + dx * len, y: c.y + dy * len })) len++;
+      if (len > best.len) best = { from: c, dx, dy, len };
+    }
+  }
+  const { dx, dy } = best;
+  let head = best.from; // the top/left end
+  let tail = { x: head.x + dx * (best.len - 1), y: head.y + dy * (best.len - 1) }; // the bottom/right end
+  const out = [...cells];
+  const dist = (a: Pos, b: Pos) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+  for (const { p, n } of strengthened) {
+    const atHead = dist(p, head) < dist(p, tail);
+    for (let k = 0; k < n; k++) {
+      if (atHead) {
+        head = { x: head.x - dx, y: head.y - dy };
+        out.push(head);
+      } else {
+        tail = { x: tail.x + dx, y: tail.y + dy };
+        out.push(tail);
+      }
+    }
+  }
+  return out;
 }
 
 function resolveSets(ctx: Ctx, sets: FoundSet[]) {
@@ -289,69 +373,179 @@ function resolveSets(ctx: Ctx, sets: FoundSet[]) {
 function applySet(ctx: Ctx, st: FoundSet, key: string) {
   const { s, c } = ctx;
   const p = s.player;
+  const shape = normalise(grow([...st.cells, ...st.support], st.strengthened));
+  const size = st.cells.length + st.bonus;
   if (key.startsWith('junk:')) {
     const j = c.junk[key.slice(5)];
-    for (let i = 0; i < j.hits; i++) s.pending.push({ type: 'hit', damage: 1, source: j.name });
-    if (j.hits > 0) emit(ctx, { type: 'effect', source: j.name, text: `${j.name}: deal ${j.hits} damage to a tile` });
+    const texts = runSetEffects(ctx, j.triggers.setFormed ?? [], { source: j.name, size, shape, mult: 1, tool: null });
+    if (texts.length) emit(ctx, { type: 'effect', source: j.name, text: `${j.name}: ${texts.join(', ')}` });
     return;
   }
-  if (!key.startsWith('tool:')) return; // Stones: no effect
+  if (!key.startsWith('tool:')) return; // Stones: Clears self
   const tool = s.tools[key.slice(5)];
-  const f = tool.fruit;
-  const size = st.cells.length + st.bonus;
+  // Critical doubles everything this set does (once-per-turn effects still fire once).
   const mult = p.critical > 0 ? 2 : 1;
   if (mult === 2) p.critical -= 1;
-  // Foresight counts at a third of its value: every 3 gives Truth tools +1 damage.
-  const truth = tool.pillar === 'truth' ? Math.floor(p.foresight / c.config.foresightPerBonus) : 0;
-  const damage = 1 + f.faithfulness + truth;
-  const texts: string[] = [];
-  switch (tool.effect) {
-    case 'critical':
-      p.critical += mult;
-      texts.push(`Critical +${mult}`);
-      break;
-    case 'damageShape': {
-      const shape = normalise([...st.cells, ...st.support]);
-      for (let i = 0; i < mult; i++) s.pending.push({ type: 'shape', cells: shape, damage, source: tool.name });
-      texts.push(`${mult > 1 ? `${mult} × ` : ''}${shape.length}-tile shape, ${damage} damage`);
-      break;
-    }
-    case 'block':
-      p.block += size * mult;
-      texts.push(`+${size * mult} Block`);
-      break;
-    case 'stones': {
-      const n = size * mult;
-      const stoneHp = c.config.stoneHp + f.patience;
-      for (let i = 0; i < n; i++) s.pending.push({ type: 'stone', damage, stoneHp, source: tool.name });
-      texts.push(`${n} Stones`);
-      break;
-    }
-    case 'prophecy': {
-      const n = size * mult;
-      for (let i = 0; i < n; i++) s.pending.push({ type: 'space', damage, source: tool.name });
-      p.foresight += n; // after the hits were sized, so it boosts later sets only
-      texts.push(`${n} hits, Foresight +${n}`);
-      break;
-    }
-    case 'none':
-      break;
-  }
-  if (f.peace > 0) {
-    p.block += f.peace * size * mult;
-    texts.push(`+${f.peace * size * mult} Block (Peace)`);
-  }
-  if (f.goodness > 0) {
-    const before = p.hp;
-    p.hp = Math.min(p.maxHp, p.hp + f.goodness * mult);
-    if (p.hp > before) texts.push(`+${p.hp - before} Courage`);
-  }
-  if (f.self_control > 0 && !s.focusUsed.includes(tool.uid)) {
-    s.focusUsed.push(tool.uid);
-    s.movesLeft += f.self_control;
-    texts.push(`+${f.self_control} move`);
-  }
+  const effects = [...(c.tools[tool.toolId].triggers.setFormed ?? []), ...fruitSetEffects(tool.fruit)];
+  const texts = runSetEffects(ctx, effects, { source: tool.name, size, shape, mult, tool });
   emit(ctx, { type: 'effect', source: tool.name, text: `${tool.name}${mult > 1 ? ' (Critical)' : ''}: ${texts.join(', ')}` });
+}
+
+interface EffectSource {
+  /** Shown on placements and in the log. */
+  source: string;
+  /** Tiles in the set (for "per tile in the set"); 0 outside Set formed. */
+  size: number;
+  /** The set's shape (offsets), for Choose shape: the set's shape. */
+  shape: Pos[];
+  /** ×2 under Critical. */
+  mult: number;
+  /** The tool whose set this is: its fruit and pillar modify the effects. */
+  tool: BattleTool | null;
+}
+
+const amountOf = (a: Amount, size: number) => (typeof a === 'number' ? a : a.perSetTile * size);
+
+/**
+ * Run Set formed or On use effects in order. Attacks you aim queue placements; everything else applies now.
+ * Modifiers: Faithfulness +Dmg; Foresight +1 Dmg per 3 on Truth tools (read when the Attack runs, so a Gain of
+ * Foresight later in the list boosts later sets only); Patience +HP on tiles the tool creates. Returns log texts.
+ */
+function runSetEffects(ctx: Ctx, effects: Effect[], src: EffectSource): string[] {
+  const { s, c } = ctx;
+  const p = s.player;
+  const { tool, mult, size } = src;
+  const texts: string[] = [];
+  for (const e of effects) {
+    switch (e.type) {
+      case 'attack': {
+        const truth = tool?.pillar === 'truth' ? Math.floor(p.foresight / c.config.foresightPerBonus) : 0;
+        const damage = e.dmg + (tool ? tool.fruit.faithfulness + truth : 0);
+        const onDestroy = {
+          ...(e.onDestroy && { onDestroy: e.onDestroy, ...(tool && tool.fruit.patience ? { onDestroyHp: tileBaseHp(ctx, e.onDestroy) + tool.fruit.patience } : {}) }),
+          ...(e.apply && { apply: e.apply }),
+        };
+        const t = e.targets;
+        if (t.type === 'chooseShape') {
+          const target = t.shape === 'set' ? { type: 'shape' as const, cells: src.shape } : { type: 'line' as const, length: t.length };
+          for (let i = 0; i < mult; i++) s.pending.push({ target, damage, source: src.source, ...onDestroy });
+          texts.push(`${mult > 1 ? `${mult} × ` : ''}${target.type === 'shape' ? `${target.cells.length}-tile shape` : `line of ${target.length}`}, ${damage} damage`);
+        } else if (t.type === 'chooseAnywhere') {
+          const n = amountOf(t.count, size) * mult;
+          const target = { type: 'anywhere' as const, ...(t.filter && { filter: t.filter }) };
+          for (let i = 0; i < n; i++) s.pending.push({ target, damage, source: src.source, ...onDestroy });
+          texts.push(`${n} × ${damage > 0 || !e.apply ? `${damage} damage` : ''}${damage > 0 && e.apply ? ' + ' : ''}${e.apply === 'locked' ? 'Lock' : e.apply === 'strengthen' ? '+1 Strengthen' : ''}${e.onDestroy?.kind === 'stone' ? ' (Stones)' : ''}`);
+        } else {
+          texts.push(...applyNow(ctx, e, null));
+        }
+        break;
+      }
+      case 'gain': {
+        if (e.oncePerTurn) {
+          const key = tool?.uid ?? src.source;
+          if (s.focusUsed.includes(key)) break;
+          s.focusUsed.push(key);
+        }
+        const v = amountOf(e.amount, size) * (e.oncePerTurn ? 1 : mult);
+        texts.push(...gain(ctx, e.what, v, e.source));
+        break;
+      }
+      case 'create':
+        texts.push(...applyNow(ctx, e, null));
+        break;
+      case 'clearsSelf':
+        break;
+    }
+  }
+  return texts;
+}
+
+/** The player gains `v` of something. Returns the log text. */
+function gain(ctx: Ctx, what: Gainable, v: number, source?: string): string[] {
+  const { s } = ctx;
+  const p = s.player;
+  const tag = source ? ` (${source})` : '';
+  switch (what) {
+    case 'block': p.block += v; return [`+${v} Block${tag}`];
+    case 'critical': p.critical += v; return [`Critical +${v}`];
+    case 'foresight': p.foresight += v; return [`Foresight +${v}`];
+    case 'moves': s.movesLeft += v; return [`+${v} move${v > 1 ? 's' : ''}`];
+    case 'courage': {
+      const before = p.hp;
+      p.hp = Math.min(p.maxHp, p.hp + v);
+      return p.hp > before ? [`+${p.hp - before} Courage`] : [];
+    }
+  }
+}
+
+function tileBaseHp(ctx: Ctx, ref: TileRef): number {
+  const { c } = ctx;
+  if (ref.kind === 'stone') return c.config.stoneHp;
+  if (ref.kind === 'junk') return c.junk[ref.id]?.hp ?? 1;
+  if (ref.kind === 'enemy') return c.enemyTiles[ref.id].hp;
+  return 1;
+}
+
+/** The tiles a game-chosen target picks around `at` (Below, Adjacent), as board indexes. You → []. */
+function gameTargets(ctx: Ctx, t: Targets, at: Pos | null, claimed?: Set<number>): number[] {
+  const b = ctx.s.board;
+  if (!at) return [];
+  if (t.type === 'below') return tileAt(b, at.x, at.y + 1) ? [idx(b, at.x, at.y + 1)] : [];
+  if (t.type !== 'adjacent') return [];
+  const open: number[] = [];
+  for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+    const n = tileAt(b, at.x + dx, at.y + dy);
+    const i = idx(b, at.x + dx, at.y + dy);
+    if (n && t.filter.includes(n.kind) && (!t.ids || t.ids.includes(n.id)) && !claimed?.has(i)) open.push(i);
+  }
+  if (t.pick === 'every') return open;
+  const out: number[] = [];
+  for (let k = 0; k < t.pick && open.length; k++) out.push(...open.splice(open.indexOf(ctx.rng.pick(open)), 1));
+  return out;
+}
+
+/** Apply a game-targeted effect from the tile at `at` right away (Each step extras, At bottom, abilities). */
+function applyNow(ctx: Ctx, e: Effect, at: Pos | null): string[] {
+  const { s } = ctx;
+  if (e.type === 'gain') return gain(ctx, e.what, amountOf(e.amount, 0), e.source);
+  if (e.type === 'attack') {
+    if (e.targets.type === 'you') {
+      hitPlayer(ctx, e.dmg);
+      return [];
+    }
+    const b = s.board;
+    const cells = gameTargets(ctx, e.targets, at).map((i) => ({ x: i % b.width, y: Math.floor(i / b.width) }));
+    for (const q of damageAt(ctx, cells, e.dmg)) {
+      const t = e.onDestroy && createTile(ctx, e.onDestroy);
+      if (t) s.board.cells[idx(b, q.x, q.y)] = t;
+    }
+    return [];
+  }
+  if (e.type === 'create') {
+    const claims = new Map<number, Effect & { type: 'create' }>();
+    for (const i of gameTargets(ctx, e.targets, at)) claims.set(i, e);
+    applyCreates(ctx, claims);
+  }
+  return [];
+}
+
+/** Turn claimed board cells into their new tiles, in reading order, and emit one 'created' event. */
+function applyCreates(ctx: Ctx, claims: Map<number, Effect & { type: 'create' }>) {
+  const { s } = ctx;
+  const b = s.board;
+  const junkIds = s.pool.filter((e) => e.kind === 'junk').map((e) => e.id);
+  const uids: number[] = [];
+  for (const i of [...claims.keys()].sort((a, z) => a - z)) {
+    const w = claims.get(i)!.what;
+    let t: Tile | null = null;
+    if (w.kind === 'randomJunk') {
+      if (junkIds.length) t = createTile(ctx, { kind: 'junk', id: ctx.rng.pick(junkIds) });
+    } else t = createTile(ctx, w);
+    if (!t) continue;
+    b.cells[i] = t;
+    uids.push(t.uid);
+  }
+  if (uids.length) emit(ctx, { type: 'created', uids });
 }
 
 // ---------------------------------------------------------------- damage, gravity, settling
@@ -533,91 +727,88 @@ function shining(ctx: Ctx) {
 function activateEnemies(ctx: Ctx) {
   const { s, c } = ctx;
   const b = s.board;
+  emit(ctx, { type: 'enemyTurn' });
   const order: number[] = [];
   for (let y = b.height - 1; y >= 0; y--) for (let x = 0; x < b.width; x++) {
     const t = tileAt(b, x, y);
     if (t?.kind === 'enemy') order.push(t.uid);
   }
+  const runAll = (effects: Effect[] | undefined, at: Pos) => {
+    for (const e of effects ?? []) {
+      applyNow(ctx, e, at);
+      if (s.outcome) return;
+    }
+  };
   for (const uid of order) {
     let p = posOf(b, uid);
     if (!p) continue;
     const t = tileAt(b, p.x, p.y)!;
+    if (isLocked(t, s.round)) continue; // Locked: no steps, no At bottom
     const def = c.enemyTiles[t.id];
     const speed = enemyTileSpeed(c, s.enemyId, t.id);
-    // A tile that doesn't move (Depression) still hits you from the bottom row.
+    const step = def.triggers.eachStep ?? [];
+    // The push: an Each step Attack on the tile below. It moves in if that breaks the tile.
+    const pushDmg = step.reduce((n, e) => n + (e.type === 'attack' && e.targets.type === 'below' ? e.dmg : 0), 0);
+    const extras = step.filter((e) => !(e.type === 'attack' && e.targets.type === 'below'));
+    // A tile that doesn't move (Depression) still fires At bottom from the bottom row.
     if (speed === 0 && p.y === b.height - 1) {
-      hitPlayer(ctx, def.damage);
+      runAll(def.triggers.atBottom, p);
       if (s.outcome) return;
       continue;
     }
-    for (let step = 0; step < speed && p; step++) {
+    for (let k = 0; k < speed && p; k++) {
       if (p.y === b.height - 1) {
-        hitPlayer(ctx, def.damage);
+        runAll(def.triggers.atBottom, p);
         if (s.outcome) return;
         break;
       }
       const below = tileAt(b, p.x, p.y + 1);
       if (below?.kind === 'enemy') break;
-      // Hold the line: leftover Block cancels steps, 1 per step. Tiles are processed bottom-up, so Block goes to
-      // bottom-row hits first, then to the lowest steps.
-      if (s.player.block > 0) {
-        s.player.block -= 1;
-        emit(ctx, { type: 'held', uid });
-        continue;
-      }
       if (below) {
-        const gone = damageAt(ctx, [{ x: p.x, y: p.y + 1 }], 1);
+        if (pushDmg <= 0) break;
+        const gone = damageAt(ctx, [{ x: p.x, y: p.y + 1 }], pushDmg);
         if (gone.length === 0) break; // it survived (a Stone with HP left): the enemy tile stays put
       }
       b.cells[idx(b, p.x, p.y + 1)] = t;
       b.cells[idx(b, p.x, p.y)] = null;
       p = { x: p.x, y: p.y + 1 };
       emit(ctx, { type: 'enemyStep', uid });
+      runAll(extras, p);
+      if (s.outcome) return;
     }
   }
-  enemyTurnEndEffects(ctx);
+  onActivate(ctx);
 }
 
 /**
- * End-of-enemy-turn effects, for enemy tiles on the board. Targets are taken from the board as it is before any
- * effect applies, so a tile changed this turn doesn't spread further until next turn.
- * - Greed: every tool tile orthogonally next to it turns into a random junk tile (from the junk in play).
- * - Depression: every tool or junk tile orthogonally next to it turns into Depression.
+ * On activate, for every tile on the board that has it (Greed, Depression, Worship; tile-effects.md § 2). Locked
+ * tiles skip it. Targets are claimed in reading order from
+ * the board as it is before anything applies, so a tile changed this turn doesn't act until next turn. A cell can
+ * be claimed once per turn: the first claim wins, and "N random" picks skip claimed cells. Then all Creates apply
+ * in reading order of their cells, then the other effects in claim order.
  */
-function enemyTurnEndEffects(ctx: Ctx) {
+function onActivate(ctx: Ctx) {
   const { s, c } = ctx;
   const b = s.board;
-  const junkTargets = new Set<number>();
-  const spreadTargets = new Set<number>();
+  const claims = new Map<number, Effect & { type: 'create' }>();
+  const rest: [Effect, Pos][] = [];
   for (let y = 0; y < b.height; y++) for (let x = 0; x < b.width; x++) {
     const t = tileAt(b, x, y);
-    const effect = t?.kind === 'enemy' ? c.enemyTiles[t.id].onEnemyTurnEnd : undefined;
-    if (!effect) continue;
-    for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
-      const n = tileAt(b, x + dx, y + dy);
-      if (effect === 'junkAdjacentTools' && n?.kind === 'tool') junkTargets.add(idx(b, x + dx, y + dy));
-      if (effect === 'spreadToAdjacent' && (n?.kind === 'tool' || n?.kind === 'junk')) spreadTargets.add(idx(b, x + dx, y + dy));
+    if (!t || isLocked(t, s.round)) continue;
+    const effects = t.kind === 'enemy' ? c.enemyTiles[t.id].triggers.onActivate
+      : t.kind === 'tool' ? c.tools[s.tools[t.id]?.toolId]?.triggers.onActivate : undefined;
+    for (const e of effects ?? []) {
+      if (e.type !== 'create') {
+        rest.push([e, { x, y }]);
+        continue;
+      }
+      for (const i of gameTargets(ctx, e.targets, { x, y }, new Set(claims.keys()))) claims.set(i, e);
     }
   }
-  const junkIds = s.pool.filter((e) => e.kind === 'junk').map((e) => e.id);
-  if (junkTargets.size && junkIds.length) {
-    const uids: number[] = [];
-    for (const i of [...junkTargets].sort((a, z) => a - z)) {
-      if (spreadTargets.has(i)) continue; // Depression wins
-      const t: Tile = { uid: s.nextUid++, kind: 'junk', id: ctx.rng.pick(junkIds), hp: 1, maxHp: 1 };
-      b.cells[i] = t;
-      uids.push(t.uid);
-    }
-    if (uids.length) emit(ctx, { type: 'junked', uids });
-  }
-  if (spreadTargets.size) {
-    const uids: number[] = [];
-    for (const i of [...spreadTargets].sort((a, z) => a - z)) {
-      const t = enemyTile(ctx, 'depression');
-      b.cells[i] = t;
-      uids.push(t.uid);
-    }
-    emit(ctx, { type: 'spread', uids });
+  applyCreates(ctx, claims);
+  for (const [e, at] of rest) {
+    applyNow(ctx, e, at);
+    if (s.outcome) return;
   }
 }
 
@@ -678,11 +869,7 @@ export function useAbility(state: BattleState, index: number, c: Content): Battl
   const p = ctx.s.player;
   p.abilities[index].uses -= 1;
   const def = c.abilities[ab.id];
-  const e = def.effect;
-  if (e.type === 'block') p.block += e.amount;
-  if (e.type === 'moves') ctx.s.movesLeft += e.amount;
-  if (e.type === 'hit') ctx.s.pending.push({ type: 'hit', damage: e.damage, source: def.name });
-  if (e.type === 'line') ctx.s.pending.push({ type: 'line', length: e.length, damage: e.damage, source: def.name });
+  runSetEffects(ctx, def.onUse, { source: def.name, size: 0, shape: [], mult: 1, tool: null });
   emit(ctx, { type: 'ability', id: ab.id });
   proceed(ctx);
   return finish(ctx);
@@ -691,12 +878,14 @@ export function useAbility(state: BattleState, index: number, c: Content): Battl
 /** The cells a placement would cover at `at` (its top-left for shapes and lines), or null if it doesn't fit. */
 export function placementCells(s: BattleState, pl: Placement, at: Pos, orientation: 'h' | 'v' = 'h', allowEmpty = false): Pos[] | null {
   const b = s.board;
+  const t = pl.target;
   let cells: Pos[];
-  if (pl.type === 'shape') cells = pl.cells.map((o) => ({ x: at.x + o.x, y: at.y + o.y }));
-  else if (pl.type === 'line') cells = Array.from({ length: pl.length }, (_, i) => (orientation === 'h' ? { x: at.x + i, y: at.y } : { x: at.x, y: at.y + i }));
+  if (t.type === 'shape') cells = t.cells.map((o) => ({ x: at.x + o.x, y: at.y + o.y }));
+  else if (t.type === 'line') cells = Array.from({ length: t.length }, (_, i) => (orientation === 'h' ? { x: at.x + i, y: at.y } : { x: at.x, y: at.y + i }));
   else cells = [at];
   if (!cells.every((p) => inBounds(b, p))) return null;
-  if (!allowEmpty && (pl.type === 'hit' || pl.type === 'stone' || pl.type === 'space') && !tileAt(b, at.x, at.y)) return null;
+  if (!allowEmpty && t.type === 'anywhere' && !tileAt(b, at.x, at.y)) return null;
+  if (!allowEmpty && t.type === 'anywhere' && t.filter && !t.filter.includes(tileAt(b, at.x, at.y)!.kind)) return null;
   return cells;
 }
 
@@ -707,9 +896,12 @@ export function placementCells(s: BattleState, pl: Placement, at: Pos, orientati
 export function pendingGroupSize(s: BattleState): number {
   const first = s.pending[0];
   if (!first) return 0;
-  const same = (p: Placement) => p.type === first.type && p.source === first.source && p.damage === first.damage && p.type !== 'line';
+  if (first.target.type === 'line') return 1;
+  // Identical placements only: two sets of one tool can have different shapes, and each shape is aimed on its own.
+  const same = (p: Placement) => JSON.stringify(p.target) === JSON.stringify(first.target) && p.source === first.source && p.damage === first.damage
+    && p.apply === first.apply && JSON.stringify(p.onDestroy) === JSON.stringify(first.onDestroy);
   let n = 1;
-  while (n < s.pending.length && same(s.pending[n]) && first.type !== 'line') n += 1;
+  while (n < s.pending.length && same(s.pending[n])) n += 1;
   return n;
 }
 
@@ -717,18 +909,31 @@ function applyPlacement(ctx: Ctx, pl: Placement, at: Pos, orientation: 'h' | 'v'
   const s = ctx.s;
   const cells = placementCells(s, pl, at, orientation, true);
   if (!cells) return; // a later hit aimed at a tile an earlier one already deleted
-  if (pl.type === 'stone' || pl.type === 'space') {
-    if (!tileAt(s.board, at.x, at.y)) return;
-    const gone = damageAt(ctx, cells, pl.damage);
-    if (gone.length) {
-      // A transformation: the broken tile is replaced in place, so nothing falls.
-      const t: Tile = pl.type === 'stone' ? stoneTile(ctx, pl.stoneHp) : { uid: s.nextUid++, kind: 'junk', id: 'space', hp: 1, maxHp: 1 };
-      s.board.cells[idx(s.board, at.x, at.y)] = t;
-      if (pl.type === 'stone') emit(ctx, { type: 'stone', uid: t.uid });
+  if (pl.target.type === 'anywhere' && !tileAt(s.board, at.x, at.y)) return;
+  const gone = damageAt(ctx, cells, pl.damage);
+  if (pl.apply) {
+    // Locked: through the coming enemy turn (this round's, or next round's once this round's is over).
+    const until = s.stage === 'newTurn' ? s.round + 1 : s.round;
+    const uids: number[] = [];
+    for (const p of cells) {
+      const t = tileAt(s.board, p.x, p.y);
+      if (!t || (pl.target.type === 'anywhere' && pl.target.filter && !pl.target.filter.includes(t.kind))) continue;
+      if (pl.apply === 'locked') t.lockedUntil = until;
+      else t.strength = (t.strength ?? 0) + 1;
+      uids.push(t.uid);
     }
-  } else {
-    damageAt(ctx, cells, pl.damage);
+    if (uids.length) emit(ctx, { type: pl.apply === 'locked' ? 'locked' : 'strengthened', uids });
   }
+  if (!pl.onDestroy) return;
+  // On destroy: each broken tile is replaced in place, so nothing falls.
+  const uids: number[] = [];
+  for (const p of gone) {
+    const t = createTile(ctx, pl.onDestroy, pl.onDestroyHp === undefined ? 0 : pl.onDestroyHp - tileBaseHp(ctx, pl.onDestroy));
+    if (!t) continue;
+    s.board.cells[idx(s.board, p.x, p.y)] = t;
+    uids.push(t.uid);
+  }
+  if (uids.length) emit(ctx, { type: 'created', uids });
 }
 
 /** Resolve the next pending placement at `at`. */

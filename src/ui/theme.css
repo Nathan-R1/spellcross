@@ -1,4 +1,4 @@
-/* Spellcross theme and phone-portrait layout (doc 03, spec §1). */
+/* Spellcross theme and responsive layout (doc 03, spec §1). The app fills the browser window at any size. */
 
 @font-face { font-family: 'SpellTitle'; src: url('/assets/fonts/mytitle.ttf') format('truetype'); font-display: swap; }
 @font-face { font-family: 'SpellText'; src: url('/assets/fonts/mytext.ttf') format('truetype'); font-display: swap; }
@@ -19,7 +19,9 @@
   --reward: #7ee07e;
   --block: #9fb4cc;
   --accent: #f2c14e;
-  --topbar: 40px;
+  /* UI scale (src/ui/scale.ts): 1 on a phone, up to 1.8 on a big desktop. Multiply px sizes by it with calc(). */
+  --s: 1;
+  --topbar: calc(40px * var(--s));
   --tile: 48px;
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
@@ -37,16 +39,22 @@ html, body, #root {
 }
 button { font: inherit; color: inherit; cursor: pointer; }
 h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: normal; letter-spacing: 0.02em; }
+/* Headings grow with the window. */
+h1 { font-size: calc(32px * var(--s)); }
+h2 { font-size: calc(24px * var(--s)); }
+h3 { font-size: calc(19px * var(--s)); }
+.topbar-title { font-size: calc(20px * var(--s)); }
+.topbar .chip { font-size: calc(15px * var(--s)); }
+.topbar .btn { font-size: calc(15px * var(--s)); min-height: calc(34px * var(--s)); }
+.outcome-title { font-size: calc(48px * var(--s)); }
 
-/* The app is one portrait layout, letterboxed beyond a large phone's width (spec §1). */
+/* The app fills the whole window; screens switch between wide and tall layouts by aspect ratio. */
 .app {
-  position: relative; margin: 0 auto; height: 100dvh; height: 100svh; height: 100dvh;
-  width: 100%; max-width: 480px; max-height: 960px; overflow: hidden;
+  position: relative; height: 100vh; height: 100dvh; width: 100%; overflow: hidden;
   background:
     repeating-linear-gradient(92deg, rgba(0,0,0,0.06) 0 2px, transparent 2px 14px),
     linear-gradient(180deg, var(--wood) 0%, var(--wood-dark) 100%);
 }
-@media (min-width: 481px) { body { display: flex; align-items: center; } .app { border-radius: 12px; box-shadow: 0 0 40px #000; } }
 
 /* ---------------------------------------------------------------- shared */
 .screen { position: absolute; inset: 0; display: flex; flex-direction: column; }
@@ -57,7 +65,7 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 }
 .topbar .spacer { flex: 1; }
 .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 15px; white-space: nowrap; }
-.chip img { width: 20px; height: 20px; }
+.chip img { width: calc(20px * var(--s)); height: calc(20px * var(--s)); }
 .btn {
   min-height: 34px; padding: 4px 12px; border-radius: 8px; border: 2px solid var(--panel-edge);
   background: linear-gradient(180deg, #8a5a2b, #5c3a18); color: var(--ink); box-shadow: 0 2px 0 #2a1708;
@@ -66,7 +74,7 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 .btn:active, .btn.pressed { transform: translateY(2px); box-shadow: none; filter: brightness(1.15); }
 .btn:disabled { opacity: 0.45; filter: grayscale(0.6); }
 .btn.primary { background: linear-gradient(180deg, #c98a2e, #8a5512); border-color: #f2c14e; }
-.btn.big { min-height: 44px; font-size: 18px; padding: 6px 20px; }
+.btn.big { min-height: calc(44px * var(--s)); font-size: calc(18px * var(--s)); padding: 6px 20px; }
 .btn.icon { min-width: 36px; padding: 2px 8px; }
 .panel { background: var(--panel); border: 2px solid var(--panel-edge); border-radius: 10px; box-shadow: inset 0 0 12px rgba(0,0,0,0.5); }
 .cost { color: var(--cost); text-shadow: 1px 1px 0 #000; }
@@ -84,7 +92,7 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 
 .modal-back { position: absolute; inset: 0; z-index: 40; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; padding: 8px; }
 .modal { max-height: calc(100% - 16px); max-width: min(560px, 100%); overflow: auto; padding: 14px 16px; }
-.modal h2 { margin: 0 0 6px; font-size: 22px; }
+.modal h2 { margin: 0 0 6px; font-size: calc(22px * var(--s)); }
 .modal .row { display: flex; gap: 12px; align-items: flex-start; }
 .modal .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; flex-wrap: wrap; }
 
@@ -92,6 +100,8 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 .toast { background: #000d; border: 1px solid var(--panel-edge); padding: 6px 12px; border-radius: 8px; font-size: 14px; }
 
 /* ---------------------------------------------------------------- menu */
+/* Sky above and grass below fill any letterboxing when the window is taller than the scene. */
+.menu { background: linear-gradient(180deg, #0b1030 0 50%, #1d2a1a 50% 100%); }
 .menu svg { width: 100%; height: 100%; display: block; }
 .menu .obj { cursor: pointer; transition: transform 180ms ease; }
 .menu .obj.lift { transform: translateY(-8px); }
@@ -99,6 +109,9 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 .menu .obj.lift .glow { opacity: 1; }
 .menu .obj.disabled { opacity: 0.35; cursor: default; }
 .menu .label { font-family: 'SpellTitle', serif; fill: var(--ink); paint-order: stroke; stroke: #000; stroke-width: 4px; }
+.menu .label.sub { font-family: 'SpellText', serif; fill: var(--ink-dim); stroke-width: 3px; }
+.menu .obj:focus-visible { outline: none; }
+.menu .obj:focus-visible .glow { opacity: 1; }
 .twinkle { animation: tw 3s ease-in-out infinite; }
 @keyframes tw { 0%,100% { opacity: 0.2; } 50% { opacity: 1; } }
 
@@ -119,10 +132,10 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 .legend .item { display: flex; gap: 8px; align-items: center; margin: 6px 0; font-size: 14px; }
 
 /* ---------------------------------------------------------------- event */
-.event-body { flex: 1; display: flex; gap: 10px; padding: 8px calc(10px + var(--safe-r)) calc(8px + var(--safe-b)) calc(10px + var(--safe-l)); min-height: 0; }
+.event-body { flex: 1; width: 100%; max-width: 1400px; margin: 0 auto; display: flex; gap: 10px; padding: 8px calc(10px + var(--safe-r)) calc(8px + var(--safe-b)) calc(10px + var(--safe-l)); min-height: 0; }
 .event-image { flex: 0 0 38%; display: flex; flex-direction: column; gap: 6px; min-height: 0; }
 .event-image .frame { flex: 1; border: 6px solid #3a240f; border-radius: 8px; background: #1a0f08 center/cover no-repeat; box-shadow: inset 0 0 20px #000; min-height: 0; }
-.banner { font-family: 'SpellTitle', serif; font-size: 20px; text-align: center; background: linear-gradient(90deg, transparent, #7a4d20 15%, #7a4d20 85%, transparent); padding: 4px 8px; }
+.banner { font-family: 'SpellTitle', serif; font-size: calc(20px * var(--s)); text-align: center; background: linear-gradient(90deg, transparent, #7a4d20 15%, #7a4d20 85%, transparent); padding: 4px 8px; }
 .event-text { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .event-text .story { flex: 1 1 auto; min-height: 2.6em; overflow-y: auto; font-size: 16px; line-height: 1.35; padding: 8px 10px; }
 /* Options never run off screen: two columns when there are many, and the list scrolls if it still doesn't fit. */
@@ -131,24 +144,50 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 .option { min-height: 40px; text-align: left; justify-content: flex-start; flex-wrap: wrap; }
 
 /* ---------------------------------------------------------------- prep & toolbox */
-.prep-body { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 8px calc(10px + var(--safe-r)) calc(8px + var(--safe-b)) calc(10px + var(--safe-l)); min-height: 0; overflow-y: auto; }
+.prep-body { flex: 1; width: 100%; max-width: calc(1200px * var(--s)); margin: 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 8px calc(10px + var(--safe-r)) calc(8px + var(--safe-b)) calc(10px + var(--safe-l)); min-height: 0; overflow-y: auto; }
 .prep-enemy { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+/* Wide screens: enemy on the left, tools on the right, FIGHT across the bottom, all on one screen. */
+@media (orientation: landscape) {
+  .prep-body { display: grid; grid-template-columns: auto minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; overflow: hidden; }
+  .prep-body > .prep-enemy, .prep-body > .prep-col { min-height: 0; overflow-y: auto; }
+  .prep-body > .btn.big { grid-column: 1 / -1; }
+  .prep-enemy .pattern-preview { flex-wrap: nowrap; }
+}
 .prep-enemy .row { display: flex; gap: 10px; align-items: center; }
-.prep-col { display: flex; flex-direction: column; gap: 6px; padding: 8px; }
-.tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 6px; }
-.tool-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border-radius: 8px; border: 2px solid #3a240f; background: #2a1a0d; font-size: 13px; text-align: center; min-height: 44px; }
+.prep-col { display: flex; flex-direction: column; gap: calc(6px * var(--s)); padding: calc(8px * var(--s)); }
+.prep-heading { font-size: calc(16px * var(--s)); }
+.tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(88px * var(--s)), 1fr)); gap: calc(6px * var(--s)); }
+.tool-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border-radius: 8px; border: 2px solid #3a240f; background: #2a1a0d; font-size: calc(13px * var(--s)); text-align: center; min-height: 44px; }
+.tool-card .pillar { font-size: calc(11px * var(--s)); }
 .tool-card.selected { border-color: var(--accent); box-shadow: 0 0 8px var(--accent); }
-.tool-card .lvl { position: absolute; top: 2px; right: 4px; font-size: 11px; color: var(--gold); }
+.tool-card .lvl { position: absolute; top: 2px; right: 4px; font-size: calc(11px * var(--s)); color: var(--gold); }
 .fruit-row { display: flex; gap: 2px; align-items: center; min-height: 14px; }
-.socket { display: inline-block; width: 10px; height: 10px; border-radius: 50%; border: 1px dashed var(--ink-dim); }
+.socket { display: inline-block; width: calc(10px * var(--s)); height: calc(10px * var(--s)); border-radius: 50%; border: 1px dashed var(--ink-dim); }
 .toolbox { flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 6px; overflow-y: auto; max-width: 100%; }
 .tool-detail { display: flex; flex-direction: column; gap: 6px; padding: 4px; }
 .sockets { display: flex; flex-direction: column; gap: 4px; }
 .socket-slot { display: flex; gap: 8px; align-items: center; min-height: 36px; padding: 2px 6px; border: 1px dashed var(--panel-edge); border-radius: 8px; }
-.enemy-pick { width: min(420px, 100%); justify-content: flex-start; gap: 10px; padding: 8px; }
+/* Enemy picker (quick fight): a grid of cards that fills the width and scrolls when there are more than fit. */
+.enemy-picker { flex: 1; min-height: 0; overflow-y: auto; width: 100%; max-width: calc(1400px * var(--s)); margin: 0 auto; display: flex; flex-direction: column; gap: 10px;
+  padding: 10px calc(10px + var(--safe-r)) calc(10px + var(--safe-b)) calc(10px + var(--safe-l)); }
+.enemy-picker-title { text-align: center; font-size: calc(16px * var(--s)); }
+.enemy-picker-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(calc(300px * var(--s)), 100%), calc(420px * var(--s)))); justify-content: center; gap: 8px; align-content: start; }
+.enemy-pick { width: 100%; justify-content: flex-start; align-items: flex-start; gap: calc(10px * var(--s)); padding: calc(8px * var(--s)); font-size: calc(15px * var(--s)); }
+.enemy-pick-name { font-size: calc(18px * var(--s)); }
 
-/* ---------------------------------------------------------------- battle (portrait: board on top, two panels below) */
+/* ---------------------------------------------------------------- battle
+   Tall: instruction, board, then the two panels side by side. Wide: board on the left filling the height,
+   with the instruction and panels stacked in a column beside it. */
 .battle-body { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px calc(5px + var(--safe-r)) calc(6px + var(--safe-b)) calc(5px + var(--safe-l)); min-height: 0; position: relative; }
+.battle-side { display: contents; }
+.battle-body.wide { flex-direction: row; align-items: stretch; justify-content: center; gap: 10px; padding-top: 6px; }
+.battle-body.wide > .board { align-self: center; }
+.battle-body.wide .battle-side { display: flex; flex-direction: column; gap: 6px; flex: 0 1 460px; min-width: 260px; min-height: 0; overflow-y: auto; }
+/* Enough height (desktop, tablet): stack the two panels in the side column. Phone landscape keeps them side by side. */
+@media (min-height: 640px) {
+  .battle-body.wide .battle-panels { flex-direction: column; }
+  .battle-body.wide .player-panel, .battle-body.wide .enemy-panel { flex: 1 1 auto; }
+}
 .battle .log { font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 60%; }
 .board { position: relative; flex: 0 0 auto; background: #1a0f08; border: 3px solid #3a240f; border-radius: 6px; box-shadow: inset 0 0 14px #000; touch-action: none; }
 .tile { position: absolute; left: 0; top: 0; padding: 2px; transition: transform 220ms cubic-bezier(.3,.8,.4,1.1), opacity 200ms; }
@@ -192,17 +231,15 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 .ability.empty { border-style: dashed; opacity: 0.4; }
 .ability:disabled { filter: grayscale(1); opacity: 0.5; }
 
-/* ---------------------------------------------------------------- menu (portrait) */
-.menu svg { flex: 1; min-height: 0; }
-.menu-buttons { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 10px calc(14px + var(--safe-b)); }
-
-/* ---------------------------------------------------------------- event (portrait: image above the text) */
-.event-body { flex-direction: column; }
-.event-image { flex: 0 0 32%; }
+/* ---------------------------------------------------------------- event (tall screens: image above the text) */
+@media (orientation: portrait) {
+  .event-body { flex-direction: column; }
+  .event-image { flex: 0 0 32%; }
+}
 
 /* ---------------------------------------------------------------- end screens */
 .centered { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; text-align: center; padding: 16px; }
-.centered h1 { font-size: 40px; margin: 0; }
+.centered h1 { font-size: calc(40px * var(--s)); margin: 0; }
 .debug { position: absolute; left: calc(4px + var(--safe-l)); bottom: calc(4px + var(--safe-b)); z-index: 50; }
 .debug .panel { padding: 8px; display: flex; flex-direction: column; gap: 4px; max-height: 300px; overflow: auto; font-size: 12px; }
 .debug .btn { min-height: 26px; font-size: 12px; padding: 2px 6px; }
@@ -216,7 +253,8 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 .pattern img { width: 100%; height: 100%; object-fit: contain; }
 .pattern-preview { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
 .pattern-cap { font-size: 11px; margin-bottom: 2px; }
-.pattern-totals { font-size: 13px; }
+.pattern-totals { font-size: calc(13px * var(--s)); }
+.pattern-note { font-size: calc(11px * var(--s)); }
 .enemy-panel .pattern { margin: 2px 0; }
 
 
@@ -237,4 +275,21 @@ h1, h2, h3, .title { font-family: 'SpellTitle', Georgia, serif; font-weight: nor
 .status-chip.s-foresight { color: #e6d27a; }
 
 /* Block stopping an enemy step. */
-.tile .held { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 22px; background: rgba(159, 180, 204, 0.45); border-radius: 6px; }
+.tile .anointed { position: absolute; inset: 0; border-radius: 6px; box-shadow: inset 0 0 6px 2px #ffd75e; }
+.tile .strength { position: absolute; top: 0; left: 2px; font-size: 11px; font-weight: bold; color: #ffd75e; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000; }
+.tile .locked { position: absolute; inset: 0; border-radius: 6px; background: rgba(20, 24, 32, 0.35) url('/assets/spells/lockTile.png') center/70% no-repeat; }
+
+/* TileIcon: any tile you can tap or hold for its popup (enemy tiles keep the red ring). */
+.tile-ref { vertical-align: middle; }
+.tile-ref:not(.k-enemy) { box-shadow: inset 0 0 0 1px #0006; }
+
+/* Targets / Dmg / On destroy (DamageAttrs) */
+.damage-attrs { margin: 4px 0; display: grid; gap: 1px; }
+.damage-attrs > div { display: flex; gap: 4px; align-items: center; }
+.damage-attrs dd { display: inline-flex; align-items: center; gap: 4px; }
+.damage-attrs dt { font-weight: 700; }
+.damage-attrs dd { margin: 0; }
+/* Trigger lines: the trigger, its effects indented under it, and each effect's sub-properties under that. */
+.damage-attrs .attr.d1 { padding-left: 12px; }
+.damage-attrs .attr.d2 { padding-left: 24px; }
+.damage-attrs .attr.d0 dt { text-decoration: underline; text-underline-offset: 2px; }

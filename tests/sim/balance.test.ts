@@ -30,10 +30,12 @@ export function play(enemyId: string, loadout: string[], seed: number, trace = f
 }
 
 it.skipIf(!!process.env.TRACE)('balance', () => {
-  const names: Record<string, string> = { t1: 'Fasting', t2: 'Prayer', t3: 'Thanksgiving', t4: 'Word', t5: 'Prophecy' };
+  // Every 3 of the starting tools (createPlayer gives them uids t1, t2, … in order).
+  const names: Record<string, string> = Object.fromEntries(c.config.startingTools.map((id, i) => [`t${i + 1}`, c.tools[id].name.replace(/^The /, '')]));
   const uids = Object.keys(names);
+  const n = uids.length;
   const combos: string[][] = [];
-  for (let a = 0; a < 5; a++) for (let b = a + 1; b < 5; b++) for (let d = b + 1; d < 5; d++) combos.push([uids[a], uids[b], uids[d]]);
+  for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) for (let d = b + 1; d < n; d++) combos.push([uids[a], uids[b], uids[d]]);
   const lines: string[] = [];
   for (const enemyId of Object.keys(c.enemies).filter((e) => !process.env.ENEMY || e === process.env.ENEMY)) {
     lines.push(`\n== ${c.enemies[enemyId].name} (${SEEDS} seeds) ==`);

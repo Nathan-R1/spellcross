@@ -3,7 +3,7 @@ import { content } from '../content';
 import { RANDOM_EVENTS } from '../content/events';
 import { FRUIT_IDS } from '../content/fruits';
 import { useStore } from '../state/store';
-import { Toasts } from './components/common';
+import { TilePopupHost, Toasts } from './components/common';
 import { BattlePrepScreen } from './screens/BattlePrepScreen';
 import { BattleScreen } from './screens/BattleScreen';
 import { EndScreen, EnemyPickerScreen, QuickResultScreen, ResultScreen } from './screens/EndScreens';
@@ -11,6 +11,7 @@ import { EventScreen } from './screens/EventScreen';
 import { MenuScreen } from './screens/MenuScreen';
 import { ToolboxScreen } from './screens/ToolboxScreen';
 import { WorldScreen } from './screens/WorldScreen';
+import './scale';
 
 export function App() {
   const screen = useStore((s) => s.run?.screen ?? null);
@@ -34,6 +35,7 @@ export function App() {
           {toolbox && screen !== null && <ToolboxScreen />}
         </>
       )}
+      <TilePopupHost />
       <Toasts />
       <DebugPanel />
     </div>

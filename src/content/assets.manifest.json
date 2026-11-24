@@ -98,6 +98,7 @@
   "w": 72,
   "h": 72
  },
+ "junk/space.svg": {},
  "maps/people/player.png": {
   "w": 72,
   "h": 72
@@ -224,6 +225,10 @@
  "spells/dud/ash.png": {
   "w": 120,
   "h": 120
+ },
+ "spells/dud/depression.png": {
+  "w": 170,
+  "h": 170
  },
  "spells/dud/mist.png": {
   "w": 120,

@@ -16,23 +16,40 @@ An enemy tile is a board tile owned by the enemy. Every enemy tile:
 - **never matches** and breaks lines of other tiles,
 - **can be swapped** like any tile,
 - **falls with gravity** like any tile,
-- **activates** once per enemy turn, bottom row first ([combat § 4.1](combat.md#41-activation)),
+- **moves** once per enemy turn, bottom row first ([combat § 4.1](combat.md#41-activation)),
 - **never destroys another enemy tile**. If its move is blocked by one, it stays put,
 - enters the board from the enemy's **generator** (§2), or from an enemy action (§3),
 - leaves the board when **damage** reaches its HP, or by being **transformed** into a Stone by **the Word**
   ([combat § 1.2](combat.md#12-hp-and-damage), [§ 5](combat.md#5-placement)),
 - shows its **HP** as a red number in the top-right corner and its **move speed** as arrows at the bottom-middle.
 
-Each tile type has an **HP** value and a **speed** (steps per activation). Damage below its HP leaves it on
+Each tile type has an **HP** value and a **speed** (steps per enemy turn). Damage below its HP leaves it on
 the board with less HP.
+
+**Framework.** Enemy tiles use the same triggers and effects as every other tile ([tile-effects.md](tile-effects.md)).
+
+**Enemy tile triggers.** Each enemy tile's behaviour is its triggers in `src/content/enemies.ts`. Its **Speed**
+(steps down per enemy turn in this fight; 0 if it doesn't move itself) is shown next to its HP at the top of the
+popup, as for every tile. Then, in this order, each trigger that has effects (others are hidden):
+
+| Trigger | When | Current effects |
+|---|---|---|
+| **Each step** | Each step down | Attack: The tile below · Dmg 1. The push: the tile **moves in if this breaks the tile below** |
+| **On activate** | The **end of every enemy turn**, after every enemy tile has moved, while it's on the board | Create [tile] on adjacent tiles |
+| **At bottom** | Each enemy turn on the bottom row | Attack: You · Dmg 1 |
+
+In player-facing text, "On activate" always means this end-of-turn effect; moving is **Speed** and **Each step**.
+Claims and clashes for On activate are in [tile-effects § 3.3](tile-effects.md#33-on-activate-claims).
 
 ### Worry (base enemy tile)
 
 | | |
 |---|---|
 | HP | 1 |
-| Speed | 1 (↓) |
-| On activate | On the bottom row: **1 damage** to the player, and it stays. Otherwise it deals **1 damage** to the tile below. If that tile is deleted, the Worry moves in. If it survives (a full-HP Stone), the Worry stays. Another enemy tile below blocks it, with no damage |
+| Speed | 1 (2 in Hard Choices) |
+| Each step | Dmg 1 to the tile below, and moves in if it breaks. If the tile survives (a full-HP Stone), the Worry stays. Another enemy tile below blocks it, with no damage |
+| On activate | (none) |
+| At bottom | Dmg 1 to you, and it stays |
 | Art | placeholder from the old junk art (e.g. `spells/dud/ash.png`) until drawn |
 
 ### Greed
@@ -40,9 +57,10 @@ the board with less HP.
 | | |
 |---|---|
 | HP | 3 |
-| Speed | 2 (↓↓): two steps per enemy turn, each dealing 1 damage to the tile below and moving in if it breaks. It stops as soon as a step doesn't break the tile |
-| On the bottom row | Hits the player for 1 (once per enemy turn) |
-| End of the enemy turn | After every enemy tile has moved, each **tool tile** orthogonally next to a Greed turns into a **random junk tile** from the junk in play (Time or Space). Junk, Stones and enemy tiles are untouched |
+| Speed | 2. It stops as soon as a step doesn't break the tile |
+| Each step | Dmg 1 to the tile below, and moves in if it breaks |
+| On activate | Create random junk ([Time] or [Space], from the junk in play) on **every adjacent tool**. Junk, Stones and enemy tiles are untouched |
+| At bottom | Dmg 1 to you (once per enemy turn) |
 | Art | placeholder: the gold coin icon (`icons/gold.png`) |
 
 ### Depression
@@ -50,10 +68,11 @@ the board with less HP.
 | | |
 |---|---|
 | HP | 3 |
-| Speed | 0: it never moves (but falls with gravity like any tile) |
-| On the bottom row | Hits the player for 1 (once per enemy turn) |
-| End of the enemy turn | Every **tool or junk tile** orthogonally next to a Depression turns into a **Depression** (3 HP). Stones and enemy tiles are untouched. A tile that changed this turn doesn't spread until next turn |
-| Art | placeholder: `spells/dud/slime.png` |
+| Speed | 0: it never moves itself (but falls with gravity like any tile) |
+| Each step | (hidden) |
+| On activate | Create [Depression] on **1 random adjacent tool or junk**. Depressions pick in reading order (top-left first), and a tile already picked this turn isn't available, so each one converts a different tile. Stones and enemy tiles are never picked. A tile that changed this turn doesn't spread until next turn. On a tile both a Greed and a Depression pick, Depression wins |
+| At bottom | Dmg 1 to you (once per enemy turn) |
+| Art | `spells/dud/depression.png`: a grey-white puddle (the slime art recoloured) |
 
 A fight can override a tile's speed with `tileSpeed` (e.g. Hard Choices' Worries take 2 steps). The board and
 the tile details show the speed for the current fight.
@@ -98,13 +117,13 @@ Actions repeat in a fixed cycle and must be visible ahead of time ("Next: …" o
 
 | | |
 |---|---|
-| Generator | **Rows 4, 5 and 6** (counting from the bottom of the board) are Worry rows; everything else is normal |
-| On the board at the start | All 24 Worries: rows 4–6 across the middle of the board |
+| Generator | **Rows 5 to 8** (counting from the bottom of the board) are Worry rows; everything else is normal |
+| On the board at the start | All 32 Worries: the top 4 rows of the board |
 | Speed | **Worries here take 2 steps** per enemy turn (`tileSpeed: { worry: 2 }`) |
-| Total | **3 Worry rows = 24 Worries**, all on the board from the start; nothing more comes |
+| Total | **4 Worry rows = 32 Worries**, all on the board from the start; nothing more comes |
 | Actions | None |
 | Reward *(tune)* | 20–30 Talents, 25% chance of a fruit (normal tier) |
-| Description (data; the picture is shown instead) | "Rows of Worry with a normal row between each: 4 Worry rows, **32 Worries** in all. The first row starts on the board." |
+| Description (data; the picture is shown instead) | "Four Worry rows filling the top half of the board (rows 5 to 8 from the bottom): **32 Worries** in all, all on the board from the start. Nothing more comes. Worries here take 2 steps per enemy turn." |
 
 You win the moment no Worries are on the board, even if more are still to come
 ([combat § 6](combat.md#6-winning-and-losing)).
@@ -123,15 +142,15 @@ You win the moment no Worries are on the board, even if more are still to come
 
 | | |
 |---|---|
-| Generator | Rows 1–4 normal. Rows **5–8**: a **Depression zigzag** in both edge pairs of columns, mirrored: from the top, (0,0) and (7,0), (1,1) and (6,1), (0,2) and (7,2), (1,3) and (6,3). Rows **8–15**: **Worry in the middle two columns** (x = 3 and 4) |
-| On the board at the start | 8 Depressions and 2 Worries (the top of each middle column) |
-| Total | **24**: 16 Worries (2 on the board, 14 to come) and 8 Depressions. Depression spreads, so more appear during the fight |
+| Generator | Rows 1–4 normal. Rows **5–8**: a **Depression zigzag** in both edge pairs of columns, mirrored: from the top, (0,0) and (7,0), (1,1) and (6,1), (0,2) and (7,2), (1,3) and (6,3). Then normal forever |
+| On the board at the start | All 8 Depressions |
+| Total | **8** Depressions, nothing to come. Depression spreads, so more appear during the fight |
 | Actions | None |
 | Reward *(tune)* | 40–60 Talents, a fruit (elite tier) |
 
-**Under review:** Depression covers the board in about 3 turns unless it's broken on turns 1–2, which locks the
-board (no sets can form). The bot wins under 10% of the time. Options on the table: spread to one neighbour per turn,
-spread every 2nd turn, cap the count, or give spread Depression 1 HP. See
+**Under review:** spreading to one neighbour per Depression still compounds, because new Depressions spread too. With
+no Worries the bot averages about 9.5 damage and wins about half the time, but it depends on the loadout:
+loadouts with Prophecy win 58–100%, and loadouts without it win 0–17%. See
 [combat-tuning.md § 5](combat-tuning.md#5-measurements).
 
 ## 5. Data files
@@ -181,4 +200,4 @@ interface EnemyDef {
 - Financial Stress portrait: `portraits/financial_stress.svg` (a pile of overdue bills).
 - Greed tile art (placeholder: the gold coin icon).
 - All Quiet portrait: `portraits/all_quiet.svg` (an empty chair by a rainy window).
-- Depression tile art (placeholder: `spells/dud/slime.png`).
+- Depression tile art: `spells/dud/depression.png` (grey-white puddle).

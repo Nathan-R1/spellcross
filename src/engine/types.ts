@@ -15,30 +15,95 @@ export type Tier = 'normal' | 'elite' | 'boss';
 
 // ---------------------------------------------------------------- content definitions
 
-/** What a tool's set does (tools.md §1). 'none' = parked tool. */
-export type ToolEffect = 'critical' | 'damageShape' | 'block' | 'stones' | 'prophecy' | 'none';
+// ---------------------------------------------------------------- triggers and effects (docs/tile-effects.md)
+// Every tile is stats plus triggers; each trigger holds an ordered list of effects. New tiles combine these in
+// data. Something genuinely new is a new trigger or effect type here, usable by every tile.
 
-export interface ToolDef {
-  id: ToolId;
+/** Any tile, by kind and content id (a tool's id is its ToolId, e.g. 'word'; `uid` picks an instance when known). */
+export interface TileRef {
+  kind: TileKind;
+  id: string;
+  uid?: string;
+}
+
+/** A number, or "N per tile in the set" (Set formed only). */
+export type Amount = number | { perSetTile: number };
+
+/** Which tiles an effect hits. Chosen by you (anywhere, shape), or by the game (below, adjacent, you). */
+export type Targets =
+  /** You pick `count` single tiles anywhere (only tiles of the `filter` kinds, when given). */
+  | { type: 'chooseAnywhere'; count: Amount; filter?: TileKind[] }
+  /** You place a shape: the set's own shape, or a straight line (you choose horizontal or vertical). */
+  | { type: 'chooseShape'; shape: 'set' }
+  | { type: 'chooseShape'; shape: 'line'; length: number }
+  /** The tile directly below this one (Each step). */
+  | { type: 'below' }
+  /** Orthogonally adjacent tiles of these kinds (and only these ids, when given): every one, or `pick` at random. */
+  | { type: 'adjacent'; pick: 'every' | number; filter: TileKind[]; ids?: string[] }
+  /** The player. */
+  | { type: 'you' };
+
+/** A status or resource the player gains. */
+export type Gainable = 'block' | 'critical' | 'foresight' | 'moves' | 'courage';
+
+/**
+ * A status put on a tile. Locked: it doesn't move, activate or deal damage through the next enemy turn.
+ * Strengthen: +1 per point, stacking; when the tile clears in a set, the set counts 1 tile bigger per point.
+ */
+export type TileStatus = 'locked' | 'strengthen';
+
+/** The tile an effect creates: a specific tile, or a random one of the junk in play. */
+export type CreateWhat = TileRef | { kind: 'randomJunk' };
+
+export type Effect =
+  /**
+   * Damage to the targets. A target this breaks is replaced by `onDestroy` in place (so nothing falls). Targets that
+   * survive get the `apply` status.
+   */
+  | { type: 'attack'; targets: Targets; dmg: number; onDestroy?: TileRef; apply?: TileStatus }
+  /** Turn the targets into a new tile. */
+  | { type: 'create'; what: CreateWhat; targets: Targets }
+  /** The player gains an amount of something. `oncePerTurn`: only the first time this source fires each turn. */
+  | { type: 'gain'; what: Gainable; amount: Amount; oncePerTurn?: boolean; source?: string }
+  /** Nothing else happens: the set just clears. */
+  | { type: 'clearsSelf' };
+
+export type TriggerId = 'setFormed' | 'eachStep' | 'onActivate' | 'atBottom' | 'onUse';
+/** Display and resolve order. */
+export const TRIGGERS: readonly TriggerId[] = ['setFormed', 'eachStep', 'onActivate', 'atBottom', 'onUse'];
+
+/**
+ * When something happens, and what it does. A tile forms sets only if it has `setFormed`.
+ *   setFormed:  3+ of it clear as a set
+ *   eachStep:   each step down (Speed > 0); an Attack on 'below' is the push, and it moves in if that breaks the tile
+ *   onActivate: end of every enemy turn, while on the board
+ *   atBottom:   each enemy turn on the bottom row
+ *   onUse:      an ability is used
+ */
+export type Triggers = Partial<Record<TriggerId, Effect[]>>;
+
+/** What every tile definition has (tools, junk, Stone, enemy tiles). */
+export interface TileDef {
+  id: string;
   name: string;
+  /** Free text for anything the triggers don't say. Normally empty. */
   description: string;
-  pillar: Pillar;
-  effect: ToolEffect;
   icon: string;
   color: string;
+  /** Base HP (tools: 1, plus Gentleness). */
+  hp: number;
+  /** Steps down per enemy turn; 0 for anything that doesn't move by itself. */
+  speed: number;
+  triggers: Triggers;
+}
+
+export interface ToolDef extends TileDef {
+  pillar: Pillar;
   /** Parked tools exist as data but can't be owned yet. */
   parked?: boolean;
 }
 
-export interface JunkDef {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  color: string;
-  /** Damage hits granted when 3+ clear (Time: 1). */
-  hits: number;
-}
+export type JunkDef = TileDef;
 
 export interface FruitDef {
   id: FruitId;
@@ -49,12 +114,6 @@ export interface FruitDef {
   dropWeight: number;
 }
 
-export type AbilityEffect =
-  | { type: 'hit'; damage: number }
-  | { type: 'block'; amount: number }
-  | { type: 'line'; length: number; damage: number }
-  | { type: 'moves'; amount: number };
-
 export interface AbilityDef {
   id: AbilityId;
   name: string;
@@ -62,7 +121,8 @@ export interface AbilityDef {
   rarity: Rarity;
   icon: string;
   maxUses: number;
-  effect: AbilityEffect;
+  /** Its effects (the onUse trigger). */
+  onUse: Effect[];
 }
 
 export interface AbilityInstance {
@@ -78,19 +138,7 @@ export interface StatusDef {
 }
 
 /** An enemy tile type (enemies.md §1). */
-export interface EnemyTileDef {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  color: string;
-  hp: number;
-  speed: number;
-  /** Damage dealt to the player when it steps from the bottom row. */
-  damage: number;
-  /** Effect at the end of each enemy turn, after every enemy tile has moved. */
-  onEnemyTurnEnd?: 'junkAdjacentTools' | 'spreadToAdjacent';
-}
+export type EnemyTileDef = TileDef;
 
 /**
  * One generated row (enemies.md §2): normal (from the tile pool), a full row of one enemy tile, or a row given cell
@@ -145,7 +193,6 @@ export interface BattleTool {
   toolId: ToolId;
   name: string;
   pillar: Pillar;
-  effect: ToolEffect;
   icon: string;
   color: string;
   weight: number;
@@ -163,6 +210,10 @@ export interface Tile {
   id: string;
   hp: number;
   maxHp: number;
+  /** Locked through the enemy turn of this round (combat § 4.4). */
+  lockedUntil?: number;
+  /** Strengthen points (Anoint): the set this tile clears in counts this many tiles bigger. */
+  strength?: number;
 }
 
 export interface Board {
@@ -177,17 +228,22 @@ export interface Pos {
   y: number;
 }
 
-export type Placement =
-  /** Prayer: 1 damage to every cell of this shape (offsets from its top-left). */
-  | { type: 'shape'; cells: Pos[]; damage: number; source: string }
-  /** Prophecy, Time, Abstain: damage one tile. */
-  | { type: 'hit'; damage: number; source: string }
-  /** The Word: damage one tile; if deleted, a Stone takes its place. */
-  | { type: 'stone'; damage: number; stoneHp: number; source: string }
-  /** Prophecy: damage one tile; if deleted, a Space junk tile takes its place. */
-  | { type: 'space'; damage: number; source: string }
-  /** Many Fish: a straight line, orientation chosen when placing. */
-  | { type: 'line'; length: number; damage: number; source: string };
+/** Where a placed Attack lands: one tile, a shape (offsets from its top-left), or a line (orientation chosen). */
+export type PlacementTarget = { type: 'anywhere'; filter?: TileKind[] } | { type: 'shape'; cells: Pos[] } | { type: 'line'; length: number };
+
+/**
+ * One Attack waiting for you to choose where (Choose anywhere / Choose shape). Every tile under it takes `damage`;
+ * a tile it breaks becomes `onDestroy` in place (with `onDestroyHp` HP when given, e.g. Patience's sturdier Stones).
+ */
+export interface Placement {
+  target: PlacementTarget;
+  damage: number;
+  source: string;
+  onDestroy?: TileRef;
+  onDestroyHp?: number;
+  /** A status put on every tile under it that survives (Preaching: Locked; Anoint: +1 Strengthen). */
+  apply?: TileStatus;
+}
 
 export type Stage = 'player' | 'endTurn' | 'enemy' | 'newTurn';
 export type Phase = 'player' | 'placing' | 'over';
@@ -243,17 +299,18 @@ export type BattleEvent =
   | { type: 'matched'; uids: number[] }
   | { type: 'effect'; source: string; text: string }
   | { type: 'damaged'; uids: number[]; deleted: number[] }
-  | { type: 'stone'; uid: number }
   | { type: 'collapsed' }
   | { type: 'shining'; uids: number[] }
+  /** The enemy turn begins (before any enemy tile acts). */
+  | { type: 'enemyTurn' }
   | { type: 'enemyStep'; uid: number }
-  /** Block cancelled one step of this enemy tile. */
-  | { type: 'held'; uid: number }
+  /** These tiles were Locked. */
+  | { type: 'locked'; uids: number[] }
+  /** These tiles gained 1 Strengthen. */
+  | { type: 'strengthened'; uids: number[] }
   | { type: 'playerHit'; amount: number; blocked: number }
-  /** Greed turned these tool tiles into junk. */
-  | { type: 'junked'; uids: number[] }
-  /** Depression turned these tiles into Depression. */
-  | { type: 'spread'; uids: number[] }
+  /** A Create effect turned tiles into these new tiles (Greed's junk, Depression's spread). */
+  | { type: 'created'; uids: number[] }
   | { type: 'ability'; id: AbilityId }
   | { type: 'turnStart'; round: number }
   | { type: 'battleEnd'; outcome: 'victory' | 'defeat' };

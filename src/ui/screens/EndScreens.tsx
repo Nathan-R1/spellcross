@@ -2,6 +2,7 @@ import { content } from '../../content';
 import { useStore } from '../../state/store';
 import { Asset, FruitIcon } from '../components/common';
 import { EnemyPatternPreview } from '../components/EnemyPattern';
+import { useUiScale } from '../scale';
 
 export function ResultScreen() {
   const run = useStore((s) => s.run)!;
@@ -63,17 +64,20 @@ export function QuickResultScreen() {
 /** Quick fight: pick the enemy (combat § 9). */
 export function EnemyPickerScreen() {
   const { quickPick, toTitle } = useStore.getState();
+  const s = useUiScale();
   return (
     <div className="screen">
-      <div className="topbar"><button className="btn icon" onClick={toTitle} aria-label="Back">←</button><span className="title" style={{ fontSize: 20 }}>Fight</span></div>
-      <div className="centered" style={{ justifyContent: 'flex-start' }}>
-        <div className="dim">Choose an enemy</div>
-        {Object.values(content.enemies).map((e) => (
-          <button key={e.id} className="btn enemy-pick" onClick={() => quickPick(e.id)}>
-            <Asset path={e.portrait} alt={e.name} size={48} color="#5a2a2a" />
-            <span style={{ textAlign: 'left' }}><b>{e.name}</b><EnemyPatternPreview enemyId={e.id} cell={6} /></span>
-          </button>
-        ))}
+      <div className="topbar"><button className="btn icon" onClick={toTitle} aria-label="Back">←</button><span className="title topbar-title">Fight</span></div>
+      <div className="enemy-picker">
+        <div className="dim enemy-picker-title">Choose an enemy</div>
+        <div className="enemy-picker-grid">
+          {Object.values(content.enemies).map((e) => (
+            <button key={e.id} className="btn enemy-pick" onClick={() => quickPick(e.id)}>
+              <Asset path={e.portrait} alt={e.name} size={Math.round(72 * s)} color="#5a2a2a" />
+              <span style={{ textAlign: 'left' }}><b className="enemy-pick-name">{e.name}</b><EnemyPatternPreview enemyId={e.id} cell={Math.round(7 * s)} /></span>
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

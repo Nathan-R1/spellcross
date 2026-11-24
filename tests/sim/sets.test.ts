@@ -74,7 +74,7 @@ function tallyEvents(start: BattleState, events: TimedEvent[], t: Tally) {
   for (const { event, after } of events) {
     switch (event.type) {
       case 'swapped': wave = 0; break;
-      case 'shining': case 'enemyStep': case 'held': case 'playerHit': case 'junked': case 'spread': enemyPhase = true; break;
+      case 'shining': case 'enemyTurn': case 'enemyStep': case 'playerHit': enemyPhase = true; break;
       case 'turnStart': enemyPhase = false; break;
       case 'damaged': {
         const kinds = new Map(board.cells.filter(Boolean).map((tl) => [tl!.uid, tl!.kind]));
@@ -129,9 +129,11 @@ function run(c: Content, enemyId: string, loadout: string[], seed: number, t: Ta
 }
 
 it('sets', () => {
-  const uids = ['t1', 't2', 't3', 't4', 't5'];
+  // Every 3 of the starting tools (createPlayer gives them uids t1, t2, … in order).
+  const uids = content.config.startingTools.map((_, i) => `t${i + 1}`);
+  const n = uids.length;
   const combos: string[][] = [];
-  for (let a = 0; a < 5; a++) for (let b = a + 1; b < 5; b++) for (let d = b + 1; d < 5; d++) combos.push([uids[a], uids[b], uids[d]]);
+  for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) for (let d = b + 1; d < n; d++) combos.push([uids[a], uids[b], uids[d]]);
   const f = (n: number, d = 2) => n.toFixed(d);
   const lines: string[] = [];
   for (const enemyId of Object.keys(content.enemies).filter((e) => !process.env.ENEMY || e === process.env.ENEMY)) {

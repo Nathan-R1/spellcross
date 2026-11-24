@@ -5,7 +5,8 @@ import { content } from '../../content';
 import { PILLAR_NAME } from '../../content/tools';
 import { atTown } from '../../engine/run';
 import { useStore } from '../../state/store';
-import { Asset, FruitIcon, Modal } from '../components/common';
+import { Asset, EffectText, FruitIcon, Modal } from '../components/common';
+import { describeTile } from '../../content/describe';
 import { ToolCard } from './BattlePrepScreen';
 
 export function ToolboxScreen() {
@@ -22,7 +23,7 @@ export function ToolboxScreen() {
       <div className="panel toolbox">
         <div className="topbar" style={{ borderRadius: 8 }}>
           <button className="btn icon" onClick={() => setToolbox(false)} aria-label="Close toolbox">←</button>
-          <span className="title" style={{ fontSize: 20 }}>Toolbox</span>
+          <span className="title topbar-title">Toolbox</span>
           <span className="spacer" />
           <span className="chip"><Asset path="fruits/love.svg" alt="Fruit" size={20} /> {run.player.fruits.length}</span>
           <span className="chip">⬆ {run.player.upgrades}</span>
@@ -35,7 +36,7 @@ export function ToolboxScreen() {
           return (
             <div className="tool-detail">
               <h2 style={{ margin: 0 }}>{def.name} <span className="dim" style={{ fontSize: 15 }}>Lv {inst.level} · {PILLAR_NAME[inst.pillar]}</span></h2>
-              <div>{def.description}</div>
+              <EffectText description={def.description} rows={describeTile({ kind: 'tool', id: inst.toolId, uid: inst.uid }, { instance: inst }).attrs} />
               <div className="sockets">
                 {inst.sockets.map((f, i) => (
                   <div key={i} className="socket-slot">

@@ -12,63 +12,140 @@ Spirit or Discipline. Right now pillars matter for **Foresight** (Prophecy) and 
 
 ### 1.1 Owned tools and the battle loadout
 
-The player starts owning **five** tools. **At the start of every battle** (quick fights too) you **choose 3** of
+The player starts owning **seven** tools. **At the start of every battle** (quick fights too) you **choose 3** of
 them. Only those 3 are in the tile pool for that battle ([combat § 1](combat.md#1-the-board)).
+
+**Framework.** Every tool, junk tile and ability is data: triggers (**Set formed**, **On use**) holding effects
+(**Attack**, **Gain**, **Create**, **Clears self**). The rules, the popup format and the vocabulary are in
+[tile-effects.md](tile-effects.md); the data is in `src/content/tools.ts` and `src/content/abilities.ts`.
+
+An **Attack** has three sub-properties, always in this order: **Targets** (**Choose anywhere**: pick single tiles,
+the bracket says how many; or **Choose shape**: place a shape where it fits, the same way round, the bracket says
+which), **Dmg** (damage to each target), and **On destroy** (Create + the icon of the tile a broken target turns
+into, in place, so nothing falls; hidden when nothing is created). The placing banner shows the same three.
+
+Every tile icon opens that tile's popup when you tap or hold it. Popups stack: an icon inside a popup opens the
+next one, **Back** returns, **OK** closes them all.
+
+Sizes are always counted as **tiles in the set**. A tile whose damage reaches its HP **breaks**.
+
+| Source | Trigger | Effects |
+|---|---|---|
+| **Prayer** | Set formed | Attack: Choose shape (the set's shape) · Dmg 3 |
+| **The Word** | Set formed | Attack: Choose anywhere (1 tile per tile in the set) · Dmg 1 · On destroy: Create [Stone] |
+| **Prophecy** | Set formed | Attack: Choose shape (the set's shape) · Dmg 1 · On destroy: Create [Space]; Gain: Foresight, 1 per tile in the set |
+| **Anoint** | Set formed | Attack: Choose anywhere (1 tile per tile in the set) · Dmg 0 · Apply: +1 Strengthen |
+| **Thanksgiving** | Set formed | Gain: Block, 1 per tile in the set |
+| **Worship** | Set formed; On activate | Gain: Block, 1 per tile in the set. On activate: Attack: Every adjacent [Space] · Dmg 1 |
+| **Preaching** | Set formed | Attack: Choose anywhere (1 tile per tile in the set) · Dmg 0 · Apply: Locked |
+| **Time** (junk) | Set formed | Attack: Choose anywhere (1 tile) · Dmg 1 |
+| **Space** (junk) | (none: never forms sets) | |
+| **Stone** | Set formed | Clears self |
+| **Abstain** | On use | Attack: Choose anywhere (1 tile) · Dmg 10 |
+| **Stand Firm** | On use | Gain: Block, 5 |
+| **Many Fish** | On use | Attack: Choose shape (line of 3, horizontal or vertical) · Dmg 1 |
+| **Revival** | On use | Gain: Moves, 3 |
+
+Faithfulness and Foresight raise Dmg; the popup's value includes Faithfulness. Peace, Goodness and Self-Control
+add their own Gain effects to the tool's Set formed list, so they show in its popup too.
 
 | Tool | Pillar | Set effect | Scales with set size? |
 |---|---|---|---|
-| **Fasting** | Discipline | Gain **Critical 1** | No: 1 per set |
-| **Prayer** | Faith | Gain one **damage shape**, the same shape as the set: 1 damage to every tile in it | Yes: the shape *is* the set |
-| **Thanksgiving** | Spirit | Gain **1 Block per tile** | Yes |
-| **The Word** | Truth | **1 Stone per tile**: each one is a 1-damage hit on any tile, which becomes a Stone if the hit deletes it | Yes |
-| **Prophecy** | Truth | **Target 1 tile per tile matched** for 1 damage each; a tile it breaks **turns into Space**. Then gain **1 Foresight per tile** | Yes, both |
+| **Anoint** | Faith | Targets: **Choose anywhere**, 1 per tile in the set. Dmg **0**. Apply **+1 Strengthen** | Yes |
+| **Prayer** | Faith | Targets: **Choose shape**. Dmg **3** | Yes: the shape *is* the set |
+| **Thanksgiving** | Spirit | Gain **1 Block per tile in the set** | Yes |
+| **The Word** | Truth | Targets: **Choose anywhere**, 1 per tile in the set. Dmg **1**. On destroy: **Create Stone** | Yes |
+| **Prophecy** | Truth | Targets: **Choose shape**. Dmg **1**. On destroy: **Create Space**. Also gain **1 Foresight per tile in the set** | Yes, both |
+| **Worship** | Spirit | Gain **1 Block per tile in the set**. On its own, every Worship tile deletes the Space next to it at the end of each enemy turn | Block: yes |
+| **Preaching** | Discipline | Targets: **Choose anywhere**, 1 tile per tile in the set. Dmg **0**. Apply **Locked** | Yes |
 
-### Fasting
+### Anoint
+
+Match 3+ Anoint: **pick tiles**, 1 per tile in the set, anywhere on the board (any tile; the same tile can be picked
+more than once). Each takes **0 damage** and gains **+1 Strengthen**, which stacks and lasts until the tile clears.
+
+When a Strengthened tile clears **in a set**, that set counts **1 tile bigger per point**:
+
+- Per-tile effects grow: Thanksgiving and Worship +1 Block, the Word +1 pick, Prophecy +1 Foresight, Preaching and
+  Anoint +1 pick.
+- A placed shape (Prayer, Prophecy) grows by **1 cell per point**, always along the set's **longest straight line**,
+  at the end nearest the Strengthened tile. A row of 3 with +2 becomes a row of 5 wherever the points were; L and T
+  sets grow along their longest arm.
+- It works with Supportive (Kindness): a Strengthened tile pulled into a set still counts.
+
+Strengthen does nothing on a tile that never clears in a set: an enemy tile, Space, or a tile broken by damage. The
+Faithfulness fruit adds 1 damage to Anoint's picks, which breaks 1-HP tiles before they're Strengthened.
+
+Shown as a gold glow and a **+N** badge on the tile.
+
+### Fasting (parked)
+
+Parked on 2026-11-24, replaced by Anoint. Its effect and Critical still work if it comes back.
 
 Match 3+ Fasting: gain **Critical**. The next tool set you complete is **doubled** ([combat § 3.3](combat.md#33-critical)):
 
-- Fasting → Prayer (3): you place **two** horizontal-3 damage shapes. It's two separate shapes, not one
-  line of 6.
-- Fasting → The Word (3): **6** Stone hits.
+- Fasting → Prayer (3): you place the set's shape **twice**. It's two separate shapes, not one line of 6.
+- Fasting → The Word (3): you pick **6** tiles.
 - Fasting → Thanksgiving (4): **8** Block.
-- Fasting → Prophecy (3): **6** hits and **6 Foresight**.
+- Fasting → Prophecy (3): you place the set's shape **twice**, and gain **6 Foresight**.
 
 ### Prayer
 
-Match 3+ Prayer: you get a damage shape matching the set, and place it anywhere it fits with the same
-orientation. Every tile under it takes 1 damage. That deletes Worries, tools and junk (1 HP) and cracks Stones
-(2 HP). Prayer is the main way to defeat enemy tiles. ([combat § 5.1](combat.md#51-damage-shapes-prayer))
+Match 3+ Prayer: place a copy of **the set's shape** anywhere it fits, the same way round. Every tile under it
+takes **3 damage** *(tune)*. That breaks Worries, Greed, Depression, tools, junk and Stones alike. Prayer is the
+main way to defeat enemy tiles. ([combat § 5.1](combat.md#51-choose-shape-prayer-prophecy))
 
 ### Thanksgiving
 
-Match 3+ Thanksgiving: gain 1 **Block** per tile. On the enemy turn Block **holds the line**: it first absorbs hits
-from the bottom row, then each point left **stops one enemy step**, lowest enemy tiles first
-([combat § 4.3](combat.md#43-damage-and-block)). It clears at the start of your next turn.
+Match 3+ Thanksgiving: gain 1 **Block** per tile. Block absorbs damage to you, point for point, until the start of
+your next turn ([combat § 4.3](combat.md#43-damage-and-block)). It doesn't stop enemy tiles moving.
 
 ### The Word
 
-Match 3+ Word: you get 1 **Stone** per tile. Each Stone is placed on **any tile** as a **1-damage hit**
-([combat § 5.3](combat.md#53-stone-placement-the-word)):
+Match 3+ Word: **pick tiles**, 1 per tile in the set, anywhere on the board. Each takes **1 damage**
+([combat § 5.3](combat.md#53-choose-anywhere-on-destroy-create-stone-the-word)):
 
-- If the hit **deletes** the tile (a tool, junk or a 1-HP Worry), a **Stone** takes its place. It's a
+- If it **breaks** the tile (a tool, junk or a 1-HP Worry), a **Stone** takes its place. It's a
   transformation, so nothing falls.
-- If the tile **survives** (a Stone, or a tougher enemy tile later), it just takes the damage, and no Stone
-  appears.
+- If the tile **survives** (a Stone, or a tougher enemy tile), it just takes the damage, and no Stone appears.
 
 Stones block Worries ([§ 3](#3-stone)).
 
 ### Prophecy
 
-Match X Prophecy (3+): you target **X tiles** (one per tile matched), each taking **1 damage**. A tile that
-breaks **turns into a Space** junk tile in place, so nothing falls; a Worry broken this way is gone. Then you gain
-**X Foresight**. That's after the hits, so it boosts *later* sets, not this one.
+Match X Prophecy (3+): place a copy of **the set's shape**, like Prayer. Every tile under it takes **1 damage**.
+A tile this breaks **becomes a Space** junk tile in place, so nothing falls; an enemy tile broken this way is
+gone. Then you gain **X Foresight** (1 per tile in the set). That's after the damage, so it boosts *later* sets,
+not this one.
 
 **Foresight** (stacks, whole battle) counts at a third of its value: **every 3 Foresight** gives every **Truth**
-tool (the Word, Prophecy) **+1 damage per hit**. It doesn't change Stone HP.
+tool (the Word, Prophecy) **+1 damage per tile**. It doesn't change Stone HP.
+
+### Worship
+
+Match 3+ Worship: gain 1 **Block** per tile, like Thanksgiving.
+
+Worship also works **without being matched**. At the end of every enemy turn (its **On activate**), each Worship tile
+on the board deletes **every Space orthogonally next to it** (1 damage each; Space has 1 HP). Tiles above fall and
+refill as usual. It runs with the enemy tiles' On activate, after their Creates, so it also clears Space that Greed
+made that turn. Time is untouched.
+
+### Preaching
+
+Match 3+ Preaching: **pick tiles**, 1 per tile in the set, anywhere on the board (any tile). Each takes **0 damage**
+(Faithfulness adds damage as usual) and is **Locked** ([combat § 4.4](combat.md#44-locked)): through the next enemy
+turn it doesn't move, activate or deal damage. The same tile can be picked more than once, but locking it again
+only refreshes the lock.
+
+Enemy tiles stop when the tile below is another enemy tile, so Locking the **lowest** enemy tile in a column holds
+the whole column for a turn.
+
+Any tile can be picked, but Locking a tool, junk or Stone has no effect beyond stopping its On activate (a Locked
+Worship tile doesn't clear Space that turn). Locked tiles still match, fall and break as usual.
 
 ### 1.2 Parked tools
 
-Healing (Love), Serving (Love), Fellowship (Unity) and Worship (Spirit) are parked. They'll come back with new
+Fasting (Discipline), Healing (Love), Serving (Love) and Fellowship (Unity) are parked. They'll come back with new
 effects that fit the board-defence game. Fight for Loot's tool reward is a dud until then.
 
 ### 1.3 Levels and Upgrades: TBD
@@ -104,7 +181,7 @@ A Supportive tile that is orthogonally next to a set of a **different tool** is 
 clears:
 
 - It counts **+1 per Supportive point** towards that set's size (Thanksgiving 3 + one Supportive tile = 4 Block).
-- For **Prayer**, its cell joins the damage shape.
+- For **Prayer** and **Prophecy**, its cell joins the set's shape.
 - Its own tool's effect does **not** trigger.
 - It never joins **junk** or **Stone** sets. It still matches normally with its own tool.
 
@@ -124,6 +201,7 @@ are gone. The Hermit's Devoted virtue becomes a **Love** fruit.
 | Matches | 3+ Stones clear, with no effect, whether damaged or not |
 | Vs enemy tiles | Each Worry step deals 1 damage. While the Stone survives, the Worry stays put. Once it's deleted, the Worry moves in |
 | Art (reused) | `spells/dud/rubble.png`. Damaged: the same art with a crack overlay |
+| Popup text | "When 3+ Stones clear: nothing." HP and Speed (0) are in the header, like every tile; blocking enemy steps is just its 2 HP |
 
 ## 4. Junk
 
@@ -132,8 +210,8 @@ Their art is reused.
 
 | Junk | Set effect | Art (reused) |
 |---|---|---|
-| **Time** | 3+ Time: deal **1 damage to 1 tile** anywhere on the board, including an enemy tile | `spells/dud/orb.png` |
-| **Space** | 3+ Space: **nothing**. They just clear | `spells/dud/mist.png` |
+| **Time** | 3+ Time: Targets: **Choose anywhere** (1 tile, enemy tiles included). Dmg **1** | `spells/dud/orb.png` |
+| **Space** | **Never forms sets.** Only damage clears it | `junk/space.svg` (wind) |
 
 ## 5. Abilities
 
@@ -156,6 +234,8 @@ Statuses clear after every battle.
 
 | Status | Lasts | Effect |
 |---|---|---|
-| **Critical** | until used | The next tool set is doubled. Each set uses 1. Stacks as a count |
-| **Block** | until the start of your next turn | Absorbs bottom-row hits, then each point left stops one enemy step (lowest first) |
+| **Critical** | until used | The next tool set is doubled. Each set uses 1. Stacks as a count. No source while Fasting is parked |
+| **Block** | until the start of your next turn | Each point absorbs 1 damage to you |
+| **Strengthen** (on a tile) | until the tile clears | Stacks. The set the tile clears in counts 1 tile bigger per point (a placed shape grows by 1 cell) |
+| **Locked** (on a tile) | through the next enemy turn | The tile doesn't move, activate (On activate, At bottom) or deal damage. Shown as a padlock |
 | **Foresight** | whole battle, stacks | Every 3 gives Truth tools +1 damage per hit |

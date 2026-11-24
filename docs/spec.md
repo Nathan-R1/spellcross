@@ -145,16 +145,17 @@ Authoritative rules: **[combat.md](combat.md)**. In short:
   the Word asks you to place Stones (it transforms tiles, including Worries).
 - **Every tile has HP** (1, Stones 2). Damage that reaches a tile's HP deletes it. There's no separate
   "remove" effect.
-- The enemy's **generator** decides which rows the board is built and refilled from (Hard Choices: Worry rows 4, 5 and 6 from the bottom, nothing more to come).
+- The enemy's **generator** decides which rows the board is built and refilled from (Hard Choices: Worry rows 5 to 8 from the bottom, nothing more to come).
 - Enemy turn: enemy actions, if any (default none), then its **tiles activate**. A Worry steps down one row,
   dealing 1 damage to the tile below and moving in if it's deleted. A Stone (2 HP) stops it for one turn.
   From the bottom row a Worry hits you for 1.
 - **Win** when the enemy has no tiles left on the board. **Lose** when Courage hits 0.
 - Enemies and enemy tiles: [enemies.md](enemies.md). Tools, junk, Stones and statuses: [tools.md](tools.md).
+- How every tile's behaviour and text is built (triggers and effects): [tile-effects.md](tile-effects.md).
 
 ## 7. Player tools
 
-The player starts owning **Fasting, Prayer, Thanksgiving, The Word and Prophecy**, and takes 3 into each battle.
+The player starts owning **Prayer, Thanksgiving, The Word, Prophecy, Worship, Preaching and Anoint**, and takes 3 into each battle.
 See [tools.md](tools.md). Healing, Serving, Fellowship and Worship are parked (TBD).
 
 ## 8. Abilities
