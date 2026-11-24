@@ -2,7 +2,7 @@
 // Every tile and ability is described by its triggers and effects (docs/tile-effects.md): one renderer per effect
 // type, none per tile.
 
-import { fruitSetEffects } from '../engine/combat';
+import { fruitSetEffects, isLocked } from '../engine/combat';
 import type {
   AbilityDef, Amount, BattleState, CreateWhat, Effect, FruitId, Gainable, Placement, Player, Targets, Tile, TileKind, TileRef, TileStatus, ToolInstance, TriggerId,
 } from '../engine/types';
@@ -14,8 +14,13 @@ import { STONE } from './tools';
 
 export type { TileRef } from '../engine/types';
 
-/** One line of text and tile icons (each icon opens that tile's popup). */
-export type AttrPart = string | TileRef;
+/** A status shown as its icon (opens the status popup). `value` is the amount it stands for, when there is one. */
+export interface StatusRef { status: string; value?: number }
+
+/** One line of text, tile icons and status icons (each icon opens its popup). */
+export type AttrPart = string | TileRef | StatusRef;
+
+export const isStatusRef = (p: AttrPart): p is StatusRef => typeof p !== 'string' && 'status' in p;
 
 /** One display line: depth 0 is a trigger, 1 an effect, 2 an effect's sub-property. */
 export interface AttrRow {
@@ -38,6 +43,12 @@ const amountText = (a: Amount) => (typeof a === 'number' ? String(a) : `${a.perS
 const tileName = (id: string) => content.junk[id]?.name ?? content.enemyTiles[id]?.name ?? (id === 'stone' ? STONE.name : id);
 
 const STATUS_LABEL: Record<TileStatus, string> = { locked: 'Locked', strengthen: '+1 Strengthen' };
+
+/** A tile status an Apply puts on: [Locked], or +1 [Strengthen]. */
+export const applyParts = (a: TileStatus): AttrPart[] => (a === 'strengthen' ? ['+1 ', { status: 'strengthen' }] : [{ status: a }]);
+
+/** Gains that are statuses show as their icon. */
+const GAIN_STATUS: Partial<Record<Gainable, string>> = { block: 'block', critical: 'critical', foresight: 'foresight' };
 
 /** "Choose shape (the set's shape)", "Choose anywhere (1 tile per tile in the set)", "every adjacent tool", "You". */
 export function targetsText(t: Targets): string {
@@ -89,13 +100,18 @@ export function effectRows(e: Effect, depth: number, bonusDmg = 0): AttrRow[] {
         { depth: depth + 1, label: 'Dmg', parts: [String(e.dmg + bonusDmg)] },
       ];
       if (e.onDestroy) rows.push({ depth: depth + 1, label: 'On destroy', parts: ['Create ', e.onDestroy] });
-      if (e.apply) rows.push({ depth: depth + 1, label: 'Apply', parts: [STATUS_LABEL[e.apply]] });
+      if (e.apply) rows.push({ depth: depth + 1, label: 'Apply', parts: applyParts(e.apply) });
       return rows;
     }
     case 'create':
       return [{ depth, parts: ['Create ', ...createdParts(e.what), ' on ', ...targetsParts(e.targets)] }];
-    case 'gain':
-      return [{ depth, parts: [`Gain: ${GAIN_LABEL[e.what]}, ${amountText(e.amount)}${e.oncePerTurn ? ', once per turn' : ''}${e.source ? ` (${e.source})` : ''}`] }];
+    case 'gain': {
+      // "Gain: [Block], 1/tile"; Moves and Courage aren't statuses, so they stay words.
+      const status = GAIN_STATUS[e.what];
+      const amount = typeof e.amount === 'number' ? String(e.amount) : `${e.amount.perSetTile}/tile`;
+      const rest = `${amount}${e.oncePerTurn ? ', once per turn' : ''}${e.source ? ` (${e.source})` : ''}`;
+      return [{ depth, label: 'Gain', parts: status ? [{ status }, `, ${rest}`] : [`${GAIN_LABEL[e.what]}, ${rest}`] }];
+    }
     case 'clearsSelf':
       return [{ depth, parts: ['Clears self'] }];
     case 'removeSelf':
@@ -120,7 +136,7 @@ export interface PlacementStats {
   targets: string;
   dmg: number;
   onDestroy: TileRef | null;
-  apply: string | null;
+  apply: AttrPart[] | null;
 }
 
 export function placementStats(p: Placement, n: number): PlacementStats {
@@ -128,7 +144,7 @@ export function placementStats(p: Placement, n: number): PlacementStats {
   const targets = t.type === 'shape' ? `Choose shape (${n > 1 ? `${n} × ` : ''}${t.cells.length} tiles)`
     : t.type === 'line' ? `Choose shape (line of ${t.length})`
     : `Choose anywhere (${plural(n, t.filter ? t.filter.map((k) => KIND_WORD[k]).join(' or ') : 'tile')})`;
-  return { targets, dmg: p.damage, onDestroy: p.onDestroy ?? null, apply: p.apply ? STATUS_LABEL[p.apply] : null };
+  return { targets, dmg: p.damage, onDestroy: p.onDestroy ?? null, apply: p.apply ? applyParts(p.apply) : null };
 }
 
 /** Where a tile popup is opened from, so tools show your own fruit and enemy tiles this fight's speed. */
@@ -173,8 +189,22 @@ function toolFruit(ref: TileRef, ctx: TileCtx): Record<FruitId, number> {
   return out;
 }
 
-/** Describe any tile. `live` is the actual tile on the board, for its current HP. */
+/** A board tile's statuses as a line: "Status: [Locked] +2 [Strengthen]", or none. */
+function statusRows(live: Tile | null | undefined, ctx: TileCtx): AttrRow[] {
+  if (!live) return [];
+  const parts: AttrPart[] = [];
+  if (ctx.battle && isLocked(live, ctx.battle.round)) parts.push({ status: 'locked' });
+  if (live.strength) parts.push(`${parts.length ? ' ' : ''}+${live.strength} `, { status: 'strengthen', value: live.strength });
+  return parts.length ? [{ depth: 0, label: 'Status', parts }] : [];
+}
+
+/** Describe any tile. `live` is the actual tile on the board, for its current HP and statuses. */
 export function describeTile(ref: TileRef, ctx: TileCtx = {}, live?: Tile | null): TileDescription {
+  const d = describeTileDef(ref, ctx, live);
+  return { ...d, attrs: [...statusRows(live, ctx), ...d.attrs] };
+}
+
+function describeTileDef(ref: TileRef, ctx: TileCtx, live?: Tile | null): TileDescription {
   const hp = (max: number) => ({ hp: live?.hp ?? max, maxHp: live?.maxHp ?? max });
   switch (ref.kind) {
     case 'tool': {

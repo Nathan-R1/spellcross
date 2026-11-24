@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { content, assetExists } from '../../content';
-import { describeAbility, describeTile, type AttrRow, type TileRef } from '../../content/describe';
+import { describeAbility, describeTile, isStatusRef, type AttrPart, type AttrRow, type TileRef } from '../../content/describe';
 import type { BattleState, FruitId, Tile } from '../../engine/types';
 import { activeBattle, useStore } from '../../state/store';
 import { enterFullscreen, exitFullscreen, fullscreenSupport, isFullscreen, onFullscreenChange } from '../fullscreen';
@@ -76,19 +76,22 @@ export function Modal({ children, onClose }: { children: ReactNode; onClose?: ()
   return root ? createPortal(back, root) : back;
 }
 
-// ---------------------------------------------------------------- tile icons and popups
-// Any tile can be shown as a TileIcon; tapping or holding it opens that tile's popup. Popups form one stack at the
-// app root (TilePopupHost): an icon inside a popup pushes another, Back pops one, OK closes them all. Only the top
-// popup is drawn, so following icons back and forth (Word -> Stone, or X -> Y -> X ...) never nests popups.
+// ---------------------------------------------------------------- tile and status icons, and their popups
+// Any tile can be shown as a TileIcon and any status as a StatusIcon; tapping or holding one opens its popup. Popups
+// form one stack at the app root (TilePopupHost): an icon inside a popup pushes another, Back pops one, OK closes them
+// all. Only the top popup is drawn, so following icons back and forth (Word -> Stone, or X -> Y -> X ...) never nests
+// popups.
 
-interface TileEntry { ref: TileRef; live?: Tile | null }
-let tileStack: TileEntry[] = [];
+type PopupEntry = { ref: TileRef; live?: Tile | null } | { status: string; value?: number };
+let tileStack: PopupEntry[] = [];
 const tileListeners = new Set<() => void>();
-const setTileStack = (next: TileEntry[]) => { tileStack = next; tileListeners.forEach((l) => l()); };
+const setTileStack = (next: PopupEntry[]) => { tileStack = next; tileListeners.forEach((l) => l()); };
 const subscribeTiles = (l: () => void) => { tileListeners.add(l); return () => { tileListeners.delete(l); }; };
 
-/** Open a tile's popup on top of any already open. `live` is the board tile, for its current HP. */
+/** Open a tile's popup on top of any already open. `live` is the board tile, for its current HP and statuses. */
 export const openTile = (ref: TileRef, live?: Tile | null) => setTileStack([...tileStack, { ref, live }]);
+/** Open a status's popup on top of any already open. `value` is your current amount (Block 3), when there is one. */
+export const openStatus = (status: string, value?: number) => setTileStack([...tileStack, { status, value }]);
 export const closeTiles = () => setTileStack([]);
 const backTile = () => setTileStack(tileStack.slice(0, -1));
 
@@ -105,6 +108,23 @@ export function TileIcon({ tile, size = 22, battle }: { tile: TileRef; size?: nu
   );
 }
 
+/** A status's icon. Tap or hold it for the status popup. */
+export function StatusIcon({ status, value, size = 22 }: { status: string; value?: number; size?: number }) {
+  const def = content.statuses[status];
+  const open = () => openStatus(status, value);
+  const press = useLongPress(open, open);
+  return (
+    <span className={`status-icon s-${status}`} role="button" aria-label={`${def?.name ?? status}${value !== undefined ? ` ${value}` : ''}: hold for details`} {...press}>
+      <Asset path={def?.icon} alt={def?.name ?? status} size={size} color="#333" />
+    </span>
+  );
+}
+
+/** Text, tile icons and status icons in a row; every icon opens its popup. */
+export function Parts({ parts, size }: { parts: AttrPart[]; size?: number }) {
+  return <>{parts.map((p, j) => (typeof p === 'string' ? <span key={j}>{p}</span> : isStatusRef(p) ? <StatusIcon key={j} status={p.status} value={p.value} size={size} /> : <TileIcon key={j} tile={p} size={size} />))}</>;
+}
+
 /**
  * Trigger and effect lines (tile-effects.md § 4): a trigger, its effects indented under it, and each effect's
  * sub-properties under that. Text and tile icons; every icon opens that tile's popup.
@@ -116,7 +136,7 @@ export function Attrs({ rows }: { rows: AttrRow[] }) {
       {rows.map((r, i) => (
         <div key={i} className={`attr d${r.depth}`}>
           {r.label && <dt>{r.label}:</dt>}{' '}
-          <dd>{r.parts.map((p, j) => (typeof p === 'string' ? <span key={j}>{p}</span> : <TileIcon key={j} tile={p} />))}</dd>
+          <dd><Parts parts={r.parts} /></dd>
         </div>
       ))}
     </dl>
@@ -134,7 +154,7 @@ export function EffectText({ description, rows }: { description: string; rows: A
 }
 
 /** The one tile popup layout: icon, name, HP and Speed, description, attribute lines, fruit. */
-export function TilePopup({ entry, depth }: { entry: TileEntry; depth: number }) {
+export function TilePopup({ entry, depth }: { entry: { ref: TileRef; live?: Tile | null }; depth: number }) {
   const battle = useStore((s) => activeBattle(s));
   const player = useStore((s) => s.quick?.player ?? s.run?.player ?? null);
   const enemyId = useStore((s) => s.quick?.enemyId ?? s.run?.prep?.enemyId ?? null);
@@ -157,11 +177,34 @@ export function TilePopup({ entry, depth }: { entry: TileEntry; depth: number })
   );
 }
 
-/** Mount once at the app root: draws the top of the tile popup stack. */
+/** A status popup: icon, name (and your current amount), description. */
+export function StatusPopup({ status, value, depth }: { status: string; value?: number; depth: number }) {
+  const def = content.statuses[status];
+  return (
+    <Modal onClose={closeTiles}>
+      <div className="row tile-popup">
+        <span className="status-icon"><Asset path={def?.icon} alt={def?.name ?? status} size={44} color="#333" /></span>
+        <div>
+          <h2>{def?.name ?? status}{value !== undefined && <span className="dim" style={{ fontSize: 15 }}> {value}</span>}</h2>
+          <div>{def?.description}</div>
+        </div>
+      </div>
+      <div className="actions">
+        {depth > 1 && <button className="btn" onClick={backTile}>Back</button>}
+        <button className="btn" onClick={closeTiles}>OK</button>
+      </div>
+    </Modal>
+  );
+}
+
+/** Mount once at the app root: draws the top of the tile and status popup stack. */
 export function TilePopupHost() {
   const stack = useSyncExternalStore(subscribeTiles, () => tileStack, () => tileStack);
   if (!stack.length) return null;
-  return <TilePopup key={stack.length} entry={stack[stack.length - 1]} depth={stack.length} />;
+  const top = stack[stack.length - 1];
+  return 'status' in top
+    ? <StatusPopup key={stack.length} status={top.status} value={top.value} depth={stack.length} />
+    : <TilePopup key={stack.length} entry={top} depth={stack.length} />;
 }
 
 export function TopBar({ children, onExit }: { children?: ReactNode; onExit?: () => void }) {

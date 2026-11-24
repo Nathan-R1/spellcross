@@ -268,15 +268,21 @@ h3 { font-size: calc(19px * var(--s)); }
 .enemy-tile-count { display: flex; align-items: center; gap: 6px; font-size: 15px; }
 .tile-icon { display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; padding: 2px; box-shadow: inset 0 0 0 2px #a33; cursor: pointer; }
 
-/* Status chips on the player panel: hold for the status description. */
-.status-chip { cursor: pointer; padding: 1px 6px; border-radius: 10px; background: #0006; }
+/* Status chips on the player panel: icon and amount; tap or hold for the status popup. */
+.status-chip { cursor: pointer; padding: 1px 6px; border-radius: 10px; background: #0006; display: inline-flex; align-items: center; gap: 4px; }
+.status-chip img, .status-chip .ph { border-radius: 3px; }
+
+/* StatusIcon: any status you can tap or hold for its popup (in text, like TileIcon). */
+.status-icon { display: inline-flex; align-items: center; justify-content: center; vertical-align: middle; cursor: pointer; border-radius: 4px; box-shadow: 0 0 0 1px #fff6; }
+.status-icon img { display: block; border-radius: 4px; }
 .status-chip.s-block { color: var(--block); }
 .status-chip.s-critical { color: var(--gold); }
 .status-chip.s-foresight { color: #e6d27a; }
 
 /* Block stopping an enemy step. */
 .tile .anointed { position: absolute; inset: 0; border-radius: 6px; box-shadow: inset 0 0 6px 2px #ffd75e; }
-.tile .strength { position: absolute; top: 0; left: 2px; font-size: 11px; font-weight: bold; color: #ffd75e; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000; }
+.tile .strength { position: absolute; top: 0; left: 2px; display: flex; align-items: center; gap: 1px; font-size: 11px; font-weight: bold; color: #ffd75e; text-shadow: 1px 1px 0 #000, -1px -1px 0 #000; }
+.tile .strength img { width: 11px; height: 11px; border-radius: 2px; }
 .tile .locked { position: absolute; inset: 0; border-radius: 6px; background: rgba(20, 24, 32, 0.35) url('/assets/spells/lockTile.png') center/70% no-repeat; }
 
 /* TileIcon: any tile you can tap or hold for its popup (enemy tiles keep the red ring). */
@@ -286,7 +292,8 @@ h3 { font-size: calc(19px * var(--s)); }
 /* Targets / Dmg / On destroy (DamageAttrs) */
 .damage-attrs { margin: 4px 0; display: grid; gap: 1px; }
 .damage-attrs > div { display: flex; gap: 4px; align-items: center; }
-.damage-attrs dd { display: inline-flex; align-items: center; gap: 4px; }
+.damage-attrs dd { display: inline; line-height: 1.6; }
+.damage-attrs dd > .tile-icon, .damage-attrs dd > .status-icon { margin: 0 1px; }
 .damage-attrs dt { font-weight: 700; }
 .damage-attrs dd { margin: 0; }
 /* Trigger lines: the trigger, its effects indented under it, and each effect's sub-properties under that. */

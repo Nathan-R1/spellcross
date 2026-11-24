@@ -7,7 +7,7 @@ import { genCell } from '../../content/enemies';
 import { enemyTileSpeed, isLocked, pendingGroupSize, placementCells, previewPlacements, snapshot, upcomingGrid } from '../../engine/combat';
 import type { BattleState, Placement, Pos, Tile, TimedEvent, ViewSnapshot } from '../../engine/types';
 import { activeBattle, useStore } from '../../state/store';
-import { AbilityBar, Asset, HpBar, Modal, openTile, TileIcon, TopBar, useLongPress } from '../components/common';
+import { AbilityBar, Asset, HpBar, Modal, openStatus, openTile, Parts, TileIcon, TopBar, useLongPress } from '../components/common';
 import { describeTile, placementStats, tileRef } from '../../content/describe';
 import { PatternGrid } from '../components/EnemyPattern';
 
@@ -145,11 +145,11 @@ export function BattleScreen() {
               <b>You</b>
               <HpBar hp={view.player.hp} max={view.player.maxHp} green />
               <div className="stat-row">
-                <StatusChip id="block" text={`🛡 ${view.player.block}`} value={view.player.block} />
-                {view.player.critical > 0 && <StatusChip id="critical" text={`✦ ×${view.player.critical}`} value={view.player.critical} />}
+                <StatusChip id="block" text={`${view.player.block}`} value={view.player.block} />
+                {view.player.critical > 0 && <StatusChip id="critical" text={`×${view.player.critical}`} value={view.player.critical} />}
                 {view.player.foresight > 0 && (
                   <StatusChip id="foresight" value={view.player.foresight}
-                    text={`👁 ${view.player.foresight} (+${Math.floor(view.player.foresight / content.config.foresightPerBonus)})`} />
+                    text={`${view.player.foresight} (+${Math.floor(view.player.foresight / content.config.foresightPerBonus)})`} />
                 )}
               </div>
               <div className="pips" aria-label={`${view.movesLeft} moves left`}>
@@ -178,27 +178,15 @@ export function BattleScreen() {
   );
 }
 
-/** A status chip on your panel: hold (or tap) it to see what the status does. */
+/** A status chip on your panel: its icon and amount. Tap or hold it for the status popup. */
 function StatusChip({ id, text, value }: { id: string; text: string; value: number }) {
-  const [open, setOpen] = useState(false);
   const def = content.statuses[id];
-  const press = useLongPress(() => setOpen(true), () => setOpen(true));
+  const open = () => openStatus(id, value);
+  const press = useLongPress(open, open);
   return (
-    <>
-      <span className={`chip status-chip s-${id}`} role="button" aria-label={`${def.name} ${value}: hold for details`} {...press}>{text}</span>
-      {open && (
-        <Modal onClose={() => setOpen(false)}>
-          <div className="row">
-            <Asset path={def.icon} alt={def.name} size={44} />
-            <div>
-              <h2>{def.name} <span className="dim" style={{ fontSize: 15 }}>{value}</span></h2>
-              <div>{def.description}</div>
-            </div>
-          </div>
-          <div className="actions"><button className="btn" onClick={() => setOpen(false)}>OK</button></div>
-        </Modal>
-      )}
-    </>
+    <span className={`chip status-chip s-${id}`} role="button" aria-label={`${def.name} ${value}: hold for details`} {...press}>
+      <Asset path={def.icon} alt={def.name} size={18} color="#333" /> {text}
+    </span>
   );
 }
 
@@ -209,7 +197,7 @@ function PlacingText({ p, n }: { p: Placement; n: number }) {
     <>
       {p.source}: Targets: {d.targets} · Dmg: {d.dmg}
       {d.onDestroy && <> · On destroy: Create <TileIcon tile={d.onDestroy} size={18} /></>}
-      {d.apply && <> · Apply: {d.apply}</>}
+      {d.apply && <> · Apply: <Parts parts={d.apply} size={18} /></>}
     </>
   );
 }
@@ -307,7 +295,7 @@ function TileView({ t, battle, x, y, tile, selected, aimed, applyMark, locked, i
         {ghost && <span className="stone-ghost" style={{ backgroundImage: `url(/assets/${ghost})` }} />}
         {breaks && <span className="breaks">✕</span>}
         {locked && <span className="locked" />}
-        {(t.strength ?? 0) > 0 && <><span className="anointed" /><span className="strength">+{t.strength}</span></>}
+        {(t.strength ?? 0) > 0 && <><span className="anointed" /><span className="strength"><img src={`/assets/${content.statuses.strengthen.icon}`} alt="" draggable={false} />+{t.strength}</span></>}
         {aimed && <span className="incoming">{incoming > 0 ? `−${incoming}` : ''}{applyMark}</span>}
       </div>
     </div>

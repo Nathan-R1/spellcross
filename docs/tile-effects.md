@@ -55,9 +55,9 @@ An effect is a verb with its own sub-properties. Sub-properties that don't apply
 
 | Effect | Sub-properties | Example |
 |---|---|---|
-| **Attack** | **Targets**, **Dmg**, **On destroy**, **Apply** (a tile status for each target that survives) | Prayer: Choose shape (the set's shape) · Dmg 3. Preaching: … Dmg 0 · Apply: Locked. Anoint: … Dmg 0 · Apply: +1 Strengthen |
+| **Attack** | **Targets**, **Dmg**, **On destroy**, **Apply** (a tile status for each target that survives) | Prayer: Choose shape (the set's shape) · Dmg 3. Preaching: … Dmg 0 · Apply: [Locked]. Anoint: … Dmg 0 · Apply: +1 [Strengthen] |
 | **Create** | the tile (an icon, or random junk) and **where** (targets) | Depression: Create [Depression] on 1 random adjacent tool or junk |
-| **Gain** | what (**Block, Critical, Foresight, Moves, Courage**) and **how much** | Thanksgiving: Gain: Block, 1 per tile in the set |
+| **Gain** | what (**Block, Critical, Foresight, Moves, Courage**) and **how much** | Thanksgiving: Gain: [Block], 1/tile |
 | **Clears self** | none: the set just clears | Stone |
 | **Remove self** | none: the tile leaves the board. Not damage, so nothing breaks it and no On destroy | Grief, At bottom (after its hit) |
 
@@ -117,7 +117,7 @@ Set formed:
     Targets: Choose shape (the set's shape)
     Dmg: 1
     On destroy: Create [Space]
-  Gain: Foresight, 1 per tile in the set
+  Gain: [Foresight], 1/tile
 ```
 
 ```
@@ -130,7 +130,15 @@ At bottom:
     Dmg: 1
 ```
 
-Every tile icon opens that tile's popup (tap or hold), stacked with Back, so references can be followed forever.
+Tiles and statuses show as **icons** in text: `[Space]` is a tile icon, `[Block]`, `[Foresight]`, `[Critical]`,
+`[Locked]` and `[Strengthen]` are status icons. A Gain of a status reads `Gain: [Block], 1/tile`; a Gain that isn't a
+status (Moves, Courage) stays a word. An Apply reads `Apply: [Locked]` or `Apply: +1 [Strengthen]`.
+
+A board tile's popup starts with its statuses, when it has any: `Status: [Locked] +2 [Strengthen]`.
+
+Every icon opens its popup (tap or hold): a tile's popup, or a status's (icon, name, your amount, what it does). The
+status chips on your panel (Block, Critical, Foresight) open the same popup. Popups stack with Back, so references
+can be followed forever.
 
 ## 5. Current tiles
 
