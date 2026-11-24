@@ -1,10 +1,10 @@
 // Battle screen (combat § 8): portrait. The 8×8 board on top; your panel (left) and the enemy panel (right) below.
 // The engine has already resolved each action; this screen plays its events back one at a time.
 
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { content } from '../../content';
 import { genCell } from '../../content/enemies';
-import { enemyTileSpeed, isLocked, pendingGroupSize, placementCells, previewPlacements, snapshot, upcomingGrid } from '../../engine/combat';
+import { enemyTileSpeed, incomingHits, isLocked, pendingGroupSize, placementCells, previewPlacements, snapshot, upcomingGrid } from '../../engine/combat';
 import type { BattleState, Placement, Pos, Tile, TimedEvent, ViewSnapshot } from '../../engine/types';
 import { activeBattle, useStore } from '../../state/store';
 import { AbilityBar, Asset, HpBar, Modal, openStatus, openTile, Parts, TileIcon, TopBar, useLongPress } from '../components/common';
@@ -115,9 +115,11 @@ export function BattleScreen() {
   const enemy = content.enemies[battle.enemyId];
   const maxMoves = Math.max(battle.player.movesPerTurn, view.movesLeft);
   const enemyPress = useLongPress(() => setEnemyInfo(true), () => setEnemyInfo(true));
+  // Enemy tiles that will hit you this enemy turn (from any row), once the board has settled on your turn.
+  const danger = useMemo(() => (busy ? new Set<number>() : incomingHits(battle, content)), [battle, busy]);
 
   const board = (
-    <BoardView view={view} battle={battle} tile={tile} selection={selection} preview={preview} ghost={pending?.onDestroy ? describeTile(pending.onDestroy).icon : null} placing={!!pending} applyMark={pending?.apply === 'locked' ? '🔒' : pending?.apply === 'strengthen' ? '+1' : ''} highlight={highlight} hurt={hurt}
+    <BoardView view={view} battle={battle} tile={tile} selection={selection} preview={preview} ghost={pending?.onDestroy ? describeTile(pending.onDestroy).icon : null} placing={!!pending} applyMark={pending?.apply === 'locked' ? '🔒' : pending?.apply === 'strengthen' ? `+${pending.applyAmount ?? 1}` : ''} highlight={highlight} hurt={hurt} danger={danger}
       onTap={onTap} onLong={(t) => openTile(tileRef(t, battle), t)} />
   );
 
@@ -242,9 +244,9 @@ function PlacingBanner({ pending, group, chosen, orientation, onOrientation, onC
   );
 }
 
-function BoardView({ view, battle, tile, selection, preview, ghost, placing, applyMark, highlight, hurt, onTap, onLong }: {
+function BoardView({ view, battle, tile, selection, preview, ghost, placing, applyMark, highlight, hurt, danger, onTap, onLong }: {
   view: ViewSnapshot; battle: BattleState; tile: number; selection: Pos | null; preview: ReturnType<typeof previewPlacements> | null; ghost: string | null;
-  placing: boolean; applyMark: string; highlight: Set<number>; hurt: Set<number>;
+  placing: boolean; applyMark: string; highlight: Set<number>; hurt: Set<number>; danger: Set<number>;
   onTap: (x: number, y: number) => void; onLong: (t: Tile) => void;
 }) {
   const b = view.board;
@@ -259,7 +261,7 @@ function BoardView({ view, battle, tile, selection, preview, ghost, placing, app
           <TileView key={t.uid} t={t} battle={battle} x={x} y={y} tile={tile} selected={!!sel}
             aimed={!!preview?.damage.has(t.uid)} applyMark={applyMark} locked={isLocked(t, view.round)}
             incoming={preview?.damage.get(t.uid) ?? 0} breaks={!!preview?.deleted.has(t.uid)} ghost={preview?.deleted.has(t.uid) ? ghost : null}
-            matched={highlight.has(t.uid)} hurt={hurt.has(t.uid)} onTap={() => onTap(x, y)} onLong={() => onLong(t)} />
+            matched={highlight.has(t.uid)} hurt={hurt.has(t.uid)} danger={danger.has(t.uid)} onTap={() => onTap(x, y)} onLong={() => onLong(t)} />
         );
       })}
     </div>
@@ -271,20 +273,19 @@ export function tileLook(t: Tile, battle: BattleState) {
   return describeTile(tileRef(t, battle), { battle });
 }
 
-function TileView({ t, battle, x, y, tile, selected, aimed, applyMark, locked, incoming, breaks, ghost, matched, hurt, onTap, onLong }: {
+function TileView({ t, battle, x, y, tile, selected, aimed, applyMark, locked, incoming, breaks, ghost, matched, hurt, danger, onTap, onLong }: {
   t: Tile; battle: BattleState; x: number; y: number; tile: number; selected: boolean; aimed: boolean; applyMark: string; locked: boolean;
-  incoming: number; breaks: boolean; ghost: string | null; matched: boolean; hurt: boolean; onTap: () => void; onLong: () => void;
+  incoming: number; breaks: boolean; ghost: string | null; matched: boolean; hurt: boolean; danger: boolean; onTap: () => void; onLong: () => void;
 }) {
   const press = useLongPress(onTap, onLong);
   const look = tileLook(t, battle);
   const enemy = t.kind === 'enemy' ? content.enemyTiles[t.id] : null;
   const supportive = t.kind === 'tool' && (battle.tools[t.id]?.fruit.kindness ?? 0) > 0;
   const shining = t.kind === 'tool' && (battle.tools[t.id]?.fruit.joy ?? 0) > 0;
-  const danger = enemy && !locked && y === battle.board.height - 1;
   return (
     <div className={`tile ${t.kind} ${selected ? 'selected' : ''} ${matched ? 'matched' : ''} ${aimed ? 'aimed' : ''} ${hurt ? 'hurt' : ''} ${danger ? 'danger' : ''}`}
       style={{ width: tile, height: tile, transform: `translate(${x * tile + 3}px, ${y * tile + 3}px)` }}
-      role="gridcell" aria-label={`${look.name}, row ${y + 1} col ${x + 1}${t.hp < t.maxHp ? ', damaged' : ''}${locked ? ', locked' : ''}${t.strength ? `, strengthened +${t.strength}` : ''}`} {...press}>
+      role="gridcell" aria-label={`${look.name}, row ${y + 1} col ${x + 1}${t.hp < t.maxHp ? ', damaged' : ''}${locked ? ', locked' : ''}${danger ? ', will hit you this enemy turn' : ''}${t.strength ? `, strengthened +${t.strength}` : ''}`} {...press}>
       <div style={{ background: `linear-gradient(160deg, ${look.color}, ${shade(look.color)})` }}>
         <Asset path={look.icon} alt={look.name} color="transparent" />
         {supportive && <span className="linked" />}

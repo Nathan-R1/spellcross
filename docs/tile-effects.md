@@ -55,7 +55,7 @@ An effect is a verb with its own sub-properties. Sub-properties that don't apply
 
 | Effect | Sub-properties | Example |
 |---|---|---|
-| **Attack** | **Targets**, **Dmg**, **On destroy**, **Apply** (a tile status for each target that survives) | Prayer: Choose shape (the set's shape) · Dmg 3. Preaching: … Dmg 0 · Apply: [Locked]. Anoint: … Dmg 0 · Apply: +1 [Strengthen] |
+| **Attack** | **Targets**, **Dmg**, **On destroy**, **Apply** (a tile status for each target that survives) | Prayer: Choose shape (the set's shape) · Dmg 3. Preaching: … Dmg 0 · Apply: [Locked]. Anoint: Choose shape (the set's shape) · Dmg 0 · Apply: +2 [Strengthen] |
 | **Create** | the tile (an icon, or random junk) and **where** (targets) | Depression: Create [Depression] on 1 random adjacent tool or junk |
 | **Gain** | what (**Block, Critical, Foresight, Moves, Courage**) and **how much** | Thanksgiving: Gain: [Block], 1/tile |
 | **Clears self** | none: the set just clears | Stone |
@@ -91,7 +91,7 @@ Fruit, statuses and Foresight change effects instead of adding special cases:
 | **Patience** | +1 HP per fruit on tiles the tool's Attacks create (the Word's Stones, Prophecy's Space) |
 | **Peace, Goodness, Self-Control** | Add their own effects to the end of the tool's Set formed list: Gain Block (1 per tile in the set, per fruit), Gain Courage, Gain Moves (once per turn) |
 | **Gentleness, Love, Kindness, Joy** | Stats, not effects: tile HP, pool weight, Supportive, Shining |
-| **Strengthen** (a tile status, from Anoint) | +1 set size per point on a tile in the set, so every "per tile in the set" amount grows; a set's shape grows by 1 cell per point, along its longest straight line |
+| **Strengthen** (a tile status, from Anoint: +2 per tile) | +1 set size per point on a tile in the set, so every "per tile in the set" amount grows; a set's shape grows by 1 cell per point, along its longest straight line |
 
 ### 3.3 On activate: claims
 
@@ -132,7 +132,7 @@ At bottom:
 
 Tiles and statuses show as **icons** in text: `[Space]` is a tile icon, `[Block]`, `[Foresight]`, `[Critical]`,
 `[Locked]` and `[Strengthen]` are status icons. A Gain of a status reads `Gain: [Block], 1/tile`; a Gain that isn't a
-status (Moves, Courage) stays a word. An Apply reads `Apply: [Locked]` or `Apply: +1 [Strengthen]`.
+status (Moves, Courage) stays a word. An Apply reads `Apply: [Locked]` or `Apply: +2 [Strengthen]`.
 
 A board tile's popup starts with its statuses, when it has any: `Status: [Locked] +2 [Strengthen]`.
 
@@ -147,13 +147,13 @@ can be followed forever.
 | Prayer | 0 | Set formed: Attack (Choose shape: the set's shape · Dmg 3) |
 | The Word | 0 | Set formed: Attack (Choose anywhere: 1 tile per tile in the set · Dmg 1 · On destroy: Create [Stone]) |
 | Prophecy | 0 | Set formed: Attack (Choose shape: the set's shape · Dmg 1 · On destroy: Create [Space]); Gain Foresight, 1 per tile in the set |
-| Anoint | 0 | Set formed: Attack (Choose anywhere: 1 tile per tile in the set · Dmg 0 · Apply: +1 Strengthen) |
+| Anoint | 0 | Set formed: Attack (Choose shape: the set's shape · Dmg 0 · Apply: +2 Strengthen) |
 | Fasting (parked) | 0 | Set formed: Gain Critical, 1 |
 | Thanksgiving | 0 | Set formed: Gain Block, 1 per tile in the set |
 | Worship | 0 | Set formed: Gain Block, 1 per tile in the set. On activate: Attack (Every adjacent [Space] · Dmg 1) |
 | Preaching | 0 | Set formed: Attack (Choose anywhere: 1 tile per tile in the set · Dmg 0 · Apply: Locked) |
 | Parked tools | 0 | Set formed: Clears self |
-| Time | 0 | Set formed: Attack (Choose anywhere: 1 tile · Dmg 1) |
+| Time | 0 | Set formed: Attack (Choose anywhere: 1 tile · Dmg 1/3 tiles, rounded up) |
 | Space | 0 | none (never forms sets) |
 | Stone | 0 | Set formed: Clears self |
 | Worry | 1 (2 in Hard Choices) | Each step: Attack (the tile below · Dmg 1). At bottom: Attack (You · Dmg 1) |

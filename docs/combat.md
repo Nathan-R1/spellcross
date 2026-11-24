@@ -303,7 +303,10 @@ The battle screen is **portrait**: the board is on top, with two panels side by 
   its **icon with "× 18 of 20 left"** (on the board + still to come, out of the total). Hold or tap an icon for
   that tile's details, as when holding it on the board. Any enemy actions are shown as "Next: …".
 - **Long-press** any tile for its info popup.
-- **Danger cue:** Worries on the bottom row (about to hit you) pulse red. *(nice-to-have)*
+- **Danger cue:** every enemy tile that will hit you in the coming enemy turn pulses red, from any row: a Speed 2
+  or 3 tile higher up with a clear path counts. The game runs the real end of turn on a copy (Shining, then each
+  enemy tile's steps, bottom first; Stones, Locks and enemy tiles in the way all count) to find them
+  (`incomingHits` in `src/engine/combat.ts`). Block doesn't change it. Shown on your turn once the board settles.
 
 ## 9. Quick fight from the main menu
 

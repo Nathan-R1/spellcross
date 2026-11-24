@@ -30,8 +30,8 @@ describe('statuses in tile text', () => {
     expect(rowsOf('prophecy')).toContainEqual({ depth: 1, label: 'Gain', parts: [{ status: 'foresight' }, ', 1/tile'] });
   });
 
-  it('Apply shows the status icon: +1 [Strengthen], [Locked]', () => {
-    expect(rowsOf('anoint')).toContainEqual({ depth: 2, label: 'Apply', parts: ['+1 ', { status: 'strengthen' }] });
+  it('Apply shows the status icon: +2 [Strengthen], [Locked]', () => {
+    expect(rowsOf('anoint')).toContainEqual({ depth: 2, label: 'Apply', parts: ['+2 ', { status: 'strengthen' }] });
     expect(rowsOf('preaching')).toContainEqual({ depth: 2, label: 'Apply', parts: [{ status: 'locked' }] });
   });
 
@@ -44,5 +44,9 @@ describe('statuses in tile text', () => {
 
   it('every status referenced in text exists', () => {
     for (const id of ['block', 'critical', 'foresight', 'locked', 'strengthen']) expect(statuses[id]?.icon).toBeTruthy();
+  });
+
+  it('Time: Dmg: 1/3 tiles (rounded up)', () => {
+    expect(describeTile({ kind: 'junk', id: 'time' }).attrs).toContainEqual({ depth: 2, label: 'Dmg', parts: ['1/3 tiles (rounded up)'] });
   });
 });

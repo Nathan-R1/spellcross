@@ -13,7 +13,7 @@ import { FRUIT_IDS } from '../content/fruits';
 import { junk as JUNK, STONE } from '../content/tools';
 import { createRng, type Rng } from './rng';
 import type {
-  Amount, BattleEvent, Gainable, Targets, BattleResult, BattleState, BattleTool, Board, Effect, FruitId, Placement, Player, Pos, Tile, TileRef, TimedEvent,
+  Amount, BattleEvent, Gainable, Targets, BattleResult, BattleState, BattleTool, Board, Effect, FruitId, Placement, Player, Pos, Tile, TileRef, TileStatus, TimedEvent,
   ToolInstance, ViewSnapshot,
 } from './types';
 
@@ -30,6 +30,8 @@ interface Ctx {
   c: Content;
   rng: Rng;
   events: TimedEvent[];
+  /** Set by incomingHits: the uids of enemy tiles whose At bottom hits you. */
+  hits?: Set<number>;
 }
 
 // ---------------------------------------------------------------- helpers
@@ -414,6 +416,9 @@ const amountOf = (a: Amount, size: number) => (typeof a === 'number' ? a : a.per
  * Modifiers: Faithfulness +Dmg; Foresight +1 Dmg per 3 on Truth tools (read when the Attack runs, so a Gain of
  * Foresight later in the list boosts later sets only); Patience +HP on tiles the tool creates. Returns log texts.
  */
+/** "Lock" or "+2 Strengthen", for the log. */
+const applyText = (e: { apply?: TileStatus; applyAmount?: number }) => (e.apply === 'locked' ? 'Lock' : e.apply === 'strengthen' ? `+${e.applyAmount ?? 1} Strengthen` : '');
+
 function runSetEffects(ctx: Ctx, effects: Effect[], src: EffectSource): string[] {
   const { s, c } = ctx;
   const p = s.player;
@@ -423,21 +428,23 @@ function runSetEffects(ctx: Ctx, effects: Effect[], src: EffectSource): string[]
     switch (e.type) {
       case 'attack': {
         const truth = tool?.pillar === 'truth' ? Math.floor(p.foresight / c.config.foresightPerBonus) : 0;
-        const damage = e.dmg + (tool ? tool.fruit.faithfulness + truth : 0);
+        // Time: 1 per 3 tiles in the set, rounded up (a Strengthened set counts bigger).
+        const base = e.dmgPerTiles ? e.dmg * Math.ceil(size / e.dmgPerTiles) : e.dmg;
+        const damage = base + (tool ? tool.fruit.faithfulness + truth : 0);
         const onDestroy = {
           ...(e.onDestroy && { onDestroy: e.onDestroy, ...(tool && tool.fruit.patience ? { onDestroyHp: tileBaseHp(ctx, e.onDestroy) + tool.fruit.patience } : {}) }),
-          ...(e.apply && { apply: e.apply }),
+          ...(e.apply && { apply: e.apply, ...(e.applyAmount && e.applyAmount !== 1 && { applyAmount: e.applyAmount }) }),
         };
         const t = e.targets;
         if (t.type === 'chooseShape') {
           const target = t.shape === 'set' ? { type: 'shape' as const, cells: src.shape } : { type: 'line' as const, length: t.length };
           for (let i = 0; i < mult; i++) s.pending.push({ target, damage, source: src.source, ...onDestroy });
-          texts.push(`${mult > 1 ? `${mult} × ` : ''}${target.type === 'shape' ? `${target.cells.length}-tile shape` : `line of ${target.length}`}, ${damage} damage`);
+          texts.push(`${mult > 1 ? `${mult} × ` : ''}${target.type === 'shape' ? `${target.cells.length}-tile shape` : `line of ${target.length}`}, ${damage > 0 || !e.apply ? `${damage} damage` : applyText(e)}${damage > 0 && e.apply ? ` + ${applyText(e)}` : ''}`);
         } else if (t.type === 'chooseAnywhere') {
           const n = amountOf(t.count, size) * mult;
           const target = { type: 'anywhere' as const, ...(t.filter && { filter: t.filter }) };
           for (let i = 0; i < n; i++) s.pending.push({ target, damage, source: src.source, ...onDestroy });
-          texts.push(`${n} × ${damage > 0 || !e.apply ? `${damage} damage` : ''}${damage > 0 && e.apply ? ' + ' : ''}${e.apply === 'locked' ? 'Lock' : e.apply === 'strengthen' ? '+1 Strengthen' : ''}${e.onDestroy?.kind === 'stone' ? ' (Stones)' : ''}`);
+          texts.push(`${n} × ${damage > 0 || !e.apply ? `${damage} damage` : ''}${damage > 0 && e.apply ? ' + ' : ''}${e.apply ? applyText(e) : ''}${e.onDestroy?.kind === 'stone' ? ' (Stones)' : ''}`);
         } else {
           texts.push(...applyNow(ctx, e, null));
         }
@@ -762,14 +769,17 @@ function activateEnemies(ctx: Ctx) {
     // The push: an Each step Attack on the tile below. It moves in if that breaks the tile.
     const pushDmg = step.reduce((n, e) => n + (e.type === 'attack' && e.targets.type === 'below' ? e.dmg : 0), 0);
     const extras = step.filter((e) => !(e.type === 'attack' && e.targets.type === 'below'));
+    const hitsYou = (def.triggers.atBottom ?? []).some((e) => e.type === 'attack' && e.targets.type === 'you' && e.dmg > 0);
     // A tile that doesn't move (Depression) still fires At bottom from the bottom row.
     if (speed === 0 && p.y === b.height - 1) {
+      if (hitsYou) ctx.hits?.add(uid);
       runAll(def.triggers.atBottom, p);
       if (s.outcome) return;
       continue;
     }
     for (let k = 0; k < speed && p; k++) {
       if (p.y === b.height - 1) {
+        if (hitsYou) ctx.hits?.add(uid);
         runAll(def.triggers.atBottom, p);
         if (s.outcome) return;
         break;
@@ -864,6 +874,22 @@ export function playerMove(state: BattleState, a: Pos, b: Pos, c: Content): Batt
   return finish(ctx);
 }
 
+/**
+ * The enemy tiles that will hit you in the coming enemy turn if you end your turn now: the real end of turn (Shining,
+ * then every enemy tile's steps, bottom first) run on a copy. Works from any row: a Speed 3 tile two rows up that
+ * has a clear path still reaches the bottom and hits. Block doesn't matter; the tile still hits.
+ */
+export function incomingHits(state: BattleState, c: Content): Set<number> {
+  if (state.phase !== 'player' || state.outcome) return new Set();
+  const ctx = begin(state, c);
+  ctx.hits = new Set();
+  ctx.s.player.hp = Number.MAX_SAFE_INTEGER; // so an early defeat doesn't stop the count
+  ctx.s.movesLeft = 0;
+  ctx.s.stage = 'endTurn';
+  proceed(ctx);
+  return ctx.hits;
+}
+
 export function endTurn(state: BattleState, c: Content): BattleResult {
   if (state.phase !== 'player') throw new Error('Not your turn');
   const ctx = begin(state, c);
@@ -911,7 +937,7 @@ export function pendingGroupSize(s: BattleState): number {
   if (first.target.type === 'line') return 1;
   // Identical placements only: two sets of one tool can have different shapes, and each shape is aimed on its own.
   const same = (p: Placement) => JSON.stringify(p.target) === JSON.stringify(first.target) && p.source === first.source && p.damage === first.damage
-    && p.apply === first.apply && JSON.stringify(p.onDestroy) === JSON.stringify(first.onDestroy);
+    && p.apply === first.apply && p.applyAmount === first.applyAmount && JSON.stringify(p.onDestroy) === JSON.stringify(first.onDestroy);
   let n = 1;
   while (n < s.pending.length && same(s.pending[n])) n += 1;
   return n;
@@ -931,7 +957,7 @@ function applyPlacement(ctx: Ctx, pl: Placement, at: Pos, orientation: 'h' | 'v'
       const t = tileAt(s.board, p.x, p.y);
       if (!t || (pl.target.type === 'anywhere' && pl.target.filter && !pl.target.filter.includes(t.kind))) continue;
       if (pl.apply === 'locked') t.lockedUntil = until;
-      else t.strength = (t.strength ?? 0) + 1;
+      else t.strength = (t.strength ?? 0) + (pl.applyAmount ?? 1);
       uids.push(t.uid);
     }
     if (uids.length) emit(ctx, { type: pl.apply === 'locked' ? 'locked' : 'strengthened', uids });

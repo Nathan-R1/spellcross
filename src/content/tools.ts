@@ -33,7 +33,7 @@ export const tools: Record<string, ToolDef> = {
   preaching: { id: 'preaching', name: 'Preaching', pillar: 'discipline', description: '', icon: 'spells/water/default.png', color: '#7fc4e8', ...T,
     triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseAnywhere', count: PER_TILE }, dmg: 0, apply: 'locked' }] } },
   anoint: { id: 'anoint', name: 'Anoint', pillar: 'faith', description: 'A Strengthened tile makes the set it clears in 1 tile bigger per point.', icon: 'spells/fire/default.png', color: '#f2c14e', ...T,
-    triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseAnywhere', count: PER_TILE }, dmg: 0, apply: 'strengthen' }] } },
+    triggers: { setFormed: [{ type: 'attack', targets: SET_SHAPE, dmg: 0, apply: 'strengthen', applyAmount: 2 }] } },
   // Parked (tools.md §1.2): no effect until redesigned.
   healing: parked('healing', 'Healing', 'love', 'spells/water/healing-1.png', '#b3d9ff'),
   serving: parked('serving', 'Serving', 'love', 'spells/water/dmg-1.png', '#b3d9ff'),
@@ -41,8 +41,8 @@ export const tools: Record<string, ToolDef> = {
 };
 
 export const junk: Record<string, JunkDef> = {
-  time: { id: 'time', name: 'Time', description: '', icon: 'spells/dud/orb.png', color: '#a58fc9', ...T,
-    triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseAnywhere', count: 1 }, dmg: 1 }] } },
+  time: { id: 'time', name: 'Time', description: '', icon: 'junk/time.svg', color: '#a58fc9', ...T,
+    triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseAnywhere', count: 1 }, dmg: 1, dmgPerTiles: 3 }] } },
   // No setFormed: Space never forms sets, so only damage clears it.
   space: { id: 'space', name: 'Space', description: 'Never forms sets. Only damage clears it.', icon: 'junk/space.svg', color: '#9aa3ad', ...T, triggers: {} },
 };

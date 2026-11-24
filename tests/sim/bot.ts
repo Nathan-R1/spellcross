@@ -43,6 +43,19 @@ function chooseStrengthen(s: BattleState, n: number): Pos[] {
     const pairs = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => tileAt(s.board, x + dx, y + dy)?.id === t.id).length;
     scored.push({ p: { x, y }, v: worth * (1 + pairs) });
   }
+  const pl = s.pending[0];
+  if (pl.target.type !== 'anywhere') {
+    // A shape (Anoint): the anchor whose cells cover the most worth, for each of the n shapes.
+    const worth = new Map(scored.map((e) => [e.p.y * W + e.p.x, e.v]));
+    let best: Pos = { x: 0, y: 7 }, bestV = -Infinity;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const cells = placementCells(s, pl, { x, y });
+      if (!cells) continue;
+      const v = cells.reduce((sum, p) => sum + (worth.get(p.y * W + p.x) ?? 0), 0);
+      if (v > bestV) { bestV = v; best = { x, y }; }
+    }
+    return Array.from({ length: n }, () => best);
+  }
   scored.sort((a, b) => b.v - a.v);
   const out = scored.slice(0, n).map((e) => e.p);
   while (out.length < n && out.length > 0) out.push(out[0]);

@@ -42,10 +42,10 @@ const amountText = (a: Amount) => (typeof a === 'number' ? String(a) : `${a.perS
 /** A tile's name from its content id (junk, enemy tile or Stone). */
 const tileName = (id: string) => content.junk[id]?.name ?? content.enemyTiles[id]?.name ?? (id === 'stone' ? STONE.name : id);
 
-const STATUS_LABEL: Record<TileStatus, string> = { locked: 'Locked', strengthen: '+1 Strengthen' };
+const statusLabel = (a: TileStatus, amount = 1) => (a === 'locked' ? 'Locked' : `+${amount} Strengthen`);
 
-/** A tile status an Apply puts on: [Locked], or +1 [Strengthen]. */
-export const applyParts = (a: TileStatus): AttrPart[] => (a === 'strengthen' ? ['+1 ', { status: 'strengthen' }] : [{ status: a }]);
+/** A tile status an Apply puts on: [Locked], or +2 [Strengthen]. */
+export const applyParts = (a: TileStatus, amount = 1): AttrPart[] => (a === 'strengthen' ? [`+${amount} `, { status: 'strengthen' }] : [{ status: a }]);
 
 /** Gains that are statuses show as their icon. */
 const GAIN_STATUS: Partial<Record<Gainable, string>> = { block: 'block', critical: 'critical', foresight: 'foresight' };
@@ -97,10 +97,10 @@ export function effectRows(e: Effect, depth: number, bonusDmg = 0): AttrRow[] {
       const rows: AttrRow[] = [
         { depth, parts: ['Attack'] },
         { depth: depth + 1, label: 'Targets', parts: targetsParts(e.targets, true) },
-        { depth: depth + 1, label: 'Dmg', parts: [String(e.dmg + bonusDmg)] },
+        { depth: depth + 1, label: 'Dmg', parts: [e.dmgPerTiles ? `${e.dmg}/${e.dmgPerTiles} tiles (rounded up)${bonusDmg ? ` +${bonusDmg}` : ''}` : String(e.dmg + bonusDmg)] },
       ];
       if (e.onDestroy) rows.push({ depth: depth + 1, label: 'On destroy', parts: ['Create ', e.onDestroy] });
-      if (e.apply) rows.push({ depth: depth + 1, label: 'Apply', parts: applyParts(e.apply) });
+      if (e.apply) rows.push({ depth: depth + 1, label: 'Apply', parts: applyParts(e.apply, e.applyAmount) });
       return rows;
     }
     case 'create':
@@ -144,7 +144,7 @@ export function placementStats(p: Placement, n: number): PlacementStats {
   const targets = t.type === 'shape' ? `Choose shape (${n > 1 ? `${n} × ` : ''}${t.cells.length} tiles)`
     : t.type === 'line' ? `Choose shape (line of ${t.length})`
     : `Choose anywhere (${plural(n, t.filter ? t.filter.map((k) => KIND_WORD[k]).join(' or ') : 'tile')})`;
-  return { targets, dmg: p.damage, onDestroy: p.onDestroy ?? null, apply: p.apply ? applyParts(p.apply) : null };
+  return { targets, dmg: p.damage, onDestroy: p.onDestroy ?? null, apply: p.apply ? applyParts(p.apply, p.applyAmount) : null };
 }
 
 /** Where a tile popup is opened from, so tools show your own fruit and enemy tiles this fight's speed. */
@@ -247,7 +247,7 @@ function effectSummary(e: Effect): string {
     case 'attack': {
       const t = e.targets;
       const what = t.type === 'chooseShape' && t.shape === 'line' ? `${t.length} in a line` : t.type === 'chooseAnywhere' && typeof t.count === 'number' ? plural(t.count, 'tile') : targetsText(t);
-      return e.apply && e.dmg === 0 ? `${STATUS_LABEL[e.apply]}: ${what}` : `${e.dmg} damage to ${what}`;
+      return e.apply && e.dmg === 0 ? `${statusLabel(e.apply, e.applyAmount)}: ${what}` : `${e.dmg} damage to ${what}`;
     }
     case 'gain': return `+${amountText(e.amount)} ${e.what === 'moves' ? 'moves' : GAIN_LABEL[e.what]}`;
     case 'create': return 'Create a tile';

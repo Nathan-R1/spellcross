@@ -60,7 +60,7 @@ export type Effect =
    * Damage to the targets. A target this breaks is replaced by `onDestroy` in place (so nothing falls). Targets that
    * survive get the `apply` status.
    */
-  | { type: 'attack'; targets: Targets; dmg: number; onDestroy?: TileRef; apply?: TileStatus }
+  | { type: 'attack'; targets: Targets; dmg: number; /** Set formed only: Dmg is per this many tiles in the set, rounded up (Time: 1 per 3). */ dmgPerTiles?: number; onDestroy?: TileRef; apply?: TileStatus; /** Strengthen points per tile (default 1). */ applyAmount?: number }
   /** Turn the targets into a new tile. */
   | { type: 'create'; what: CreateWhat; targets: Targets }
   /** The player gains an amount of something. `oncePerTurn`: only the first time this source fires each turn. */
@@ -243,8 +243,10 @@ export interface Placement {
   source: string;
   onDestroy?: TileRef;
   onDestroyHp?: number;
-  /** A status put on every tile under it that survives (Preaching: Locked; Anoint: +1 Strengthen). */
+  /** A status put on every tile under it that survives (Preaching: Locked; Anoint: +2 Strengthen). */
   apply?: TileStatus;
+  /** Strengthen points per tile (default 1). */
+  applyAmount?: number;
 }
 
 export type Stage = 'player' | 'endTurn' | 'enemy' | 'newTurn';

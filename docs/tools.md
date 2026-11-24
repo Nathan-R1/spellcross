@@ -34,11 +34,11 @@ Sizes are always counted as **tiles in the set**. A tile whose damage reaches it
 | **Prayer** | Set formed | Attack: Choose shape (the set's shape) · Dmg 3 |
 | **The Word** | Set formed | Attack: Choose anywhere (1 tile per tile in the set) · Dmg 1 · On destroy: Create [Stone] |
 | **Prophecy** | Set formed | Attack: Choose shape (the set's shape) · Dmg 1 · On destroy: Create [Space]; Gain: Foresight, 1 per tile in the set |
-| **Anoint** | Set formed | Attack: Choose anywhere (1 tile per tile in the set) · Dmg 0 · Apply: +1 Strengthen |
+| **Anoint** | Set formed | Attack: Choose shape (the set's shape) · Dmg 0 · Apply: +2 Strengthen |
 | **Thanksgiving** | Set formed | Gain: Block, 1 per tile in the set |
 | **Worship** | Set formed; On activate | Gain: Block, 1 per tile in the set. On activate: Attack: Every adjacent [Space] · Dmg 1 |
 | **Preaching** | Set formed | Attack: Choose anywhere (1 tile per tile in the set) · Dmg 0 · Apply: Locked |
-| **Time** (junk) | Set formed | Attack: Choose anywhere (1 tile) · Dmg 1 |
+| **Time** (junk) | Set formed | Attack: Choose anywhere (1 tile) · Dmg 1/3 tiles (rounded up) |
 | **Space** (junk) | (none: never forms sets) | |
 | **Stone** | Set formed | Clears self |
 | **Abstain** | On use | Attack: Choose anywhere (1 tile) · Dmg 10 |
@@ -51,7 +51,7 @@ add their own Gain effects to the tool's Set formed list, so they show in its po
 
 | Tool | Pillar | Set effect | Scales with set size? |
 |---|---|---|---|
-| **Anoint** | Faith | Targets: **Choose anywhere**, 1 per tile in the set. Dmg **0**. Apply **+1 Strengthen** | Yes |
+| **Anoint** | Faith | Targets: **Choose shape** (the set's shape). Dmg **0**. Apply **+2 Strengthen** | Yes |
 | **Prayer** | Faith | Targets: **Choose shape**. Dmg **3** | Yes: the shape *is* the set |
 | **Thanksgiving** | Spirit | Gain **1 Block per tile in the set** | Yes |
 | **The Word** | Truth | Targets: **Choose anywhere**, 1 per tile in the set. Dmg **1**. On destroy: **Create Stone** | Yes |
@@ -61,21 +61,21 @@ add their own Gain effects to the tool's Set formed list, so they show in its po
 
 ### Anoint
 
-Match 3+ Anoint: **pick tiles**, 1 per tile in the set, anywhere on the board (any tile; the same tile can be picked
-more than once). Each takes **0 damage** and gains **+1 Strengthen**, which stacks and lasts until the tile clears.
+Match 3+ Anoint: **place the set's shape** anywhere on the board, like Prayer. Every tile under it takes **0 damage**
+and gains **+2 Strengthen**, which stacks and lasts until the tile clears. A Strengthened Anoint set grows its own shape
+like any other.
 
 When a Strengthened tile clears **in a set**, that set counts **1 tile bigger per point**:
 
-- Per-tile effects grow: Thanksgiving and Worship +1 Block, the Word +1 pick, Prophecy +1 Foresight, Preaching and
-  Anoint +1 pick.
-- A placed shape (Prayer, Prophecy) grows by **1 cell per point**, always along the set's **longest straight line**,
+- Per-tile effects grow: Thanksgiving and Worship +1 Block, the Word +1 pick, Prophecy +1 Foresight, Preaching +1 pick.
+- A placed shape (Prayer, Prophecy, Anoint) grows by **1 cell per point**, always along the set's **longest straight line**,
   at the end nearest the Strengthened tile. A row of 3 with +2 becomes a row of 5 wherever the points were; L and T
   sets grow along their longest arm. The line stops growing at the board's length (8), so the shape always fits;
   the set still counts its full size for per-tile effects.
 - It works with Supportive (Kindness): a Strengthened tile pulled into a set still counts.
 
 Strengthen does nothing on a tile that never clears in a set: an enemy tile, Space, or a tile broken by damage. The
-Faithfulness fruit adds 1 damage to Anoint's picks, which breaks 1-HP tiles before they're Strengthened.
+Faithfulness fruit adds 1 damage to Anoint's shape, which breaks 1-HP tiles before they're Strengthened.
 
 Shown as a gold glow and a **+N** badge on the tile.
 
@@ -211,7 +211,7 @@ Their art is reused.
 
 | Junk | Set effect | Art (reused) |
 |---|---|---|
-| **Time** | 3+ Time: Targets: **Choose anywhere** (1 tile, enemy tiles included). Dmg **1** | `spells/dud/orb.png` |
+| **Time** | 3+ Time: Targets: **Choose anywhere** (1 tile, enemy tiles included). Dmg **1 per 3 tiles in the set, rounded up** (3: 1, 4–6: 2, 7+: 3; Strengthen counts) | `junk/time.svg` (spiral) |
 | **Space** | **Never forms sets.** Only damage clears it | `junk/space.svg` (wind) |
 
 ## 5. Abilities

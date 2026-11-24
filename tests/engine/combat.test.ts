@@ -1,7 +1,7 @@
 // The combat rules (docs/combat.md, docs/tools.md, docs/enemies.md) on hand-drawn boards.
 
 import { content } from '../../src/content';
-import { createBattle, endTurn, isLocked, enemyTileSpeed, enemyToCome, findSets, pendingGroupSize, place, placeGroup, playerMove, previewPlacements, startingGrid, upcomingGrid, useAbility } from '../../src/engine/combat';
+import { createBattle, endTurn, incomingHits, isLocked, enemyTileSpeed, enemyToCome, findSets, pendingGroupSize, place, placeGroup, playerMove, previewPlacements, startingGrid, upcomingGrid, useAbility } from '../../src/engine/combat';
 import { createPlayer } from '../../src/engine/run';
 import { at, F1, F2, makeBattle } from '../helpers';
 import { tc } from '../helpers';
@@ -135,6 +135,15 @@ describe('tools', () => {
     const r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
     expect(r.state.pending).toEqual([{ target: { type: 'anywhere' }, damage: 1, source: 'Time' }]);
     expect(r.state.player.critical).toBe(1);
+  });
+
+  it('Time: Dmg 1 per 3 tiles in the set, rounded up (5 Time: 2 damage; Strengthen counts)', () => {
+    // Swapping the Time at (2,6) down makes 5 in a row.
+    const five = makeBattle({ rows: base({ 6: 'smismsms', 7: 'iisiimsm' }) });
+    expect(playerMove(five, { x: 2, y: 6 }, { x: 2, y: 7 }, c).state.pending).toEqual([{ target: { type: 'anywhere' }, damage: 2, source: 'Time' }]);
+    // 3 Time with +4 Strengthen count as 7: 3 damage.
+    const strong = makeBattle({ rows: base({ 7: 'iisismsm' }), state: (x) => (x.board.cells[7 * 8]!.strength = 4) });
+    expect(playerMove(strong, { x: 2, y: 7 }, { x: 3, y: 7 }, c).state.pending[0].damage).toBe(3);
   });
 });
 
@@ -422,15 +431,14 @@ describe('Preaching and Locked', () => {
 });
 
 describe('Anoint and Strengthen', () => {
-  it('Anoint: Choose anywhere (any tile), 1 per tile in the set; Dmg 0; +1 Strengthen each, stacking', () => {
+  it("Anoint: Choose shape (the set's shape); Dmg 0; +2 Strengthen on each tile under it", () => {
     const s = makeBattle({ rows: base({ 7: 'AAsAsmsm' }) });
     const r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
-    expect(r.state.pending).toHaveLength(3);
-    expect(r.state.pending[0]).toMatchObject({ target: { type: 'anywhere' }, damage: 0, apply: 'strengthen' });
-    // Two on the Mud at (5,7), one on the Worry (any tile can be picked).
-    const done = placeGroup(r.state, [{ x: 5, y: 7 }, { x: 5, y: 7 }, { x: 0, y: 1 }], c).state;
-    expect(at(done, 5, 7)).toMatchObject({ id: 'mud', hp: 1, strength: 2 });
-    expect(at(done, 0, 1)).toMatchObject({ kind: 'enemy', strength: 1 });
+    expect(r.state.pending).toHaveLength(1);
+    expect(r.state.pending[0]).toMatchObject({ target: { type: 'shape', cells: [0, 1, 2].map((x) => ({ x, y: 0 })) }, damage: 0, apply: 'strengthen', applyAmount: 2 });
+    // A line of 3 over (3..5, 7): each gets +2.
+    const once = placeGroup(r.state, [{ x: 3, y: 7 }], c).state;
+    expect([3, 4, 5].map((x) => at(once, x, 7)?.strength)).toEqual([2, 2, 2]);
   });
 
   it('a Strengthened tile makes its set count 1 tile bigger per point', () => {
@@ -522,6 +530,33 @@ describe('refill damping', () => {
     const r = playerMove(s, { x: 0, y: 4 }, { x: 0, y: 5 }, withP(1));
     expect(matchedWaves(r)).toBeGreaterThanOrEqual(2);
     expect(r.state.board.cells.filter((t) => t?.kind === 'stone')).toHaveLength(0);
+  });
+});
+
+describe('incomingHits: the enemy tiles that will hit you this enemy turn', () => {
+  const uidAt = (st: ReturnType<typeof makeBattle>, x: number, y: number) => at(st, x, y)!.uid;
+
+  it('a Speed 2 Grief one row up will hit (not only the bottom row); the Worry far up will not', () => {
+    const s = makeBattle({ rows: base({ 6: 'smsYsmsm' }) });
+    expect([...incomingHits(s, c)]).toEqual([uidAt(s, 3, 6)]);
+  });
+
+  it('a Stone below holds it, so it will not hit', () => {
+    const s = makeBattle({ rows: base({ 5: 'smsYsmsm', 6: 'msmOmsms' }) });
+    expect(incomingHits(s, c).size).toBe(0);
+  });
+
+  it('a Locked tile on the bottom row will not hit', () => {
+    const s = makeBattle({ rows: base({ 7: 'smsYsmsm' }), state: (st) => { st.board.cells[7 * 8 + 3]!.lockedUntil = st.round; } });
+    expect(incomingHits(s, c).size).toBe(0);
+  });
+
+  it('it matches what endTurn actually does, and changes nothing', () => {
+    const s = makeBattle({ rows: base({ 6: 'smsYsmsm' }) });
+    const before = JSON.stringify(s);
+    incomingHits(s, c);
+    expect(JSON.stringify(s)).toBe(before);
+    expect(endTurn(s, c).state.player.hp).toBe(s.player.hp - 3);
   });
 });
 
