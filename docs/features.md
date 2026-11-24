@@ -197,7 +197,7 @@ Set events reference `town/town.png`, but the asset is `town/town.jpg`.
 | 5.2.8 | **Spell power = number of tiles in the group** (grouped by spell name across all sets this step) | Done | |
 | 5.2.9 | **Linked tiles**: tiles with `linkedTile=true` orthogonally adjacent to a triggered set are pulled in and cleared, 🆕 but only if **available** (a locked or hidden linked tile stays). A linked **Surge** turns into the adjacent spell and adds to its power | Partial | Only Surge converts (TODO in code). Ash and others are cleared but have no effect |
 | 5.2.10 | **Cascade**: cleared tiles drop down column by column, the buffer refills from the top, new sets trigger, repeat until stable | Done | Each cascade step currently runs on a 1s timer |
-| 5.2.11 | **Tile lock states**: swapped tiles become `PENDING`. At end of turn PENDING → LOCKED and LOCKED → FREE. Locked tiles can't be swapped or matched | Done | `assets/spells/lockTile.png` overlay. **→ D23**: swaps no longer lock; only Spin Web does |
+| 5.2.11 | **Tile lock states**: swapped tiles become `PENDING`. At end of turn PENDING → LOCKED and LOCKED → FREE. Locked tiles can't be swapped or matched | Done | `assets/tools/lockTile.png` overlay. **→ D23**: swaps no longer lock; only Spin Web does |
 | 5.2.12 | Hidden tiles can't be swapped | Done | |
 | 5.2.13 | Move enumeration and swap simulation (used by AI) | Done | `getAllValidMoves`, `simulateSwap` |
 | 5.2.14 | Board debug printing | Done | Dev only |
@@ -262,11 +262,11 @@ Hook order: target `onSpellActivated` → actor `onSpellActivated` → compute �
 \* Defaults that look like data-entry mistakes. Corrected in Spellcross (D3).
 
 🆕 **Spell icons from stats.** Player spells no longer name an icon. `Spell.getIconPathFromStats()` builds
-`spells/<element>/<cat>[-<cat2>]-<tier>.png`:
+`tools/<element>/<cat>[-<cat2>]-<tier>.png`:
 - Categories, in priority order: `dmg`, `healing`, `block`, `poison`, `chaos` (= Critical).
 - Each category gets a tier from its value: 1–3 → 1, 4–7 → 2, 8+ → 3. At most 2 categories are kept,
   highest tiers first, and the file uses the highest tier.
-- Missing file → `spells/<element>/default.png`.
+- Missing file → `tools/<element>/default.png`.
 
 So an upgraded spell's icon changes as its numbers grow. Full rule, quirks, art coverage and the Spellcross
 port: [spells-and-gems.md §2](tools.md). Note: the spell info popup
@@ -397,14 +397,14 @@ battles have 1–4 of them.
 ## 8. Assets to carry over
 
 All of `spellford/app/src/main/assets/` is copied as-is into `spellcross/public/assets/`:
-`abilities/`, `fonts/`, `icons/`, `portraits/`, `spells/{fire,water,earth,lightning,acid,monster,dud,nova}/` 🆕,
-`spells/linkedTile.png`, `spells/lockTile.png`, `status/`, `maps/stops/` (now with `encounter1.png`), `maps/people/`,
+`abilities/`, `fonts/`, `icons/`, `portraits/`, `tools/{fire,water,earth,lightning,acid,monster,dud,nova}/` 🆕,
+`tools/linkedTile.png`, `tools/lockTile.png`, `status/`, `maps/stops/` (now with `encounter1.png`), `maps/people/`,
 `town/` 🆕.
 
 🆕 The element folders hold the stat-based icon sets (`dmg-1.png`, `dmg-block-2.png`, …, §5.5). The old
-`spells/ice/` folder and named icons like `fire-burst.png` and `water-wave.png` are gone. Coverage is uneven:
+`tools/ice/` folder and named icons like `fire-burst.png` and `water-wave.png` are gone. Coverage is uneven:
 fire is complete, `acid/` has no `default.png`, `earth/` has no single-category icons, and there's no
-`air/` folder (Wind Wall has no icon). Ignore `spells/earth/Template Frame Earth.png`.
+`air/` folder (Wind Wall has no icon). Ignore `tools/earth/Template Frame Earth.png`.
 
 The battle background `wood.png` is referenced but **missing**, so Spellford uses a solid-colour
 fallback. Some files are referenced but don't exist either: `status/fortify-air.png`, 🆕 `portraits/traveller.png`, and

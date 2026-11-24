@@ -154,6 +154,21 @@ effects that fit the board-defence game. Fight for Loot's tool reward is a dud u
 Every tool has a level of 1–5, and an Upgrade raises it by 1 (Market Study, Campfire Reflect, the Hermit).
 *TBD: what a level does.* Fruit don't scale with level (§2).
 
+### 1.3 Tool art
+
+Every tool icon is its **pillar's frame** with the tool's own **glyph** drawn inside it (`PILLAR_FRAME` and `GLYPH` in
+`src/content/tools.ts`). The glyphs are black line-art SVGs in `public/assets/tools/svgs/`, drawn white with a thin
+dark outline so they read on any tile colour. The frames are pixel art in `public/assets/tools/frames/`.
+
+| Pillar | Frame | Tools (glyph) |
+|---|---|---|
+| Faith | yellow | Prayer (praying hands), Anoint (anointing oil) |
+| Truth | brown | The Word (Bible), Prophecy (no glyph yet: old art, unframed) |
+| Spirit | purple | Thanksgiving (raised hands), Worship (music) |
+| Discipline | blue | Preaching (pulpit), Fasting (parked: old art) |
+| Love | pink | Healing, Serving (parked: old art) |
+| Unity | green | Fellowship (parked: old art) |
+
 ## 2. Fruit
 
 The **fruit of the Spirit** (Galatians 5:22–23) replace virtues. Each tool has **3 fruit sockets**. A fruit
@@ -201,7 +216,7 @@ are gone. The Hermit's Devoted virtue becomes a **Love** fruit.
 | HP | **2** (+1 per Patience on the Word) |
 | Matches | 3+ Stones clear, with no effect, whether damaged or not |
 | Vs enemy tiles | Each Worry step deals 1 damage. While the Stone survives, the Worry stays put. Once it's deleted, the Worry moves in |
-| Art (reused) | `spells/dud/rubble.png`. Damaged: the same art with a crack overlay |
+| Art (reused) | `tools/dud/rubble.png`. Damaged: the same art with a crack overlay |
 | Popup text | "When 3+ Stones clear: nothing." HP and Speed (0) are in the header, like every tile; blocking enemy steps is just its 2 HP |
 
 ## 4. Junk

@@ -70,7 +70,7 @@ export function EventScreen() {
               const def = content.tools[t.toolId];
               return (
                 <button key={t.uid} className="btn" disabled={t.level >= 5} onClick={() => pickLevelUp(t.uid)} style={{ flexDirection: 'column', minWidth: 92 }}>
-                  <Asset path={def.icon} alt={def.name} size={32} color={def.color} />
+                  <Asset path={def.icon} frame={def.frame} alt={def.name} size={32} color={def.color} />
                   <span style={{ fontSize: 12 }}>{def.name}</span>
                   <span className="dim" style={{ fontSize: 12 }}>Lv {t.level}{t.level < 5 ? ` → ${t.level + 1}` : ' (max)'}</span>
                 </button>

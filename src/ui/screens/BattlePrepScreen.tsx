@@ -67,7 +67,7 @@ export function ToolCard({ tool, selected, onTap, onLong }: { tool: ToolInstance
   return (
     <button className={`tool-card ${selected ? 'selected' : ''}`} style={{ background: def.color + '33' }} aria-pressed={!!selected} {...press}>
       <span className="lvl">Lv{tool.level}</span>
-      <Asset path={def.icon} alt={def.name} size={Math.round(36 * s)} color={def.color} />
+      <Asset path={def.icon} frame={def.frame} alt={def.name} size={Math.round(36 * s)} color={def.color} />
       <span>{def.name}</span>
       <span className="dim pillar">{PILLAR_NAME[tool.pillar]}</span>
       <span className="fruit-row">{tool.sockets.map((f, i) => (f ? <FruitIcon key={i} fruit={f} size={Math.round(14 * s)} /> : <i key={i} className="socket" />))}</span>
@@ -81,7 +81,7 @@ export function ToolInfo({ tool, onClose }: { tool: ToolInstance; onClose: () =>
   return (
     <Modal onClose={onClose}>
       <div className="row">
-        <Asset path={def.icon} alt={def.name} size={56} color={def.color} />
+        <Asset path={def.icon} frame={def.frame} alt={def.name} size={56} color={def.color} />
         <div>
           <h2>{def.name} <span className="dim" style={{ fontSize: 15 }}>Lv {tool.level} · {PILLAR_NAME[tool.pillar]}</span></h2>
           <EffectText description={def.description} rows={describeTile({ kind: 'tool', id: tool.toolId, uid: tool.uid }, { instance: tool }).attrs} />

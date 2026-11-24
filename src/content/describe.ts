@@ -161,6 +161,8 @@ export interface TileDescription {
   ref: TileRef;
   name: string;
   icon: string;
+  /** A frame around the icon (tools with a glyph). */
+  frame?: string;
   color: string;
   hp: number;
   maxHp: number;
@@ -213,7 +215,7 @@ function describeTileDef(ref: TileRef, ctx: TileCtx, live?: Tile | null): TileDe
       // The same Set formed list the engine runs: the tool's own effects, then its fruit's.
       const setFormed = [...(def?.triggers.setFormed ?? []), ...fruitSetEffects(fruit)];
       return {
-        ref, name: def?.name ?? '?', icon: def?.icon ?? '', color: def?.color ?? '#555', ...hp((def?.hp ?? 1) + fruit.gentleness), speed: def?.speed ?? 0,
+        ref, name: def?.name ?? '?', icon: def?.icon ?? '', frame: def?.frame, color: def?.color ?? '#555', ...hp((def?.hp ?? 1) + fruit.gentleness), speed: def?.speed ?? 0,
         description: def?.description ?? '', attrs: triggerRows({ ...def?.triggers, setFormed }, fruit.faithfulness),
         fruits: (Object.entries(fruit) as [FruitId, number][]).filter(([, n]) => n > 0),
       };

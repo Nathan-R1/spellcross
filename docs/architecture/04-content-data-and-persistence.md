@@ -11,7 +11,7 @@ and leaves room to move content to JSON later for modding or a content editor.
 // src/content/spells.ts
 export const spells = defineSpells({
   scorch: { name: 'Scorch', description: 'Damage the enemy',
-            element: 'fire',              // no icon: derived from stats → spells/fire/dmg-2.png
+            element: 'fire',              // no icon: derived from stats → tools/fire/dmg-2.png
             damage: 4, healing: 0, weight: 1, spellClass: 'player', linked: false, target: 'single',
             statuses: [], color: '#ffb3b3' },
   strike: { ..., damage: 2, statuses: [{ status: 'chargeLightning', value: 1, self: true, perTile: false }] },
@@ -54,7 +54,7 @@ Market), and `content/map.ts` maps stop type → set event id (features §4.3).
 
 **Spell icons from stats:** player spells don't name an icon. `iconForSpell(def)` ports Spellford's
 `getIconPathFromStats` (features §5.5): categories dmg/healing/block/poison/chaos, tiers at 1/4/8, top two
-categories, falling back to `spells/<element>/default.png` and then the generic placeholder. It's computed
+categories, falling back to `tools/<element>/default.png` and then the generic placeholder. It's computed
 from the spell instance's **final** stats (base + upgrades + gems; `resolveSpell`), so customisation shows
 on the icon. Rule, quirks and tests: [spells-and-gems.md §2](../spells-and-gems.md#2-spell-icons-from-stats).
 
@@ -70,7 +70,7 @@ level, sockets) instead of spell ids. See [spells-and-gems.md §5](../spells-and
   circle + initial) if missing. This mirrors Spellford's null-texture fallback.
 - Fonts → `@font-face` in `theme/fonts.css`.
 - Missing today: `wood.png` (use a CSS wood texture), `status/fortify-air.png`, `portraits/traveller.png`,
-  `spells/air/*` (Wind Wall) and `spells/acid/default.png`. Spellford references `town/town.png`, but the
+  `tools/air/*` (Wind Wall) and `tools/acid/default.png`. Spellford references `town/town.png`, but the
   file is `town/town.jpg`, so Spellcross references the `.jpg`.
 
 ## Persistence

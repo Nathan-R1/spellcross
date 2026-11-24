@@ -287,7 +287,7 @@ function TileView({ t, battle, x, y, tile, selected, aimed, applyMark, locked, i
       style={{ width: tile, height: tile, transform: `translate(${x * tile + 3}px, ${y * tile + 3}px)` }}
       role="gridcell" aria-label={`${look.name}, row ${y + 1} col ${x + 1}${t.hp < t.maxHp ? ', damaged' : ''}${locked ? ', locked' : ''}${danger ? ', will hit you this enemy turn' : ''}${t.strength ? `, strengthened +${t.strength}` : ''}`} {...press}>
       <div style={{ background: `linear-gradient(160deg, ${look.color}, ${shade(look.color)})` }}>
-        <Asset path={look.icon} alt={look.name} color="transparent" />
+        <Asset path={look.icon} frame={look.frame} alt={look.name} color="transparent" />
         {supportive && <span className="linked" />}
         {shining && <span className="shine" />}
         {t.kind === 'stone' && t.hp < t.maxHp && <span className="crack" />}

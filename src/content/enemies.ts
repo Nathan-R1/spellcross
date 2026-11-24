@@ -16,7 +16,7 @@ const HIT_YOU: Effect[] = [{ type: 'attack', targets: { type: 'you' }, dmg: 1 }]
 
 export const enemyTiles: Record<string, EnemyTileDef> = {
   worry: {
-    id: 'worry', name: 'Worry', icon: 'spells/dud/ash.png', color: '#4a4458', hp: 1, speed: 1, description: '',
+    id: 'worry', name: 'Worry', icon: 'tools/dud/ash.png', color: '#4a4458', hp: 1, speed: 1, description: '',
     triggers: { eachStep: STEP, atBottom: HIT_YOU },
   },
   greed: {
@@ -28,14 +28,14 @@ export const enemyTiles: Record<string, EnemyTileDef> = {
     },
   },
   depression: {
-    id: 'depression', name: 'Depression', icon: 'spells/dud/depression.png', color: '#3b4a5c', hp: 3, speed: 0, description: '',
+    id: 'depression', name: 'Depression', icon: 'tools/dud/depression.png', color: '#3b4a5c', hp: 3, speed: 0, description: '',
     triggers: {
       onActivate: [{ type: 'create', what: { kind: 'enemy', id: 'depression' }, targets: { type: 'adjacent', pick: 1, filter: ['tool', 'junk'] } }],
       atBottom: HIT_YOU,
     },
   },
   grief: {
-    id: 'grief', name: 'Grief', icon: 'spells/dud/mist.png', color: '#2a2f4a', hp: 20, speed: 2, description: '',
+    id: 'grief', name: 'Grief', icon: 'tools/dud/mist.png', color: '#2a2f4a', hp: 20, speed: 2, description: '',
     triggers: {
       eachStep: STEP,
       // It can't really be broken (20 HP): it passes through. From the bottom row it hits hard once, then leaves.

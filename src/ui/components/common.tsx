@@ -8,9 +8,20 @@ import type { BattleState, FruitId, Tile } from '../../engine/types';
 import { activeBattle, useStore } from '../../state/store';
 import { enterFullscreen, exitFullscreen, fullscreenSupport, isFullscreen, onFullscreenChange } from '../fullscreen';
 
-/** Image from public/assets with a generated placeholder (coloured circle + initial) when missing (doc 04). */
-export function Asset({ path, alt, size, color = '#6b4523', className, style }: { path?: string; alt: string; size?: number; color?: string; className?: string; style?: React.CSSProperties }) {
+/**
+ * Image from public/assets with a generated placeholder (coloured circle + initial) when missing (doc 04). With a
+ * `frame`, the frame is drawn at full size and the image inset inside it (tool art: pillar frame + glyph).
+ */
+export function Asset({ path, alt, size, color = '#6b4523', className, style, frame }: { path?: string; alt: string; size?: number; color?: string; className?: string; style?: React.CSSProperties; frame?: string }) {
   const [broken, setBroken] = useState(false);
+  if (frame && assetExists(frame)) {
+    return (
+      <span className={`framed ${className ?? ''}`} style={{ width: size, height: size, ...style }} role="img" aria-label={alt}>
+        <img className="frame" src={`/assets/${frame}`} alt="" draggable={false} />
+        {path && assetExists(path) && <img className="glyph" src={`/assets/${path}`} alt="" draggable={false} />}
+      </span>
+    );
+  }
   if (!path || broken || !assetExists(path)) {
     return (
       <span className={`ph ${className ?? ''}`} style={{ width: size, height: size, background: color, fontSize: size ? size * 0.5 : 14, ...style }} aria-label={alt}>
@@ -103,7 +114,7 @@ export function TileIcon({ tile, size = 22, battle }: { tile: TileRef; size?: nu
   const press = useLongPress(open, open);
   return (
     <span className={`tile-icon tile-ref k-${tile.kind}`} style={{ background: d.color }} role="button" aria-label={`${d.name}: hold for details`} {...press}>
-      <Asset path={d.icon} alt={d.name} size={size} color="transparent" />
+      <Asset path={d.icon} frame={d.frame} alt={d.name} size={size} color="transparent" />
     </span>
   );
 }
@@ -162,7 +173,7 @@ export function TilePopup({ entry, depth }: { entry: { ref: TileRef; live?: Tile
   return (
     <Modal onClose={closeTiles}>
       <div className="row tile-popup">
-        <span className="tile-icon" style={{ background: d.color }}><Asset path={d.icon} alt={d.name} size={44} color="transparent" /></span>
+        <span className="tile-icon" style={{ background: d.color }}><Asset path={d.icon} frame={d.frame} alt={d.name} size={44} color="transparent" /></span>
         <div>
           <h2>{d.name} <span className="dim" style={{ fontSize: 14 }}>HP {d.hp}/{d.maxHp} · Speed: {d.speed}</span></h2>
           <EffectText description={d.description} rows={d.attrs} />

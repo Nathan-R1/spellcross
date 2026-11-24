@@ -50,7 +50,7 @@ Claims and clashes for On activate are in [tile-effects § 3.3](tile-effects.md#
 | Each step | Dmg 1 to the tile below, and moves in if it breaks. If the tile survives (a full-HP Stone), the Worry stays. Another enemy tile below blocks it, with no damage |
 | On activate | (none) |
 | At bottom | Dmg 1 to you, and it stays |
-| Art | placeholder from the old junk art (e.g. `spells/dud/ash.png`) until drawn |
+| Art | placeholder from the old junk art (e.g. `tools/dud/ash.png`) until drawn |
 
 ### Greed
 
@@ -72,7 +72,7 @@ Claims and clashes for On activate are in [tile-effects § 3.3](tile-effects.md#
 | Each step | (hidden) |
 | On activate | Create [Depression] on **1 random adjacent tool or junk**. Depressions pick in reading order (top-left first), and a tile already picked this turn isn't available, so each one converts a different tile. Stones and enemy tiles are never picked. A tile that changed this turn doesn't spread until next turn. On a tile both a Greed and a Depression pick, Depression wins |
 | At bottom | Dmg 1 to you (once per enemy turn) |
-| Art | `spells/dud/depression.png`: a grey-white puddle (the slime art recoloured) |
+| Art | `tools/dud/depression.png`: a grey-white puddle (the slime art recoloured) |
 
 ### Grief
 
@@ -83,7 +83,7 @@ Claims and clashes for On activate are in [tile-effects § 3.3](tile-effects.md#
 | Each step | Dmg 1 to the tile below, and moves in if it breaks (as Worry). A full-HP Stone holds it for a turn |
 | On activate | (none) |
 | At bottom | Dmg **3** to you, then **Remove self**: it leaves the board. Block absorbs the damage as usual |
-| Art | placeholder: `spells/dud/mist.png` |
+| Art | placeholder: `tools/dud/mist.png` |
 
 Remove self isn't damage, so nothing breaks the tile; it just leaves ([tile-effects § 3](tile-effects.md#3-effects)).
 A Grief that leaves counts towards victory like one you destroyed.
@@ -230,6 +230,6 @@ interface EnemyDef {
 - Financial Stress portrait: `portraits/financial_stress.svg` (a pile of overdue bills).
 - Greed tile art (placeholder: the gold coin icon).
 - All Quiet portrait: `portraits/all_quiet.svg` (an empty chair by a rainy window).
-- Depression tile art: `spells/dud/depression.png` (grey-white puddle).
+- Depression tile art: `tools/dud/depression.png` (grey-white puddle).
 - The Long Night portrait: `portraits/long_night.svg` (a candle under a night sky, dawn on the horizon).
-- Grief tile art (placeholder: `spells/dud/mist.png`).
+- Grief tile art (placeholder: `tools/dud/mist.png`).

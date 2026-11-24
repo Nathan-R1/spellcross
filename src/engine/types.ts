@@ -91,6 +91,8 @@ export interface TileDef {
   /** Free text for anything the triggers don't say. Normally empty. */
   description: string;
   icon: string;
+  /** A frame drawn around the icon (tools: their pillar's frame, with an SVG glyph as the icon). */
+  frame?: string;
   color: string;
   /** Base HP (tools: 1, plus Gentleness). */
   hp: number;
