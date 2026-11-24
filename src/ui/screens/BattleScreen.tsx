@@ -12,7 +12,7 @@ import { describeTile, placementStats, tileRef } from '../../content/describe';
 import { PatternGrid } from '../components/EnemyPattern';
 
 const DURATION: Record<TimedEvent['event']['type'], number> = {
-  swapped: 200, matched: 280, effect: 420, damaged: 260, collapsed: 260, shining: 320, enemyStep: 160,
+  swapped: 200, matched: 280, effect: 420, damaged: 260, removed: 260, collapsed: 260, shining: 320, enemyStep: 160,
   playerHit: 320, locked: 300, strengthened: 300, created: 400, enemyTurn: 0, ability: 200, turnStart: 160, battleEnd: 700,
 };
 
@@ -110,7 +110,7 @@ export function BattleScreen() {
   };
 
   const highlight = new Set<number>(current?.type === 'matched' || current?.type === 'shining' || current?.type === 'created' || current?.type === 'locked' || current?.type === 'strengthened' ? current.uids : []);
-  const hurt = new Set<number>(current?.type === 'damaged' ? current.uids : []);
+  const hurt = new Set<number>(current?.type === 'damaged' || current?.type === 'removed' ? current.uids : []);
   const [enemyInfo, setEnemyInfo] = useState(false);
   const enemy = content.enemies[battle.enemyId];
   const maxMoves = Math.max(battle.player.movesPerTurn, view.movesLeft);

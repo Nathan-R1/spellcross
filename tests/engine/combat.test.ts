@@ -458,6 +458,15 @@ describe('Anoint and Strengthen', () => {
     const r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
     expect(r.state.pending[0].target).toEqual({ type: 'shape', cells: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }] });
   });
+  it("a grown shape stops at the board's length, so it always fits; the set still counts its full size", () => {
+    // Prayer ×3 with +8 Strengthen: the line stops at 8 cells, not 11.
+    const s = makeBattle({ rows: base({ 7: 'PPsPsmsm' }), state: (x) => (x.board.cells[7 * 8]!.strength = 8) });
+    const r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
+    expect(r.state.pending[0].target).toEqual({ type: 'shape', cells: [0, 1, 2, 3, 4, 5, 6, 7].map((x) => ({ x, y: 0 })) });
+    // Thanksgiving ×3 with +8: 11 Block, uncapped.
+    const t = makeBattle({ rows: base({ 7: 'TTsTsmsm' }), state: (x) => (x.board.cells[7 * 8]!.strength = 8) });
+    expect(playerMove(t, { x: 2, y: 7 }, { x: 3, y: 7 }, c).state.player.block).toBe(11);
+  });
 });
 
 describe('Worship', () => {
@@ -513,5 +522,47 @@ describe('refill damping', () => {
     const r = playerMove(s, { x: 0, y: 4 }, { x: 0, y: 5 }, withP(1));
     expect(matchedWaves(r)).toBeGreaterThanOrEqual(2);
     expect(r.state.board.cells.filter((t) => t?.kind === 'stone')).toHaveLength(0);
+  });
+});
+
+describe('Grief and The Long Night', () => {
+  it('The Long Night: one row of Grief across the top of the board, nothing to come', () => {
+    const p = createPlayer(content);
+    const { state } = createBattle({ player: p, enemyId: 'long_night', loadout: ['t1', 't2', 't3'], seed: 7 }, content);
+    const grief = state.board.cells.map((t, i) => (t?.id === 'grief' ? i : -1)).filter((i) => i >= 0);
+    expect(grief).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    expect(state.board.cells.filter((t) => t?.kind === 'enemy')).toHaveLength(8);
+    expect(enemyToCome(state, content)).toBe(0);
+    expect(content.enemies.long_night.tier).toBe('elite');
+  });
+
+  it('Grief takes 2 steps, breaking what is below; from the bottom row it hits you for 3 and leaves', () => {
+    const s = makeBattle({ rows: base({ 6: 'smsYsmsm' }) });
+    const r = endTurn(s, c);
+    expect(r.state.player.hp).toBe(s.player.hp - 3);
+    expect(r.state.board.cells.some((t) => t?.id === 'grief')).toBe(false);
+    expect(r.events.some((e) => e.event.type === 'removed')).toBe(true);
+    expect(r.state.outcome).toBeNull(); // the Worry top-left is still there
+  });
+
+  it('Block absorbs the Grief hit, and Grief still leaves', () => {
+    const s = makeBattle({ rows: base({ 7: 'smsYsmsm' }), state: (st) => { st.player.block = 1; } });
+    const r = endTurn(s, c);
+    expect(r.state.player.hp).toBe(s.player.hp - 2);
+    expect(r.state.board.cells.some((t) => t?.id === 'grief')).toBe(false);
+  });
+
+  it('a Stone holds Grief for a turn (it cracks, Grief stays put)', () => {
+    const s = makeBattle({ rows: base({ 4: 'smsYsmsm', 5: 'msmOmsms' }) });
+    const r = endTurn(s, c);
+    expect(at(r.state, 3, 4)?.id).toBe('grief');
+    expect(at(r.state, 3, 5)?.hp).toBe(1);
+  });
+
+  it('the last Grief leaving wins the battle', () => {
+    const rows = Array.from({ length: 8 }, (_, y) => (y === 7 ? 'smsYsmsm' : y % 2 ? F2 : F1));
+    const r = endTurn(makeBattle({ rows }), c);
+    expect(r.state.outcome).toBe('victory');
+    expect(r.state.player.hp).toBe(r.state.player.maxHp - 3);
   });
 });

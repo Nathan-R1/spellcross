@@ -98,6 +98,8 @@ export function effectRows(e: Effect, depth: number, bonusDmg = 0): AttrRow[] {
       return [{ depth, parts: [`Gain: ${GAIN_LABEL[e.what]}, ${amountText(e.amount)}${e.oncePerTurn ? ', once per turn' : ''}${e.source ? ` (${e.source})` : ''}`] }];
     case 'clearsSelf':
       return [{ depth, parts: ['Clears self'] }];
+    case 'removeSelf':
+      return [{ depth, parts: ['Remove self'] }];
   }
 }
 
@@ -220,6 +222,7 @@ function effectSummary(e: Effect): string {
     case 'gain': return `+${amountText(e.amount)} ${e.what === 'moves' ? 'moves' : GAIN_LABEL[e.what]}`;
     case 'create': return 'Create a tile';
     case 'clearsSelf': return 'Nothing';
+    case 'removeSelf': return 'Leaves the board';
   }
 }
 

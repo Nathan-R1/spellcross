@@ -66,7 +66,9 @@ export type Effect =
   /** The player gains an amount of something. `oncePerTurn`: only the first time this source fires each turn. */
   | { type: 'gain'; what: Gainable; amount: Amount; oncePerTurn?: boolean; source?: string }
   /** Nothing else happens: the set just clears. */
-  | { type: 'clearsSelf' };
+  | { type: 'clearsSelf' }
+  /** The tile leaves the board (not damage, so nothing breaks it): Grief after it hits you. Game-picked triggers only. */
+  | { type: 'removeSelf' };
 
 export type TriggerId = 'setFormed' | 'eachStep' | 'onActivate' | 'atBottom' | 'onUse';
 /** Display and resolve order. */
@@ -299,6 +301,8 @@ export type BattleEvent =
   | { type: 'matched'; uids: number[] }
   | { type: 'effect'; source: string; text: string }
   | { type: 'damaged'; uids: number[]; deleted: number[] }
+  /** These tiles left the board by Remove self (Grief after it hits you). */
+  | { type: 'removed'; uids: number[] }
   | { type: 'collapsed' }
   | { type: 'shining'; uids: number[] }
   /** The enemy turn begins (before any enemy tile acts). */

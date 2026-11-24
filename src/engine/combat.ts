@@ -326,8 +326,10 @@ function normalise(cells: Pos[]): Pos[] {
  * Strengthen grows a set's shape by 1 cell per point, always along the set's longest straight line, at the end nearest
  * the Strengthened tile. So a row of 3 with +2 is a row of 5 wherever the points were; L and T sets grow along their
  * longest arm. Ties: horizontal before vertical, then the top-left line; the right/bottom end when both are as near.
+ * The line stops growing at the board's length (`maxLen`), so the shape always fits somewhere; the set still counts its
+ * full size for per-tile amounts.
  */
-function grow(cells: Pos[], strengthened: { p: Pos; n: number }[]): Pos[] {
+function grow(cells: Pos[], strengthened: { p: Pos; n: number }[], maxLen: { x: number; y: number }): Pos[] {
   if (strengthened.length === 0) return cells;
   const has = (q: Pos) => cells.some((c) => c.x === q.x && c.y === q.y);
   // The longest run: from each cell that starts one (no cell before it), count along +x and +y.
@@ -345,9 +347,10 @@ function grow(cells: Pos[], strengthened: { p: Pos; n: number }[]): Pos[] {
   let tail = { x: head.x + dx * (best.len - 1), y: head.y + dy * (best.len - 1) }; // the bottom/right end
   const out = [...cells];
   const dist = (a: Pos, b: Pos) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+  let room = (dx ? maxLen.x : maxLen.y) - best.len;
   for (const { p, n } of strengthened) {
     const atHead = dist(p, head) < dist(p, tail);
-    for (let k = 0; k < n; k++) {
+    for (let k = 0; k < n && room > 0; k++, room--) {
       if (atHead) {
         head = { x: head.x - dx, y: head.y - dy };
         out.push(head);
@@ -373,7 +376,7 @@ function resolveSets(ctx: Ctx, sets: FoundSet[]) {
 function applySet(ctx: Ctx, st: FoundSet, key: string) {
   const { s, c } = ctx;
   const p = s.player;
-  const shape = normalise(grow([...st.cells, ...st.support], st.strengthened));
+  const shape = normalise(grow([...st.cells, ...st.support], st.strengthened, { x: s.board.width, y: s.board.height }));
   const size = st.cells.length + st.bonus;
   if (key.startsWith('junk:')) {
     const j = c.junk[key.slice(5)];
@@ -454,6 +457,7 @@ function runSetEffects(ctx: Ctx, effects: Effect[], src: EffectSource): string[]
         texts.push(...applyNow(ctx, e, null));
         break;
       case 'clearsSelf':
+      case 'removeSelf': // a set's tiles clear anyway
         break;
     }
   }
@@ -518,6 +522,14 @@ function applyNow(ctx: Ctx, e: Effect, at: Pos | null): string[] {
     for (const q of damageAt(ctx, cells, e.dmg)) {
       const t = e.onDestroy && createTile(ctx, e.onDestroy);
       if (t) s.board.cells[idx(b, q.x, q.y)] = t;
+    }
+    return [];
+  }
+  if (e.type === 'removeSelf') {
+    const t = at && tileAt(s.board, at.x, at.y);
+    if (t) {
+      s.board.cells[idx(s.board, at.x, at.y)] = null;
+      emit(ctx, { type: 'removed', uids: [t.uid] });
     }
     return [];
   }

@@ -34,6 +34,14 @@ export const enemyTiles: Record<string, EnemyTileDef> = {
       atBottom: HIT_YOU,
     },
   },
+  grief: {
+    id: 'grief', name: 'Grief', icon: 'spells/dud/mist.png', color: '#2a2f4a', hp: 20, speed: 2, description: '',
+    triggers: {
+      eachStep: STEP,
+      // It can't really be broken (20 HP): it passes through. From the bottom row it hits hard once, then leaves.
+      atBottom: [{ type: 'attack', targets: { type: 'you' }, dmg: 3 }, { type: 'removeSelf' }],
+    },
+  },
 };
 
 const W = (tile: string): GeneratedRow => ({ tile });
@@ -68,6 +76,13 @@ export const enemies: Record<string, EnemyDef> = {
       + 'Nothing more comes, but each Depression spreads to a tile next to it every enemy turn.',
     // Rows 1–4 normal. Rows 5–8: the Depression zigzag (mirrored: outer column on rows 6 and 8, inner on 5 and 7).
     generator: [N, N, N, N, zig(1), zig(0), zig(1), zig(0)],
+  },
+  long_night: {
+    id: 'long_night', name: 'The Long Night', tier: 'elite', portrait: 'portraits/long_night.svg', talents: [40, 60],
+    description: 'One row of Grief across the top of the board: 8 Grief in all, all on the board. Nothing more comes. '
+      + 'Grief has 20 HP and takes 2 steps per enemy turn. On the bottom row it deals 3 damage to you, then leaves.',
+    // Rows 1–7 normal. Row 8 (the top of the board): Grief.
+    generator: [N, N, N, N, N, N, N, W('grief')],
   },
 };
 

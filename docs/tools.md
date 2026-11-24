@@ -70,7 +70,8 @@ When a Strengthened tile clears **in a set**, that set counts **1 tile bigger pe
   Anoint +1 pick.
 - A placed shape (Prayer, Prophecy) grows by **1 cell per point**, always along the set's **longest straight line**,
   at the end nearest the Strengthened tile. A row of 3 with +2 becomes a row of 5 wherever the points were; L and T
-  sets grow along their longest arm.
+  sets grow along their longest arm. The line stops growing at the board's length (8), so the shape always fits;
+  the set still counts its full size for per-tile effects.
 - It works with Supportive (Kindness): a Strengthened tile pulled into a set still counts.
 
 Strengthen does nothing on a tile that never clears in a set: an enemy tile, Space, or a tile broken by damage. The

@@ -41,9 +41,9 @@ the other. A trigger with no effects is **hidden**: there is never an "N/A" or "
 | Trigger | When it fires | Used by |
 |---|---|---|
 | **Set formed** | 3+ of this tile clear as a set (from your swap or a cascade) | Tools, Time, Stone |
-| **Each step** | Each step down (Speed > 0). An Attack on *the tile below* is the **push**: the tile moves in if it breaks that tile, and stays if it doesn't | Worry, Greed |
+| **Each step** | Each step down (Speed > 0). An Attack on *the tile below* is the **push**: the tile moves in if it breaks that tile, and stays if it doesn't | Worry, Greed, Grief |
 | **On activate** | The end of every enemy turn, after every enemy tile has moved, while the tile is on the board (Locked tiles skip it) | Greed, Depression, Worship |
-| **At bottom** | Each enemy turn the tile spends on the bottom row | Worry, Greed, Depression |
+| **At bottom** | Each enemy turn the tile spends on the bottom row | Worry, Greed, Depression, Grief |
 | **On use** | An ability is used | Abilities |
 
 Planned, not built yet: **Start of your turn**, **End of your turn** (Joy's Shining fits here), **When broken**
@@ -59,6 +59,7 @@ An effect is a verb with its own sub-properties. Sub-properties that don't apply
 | **Create** | the tile (an icon, or random junk) and **where** (targets) | Depression: Create [Depression] on 1 random adjacent tool or junk |
 | **Gain** | what (**Block, Critical, Foresight, Moves, Courage**) and **how much** | Thanksgiving: Gain: Block, 1 per tile in the set |
 | **Clears self** | none: the set just clears | Stone |
+| **Remove self** | none: the tile leaves the board. Not damage, so nothing breaks it and no On destroy | Grief, At bottom (after its hit) |
 
 ### 3.1 Targets
 
@@ -150,6 +151,7 @@ Every tile icon opens that tile's popup (tap or hold), stacked with Back, so ref
 | Worry | 1 (2 in Hard Choices) | Each step: Attack (the tile below · Dmg 1). At bottom: Attack (You · Dmg 1) |
 | Greed | 2 | Each step: as Worry. On activate: Create random junk on every adjacent tool. At bottom: Attack (You · Dmg 1) |
 | Depression | 0 | On activate: Create [Depression] on 1 random adjacent tool or junk. At bottom: Attack (You · Dmg 1) |
+| Grief | 2 | Each step: as Worry. At bottom: Attack (You · Dmg 3), Remove self |
 
 ## 6. Adding something new
 

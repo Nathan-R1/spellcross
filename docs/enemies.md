@@ -74,6 +74,20 @@ Claims and clashes for On activate are in [tile-effects § 3.3](tile-effects.md#
 | At bottom | Dmg 1 to you (once per enemy turn) |
 | Art | `spells/dud/depression.png`: a grey-white puddle (the slime art recoloured) |
 
+### Grief
+
+| | |
+|---|---|
+| HP | 20: far more than you can deal in the time it's on the board. It isn't meant to be killed |
+| Speed | 2 |
+| Each step | Dmg 1 to the tile below, and moves in if it breaks (as Worry). A full-HP Stone holds it for a turn |
+| On activate | (none) |
+| At bottom | Dmg **3** to you, then **Remove self**: it leaves the board. Block absorbs the damage as usual |
+| Art | placeholder: `spells/dud/mist.png` |
+
+Remove self isn't damage, so nothing breaks the tile; it just leaves ([tile-effects § 3](tile-effects.md#3-effects)).
+A Grief that leaves counts towards victory like one you destroyed.
+
 A fight can override a tile's speed with `tileSpeed` (e.g. Hard Choices' Worries take 2 steps). The board and
 the tile details show the speed for the current fight.
 
@@ -153,6 +167,22 @@ no Worries the bot averages about 9.5 damage and wins about half the time, but i
 loadouts with Prophecy win 58–100%, and loadouts without it win 0–17%. See
 [combat-tuning.md § 5](combat-tuning.md#5-measurements).
 
+### The Long Night (elite)
+
+| | |
+|---|---|
+| Generator | Rows 1–7 normal. Row **8** (the top of the board): a full row of **Grief**. Then normal forever |
+| On the board at the start | All 8 Grief |
+| Total | **8** Grief, nothing to come |
+| Actions | None |
+| Reward *(tune)* | 40–60 Talents, a fruit (elite tier) |
+| Description (data) | "One row of Grief across the top of the board: 8 Grief in all, all on the board. Nothing more comes. Grief has 20 HP and takes 2 steps per enemy turn. On the bottom row it deals 3 damage to you, then leaves." |
+
+**The sustain elite**, the opposite of All Quiet: you can't win it by damage. Unchecked, every Grief reaches the
+bottom on enemy turn 4 and the row deals 24 at once. You win when the last one leaves. What you control is **how
+much of it lands**: Block absorbs it, and Stones and Locks stagger the columns so it arrives over several turns
+instead of all at once.
+
 ## 5. Data files
 
 ```ts
@@ -201,3 +231,5 @@ interface EnemyDef {
 - Greed tile art (placeholder: the gold coin icon).
 - All Quiet portrait: `portraits/all_quiet.svg` (an empty chair by a rainy window).
 - Depression tile art: `spells/dud/depression.png` (grey-white puddle).
+- The Long Night portrait: `portraits/long_night.svg` (a candle under a night sky, dawn on the horizon).
+- Grief tile art (placeholder: `spells/dud/mist.png`).

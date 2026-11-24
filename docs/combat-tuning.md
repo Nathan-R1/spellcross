@@ -6,6 +6,11 @@ balance sims when tuning the tile pool, enemies or tools. The rules themselves a
 All numbers come from the **sim bot**, not from players. The bot is greedy and doesn't look ahead: it picks the swap
 whose sets are best right now and aims damage at the lowest enemy tiles. A careful player should do better than it.
 
+**Block:** Block clears at the start of your turn, so the bot **saves its Block tiles** (leaves Thanksgiving and
+Worship unmatched) while nothing will hit it in the coming enemy turn, and **fires them when something will**, ahead
+of damage, for the points that cover the hit. "Something will hit" is every unlocked enemy tile on the bottom row or
+close enough to reach it this enemy turn, ignoring Stones in the way (`incomingDamage` in `tests/sim/bot.ts`).
+
 ## 1. Damage targets
 
 | Fight tier | Bot's average damage taken | A player who plays well |
@@ -59,6 +64,43 @@ Even at 1, about a third of swaps still cascade, because tiles already on the bo
 to the 15–25% goal, the next lever is a **third junk type**.
 
 ## 5. Measurements
+
+**2026-11-24, later** (current game: 7 starting tools, so 35 loadouts × 12 seeds; 2 junk types, refill damping 1;
+the Block-saving bot). Grief deals 3.
+
+| Metric | Hard Choices | Financial Stress | All Quiet (elite) | The Long Night (elite) |
+|---|---|---|---|---|
+| Turn 1: set-making swaps | 7.9 | 14.6 | 15.2 | 15.8 |
+| Any turn: set-making swaps | 7.3 | 7.7 | 5.9 | 12.3 |
+| Tools you can fire (of 3) | 1.8 | 1.6 | 1.2 | 2.3 |
+| Sets made by the swap | 1.13 | 1.13 | 1.11 | 1.16 |
+| Auto sets per set-making swap | 0.22 | 0.22 | 0.27 | 0.25 |
+| ↳ auto tool sets | 0.09 | 0.12 | 0.21 | 0.18 |
+| % swaps that cascade | 16 | 16 | 17 | 16 |
+| Sets per turn (all) | 3.5 | 3.2 | 1.9 | 4.2 |
+| Enemy tiles killed per turn | 3.3 | 2.3 | 1.3 | 0.1 |
+| Win % | 75 | 77 | 36 | 85 |
+| Avg damage taken | 8.5 | 5.8 | 12.9 | 10.6 |
+
+**Saving Block vs always firing it** (balance sim, same seeds, average over the 35 loadouts):
+
+| Enemy | Win % before → after | Avg damage before → after |
+|---|---|---|
+| Hard Choices | 75 → 76 | 8.6 → 8.5 |
+| Financial Stress | 77 → 77 | 6.3 → 5.9 |
+| All Quiet | 35 → 36 | 13.0 → 12.9 |
+| The Long Night | 83 → 85 | 11.2 → 10.6 |
+
+Saving Block helps only a little, because Block can't be banked: on the turn that matters you still get just 3
+swaps' worth. Against the Long Night that turn is the one where all 8 Grief arrive (24 damage), so the fight is
+capped by one turn's Block. Staggering the Grief (Stones, Locks, or a different generator) is what would make it a
+longer sustain test.
+
+Losses now come mostly from loadouts with **no damage tool** (Anoint + Thanksgiving + Worship/Preaching and the like),
+which can't clear Hard Choices or Financial Stress at all, and, against the Long Night, from loadouts with **no Block**
+(Anoint/Prayer/Word/Prophecy/Preaching mixes: 0–58% wins).
+
+### Earlier measurements (older toolset and bot; not comparable with the table above)
 
 Run `pnpm exec vitest run tests/sim/sets --silent=false` (options: `SEEDS`, `ENEMY`, `JUNK=2,3,4`,
 `REFILL=0,0.7,1`) for the set-density table, and `pnpm sim` for win rate and damage by loadout.

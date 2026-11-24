@@ -1,5 +1,6 @@
 // The balance bot: a human-like player shared by the sims. It picks swaps by the sets they make right away (it
-// can't see random refills), aims damage at the lowest enemy tiles, and doesn't plan ahead.
+// can't see random refills), aims damage at the lowest enemy tiles, and doesn't plan ahead. Block: it saves its
+// Block tiles (doesn't match them) while nothing will hit it this enemy turn, and fires them when something will.
 import { content, type Content } from '../../src/content';
 import { endTurn, enemyTileSpeed, findSets, isLocked, pendingGroupSize, placeGroup, placementCells, playerMove, tileAt } from '../../src/engine/combat';
 import type { BattleState, Pos, TimedEvent } from '../../src/engine/types';
@@ -93,13 +94,39 @@ export function resolvePlacements(s: BattleState, c: Content = content, events?:
   return st;
 }
 
+/** Damage an enemy tile deals you from the bottom row (its At bottom Attacks on You). */
+function bottomDamage(c: Content, id: string): number {
+  return (c.enemyTiles[id].triggers.atBottom ?? []).reduce((n, e) => n + (e.type === 'attack' && e.targets.type === 'you' ? e.dmg : 0), 0);
+}
+
+/**
+ * Damage the coming enemy turn will deal you if nothing changes: every unlocked enemy tile that is on the bottom row,
+ * or close enough to reach it and still have a step left (it moves Speed steps; a step from the bottom row hits).
+ * Tiles in the way are ignored, so this is the worst case.
+ */
+export function incomingDamage(s: BattleState, c: Content = content): number {
+  let dmg = 0;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const t = tileAt(s.board, x, y);
+    if (t?.kind !== 'enemy' || isLocked(t, s.round)) continue;
+    const speed = enemyTileSpeed(c, s.enemyId, t.id);
+    if (y === H - 1 || H - 1 - y < speed) dmg += bottomDamage(c, t.id);
+  }
+  return dmg;
+}
+
 /**
  * A human-like move: judge each swap only by the sets it makes right away (no peeking at random refills), then
  * play the best one. Swapping a low enemy tile upward also counts.
  */
 export function botMove(s: BattleState, rnd: () => number, c: Content = content, events?: TimedEvent[]): BattleState {
   const lowest = Math.max(-1, ...s.board.cells.map((t, i) => (t?.kind === 'enemy' ? Math.floor(i / W) : -1)));
-  const urgency = lowest >= 6 ? 3 : lowest >= 4 ? 1.5 : 0.6; // Block matters more when enemies are near the bottom
+  const urgency = lowest >= 6 ? 3 : lowest >= 4 ? 1.5 : 0.6; // Locks matter more when enemies are near the bottom
+  // Block lasts only until your next turn, so it's worth gaining only to cover a hit coming this enemy turn.
+  // In danger (more incoming than Block): fire Block, ahead of damage, for the points that cover the hit.
+  // Not in danger: save the Block tiles for a turn when it is, so a set of them is a small cost.
+  const need = incomingDamage(s, c) - s.player.block;
+  const blockValue = (n: number) => (need > 0 ? 4 * Math.min(n, need) + 0.5 * Math.max(0, n - need) : -0.5 * n);
   let best: [Pos, Pos] | null = null, bestV = 0;
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) for (const [dx, dy] of [[1, 0], [0, 1]]) {
     if (x + dx >= W || y + dy >= H) continue;
@@ -119,7 +146,7 @@ export function botMove(s: BattleState, rnd: () => number, c: Content = content,
         const damages = effects.some((e) => e.type === 'attack' && e.dmg > 0);
         const locks = effects.some((e) => e.type === 'attack' && e.apply === 'locked');
         const strengthens = effects.some((e) => e.type === 'attack' && e.apply === 'strengthen');
-        v += damages ? 3 * n : locks ? urgency * n : strengthens ? 2 * n : gains('block') ? urgency * n : gains('critical') ? 4 : 0;
+        v += damages ? 3 * n : locks ? urgency * n : strengthens ? 2 * n : gains('block') ? blockValue(n) : gains('critical') ? 4 : 0;
       } else if (set.key === 'junk:time') v += 2;
       else v += 0.2;
     }
