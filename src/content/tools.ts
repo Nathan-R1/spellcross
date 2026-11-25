@@ -39,7 +39,7 @@ export const tools: Record<string, ToolDef> = {
       onActivate: [{ type: 'attack', targets: { type: 'adjacent', pick: 'every', filter: ['junk'], ids: ['space'] }, dmg: 1 }],
     } },
   preaching: { id: 'preaching', name: 'Preaching', pillar: 'discipline', description: '', icon: 'tools/water/default.png', role: 'control', color: ROLE_COLOR.control, ...T,
-    triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseAnywhere', count: PER_TILE }, dmg: 0, apply: 'locked' }] } },
+    triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseAnywhere', count: PER_TILE }, dmg: 1, apply: 'locked' }] } },
   anoint: { id: 'anoint', name: 'Anoint', pillar: 'faith', description: 'A Strengthened tile makes the set it clears in 1 tile bigger per point.', icon: 'tools/fire/default.png', role: 'support', color: ROLE_COLOR.support, ...T,
     triggers: { setFormed: [{ type: 'attack', targets: SET_SHAPE, dmg: 0, apply: 'strengthen', applyAmount: 2 }] } },
   // Parked (tools.md §1.2): no effect until redesigned.
@@ -56,8 +56,8 @@ export const junk: Record<string, JunkDef> = {
 };
 
 /** The Word's Stone: config.stoneHp HP (+ Patience on the tool that made it). */
-export const STONE: TileDef = { id: 'stone', name: 'Stone', description: '', icon: 'tools/dud/rubble.png', color: '#7a6a55', hp: config.stoneHp, speed: 0,
-  triggers: { setFormed: [{ type: 'clearsSelf' }] } };
+export const STONE: TileDef = { id: 'stone', name: 'Stone', description: 'Never forms sets. Only damage clears it.', icon: 'tools/dud/rubble.png', color: '#7a6a55', hp: config.stoneHp, speed: 0,
+  triggers: {} };
 
 /**
  * Tool art: each pillar has a frame, and a tool's own SVG glyph is drawn inside it (the Word: a Bible in the Truth

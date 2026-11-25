@@ -393,19 +393,22 @@ describe('placement groups', () => {
 });
 
 describe('Preaching and Locked', () => {
-  it('Preaching: Choose anywhere (any tile), 1 per tile in the set; Dmg 0; the targets are Locked', () => {
-    const s = makeBattle({ rows: base({ 7: 'KKsKsmsm' }) });
+  it('Preaching: Choose anywhere (any tile), 1 per tile in the set; Dmg 1; targets that survive are Locked', () => {
+    // A Greed (3 HP) and a Worry (1 HP) on top; both fall one row when the set clears.
+    const s = makeBattle({ rows: base({ 0: 'GmXsmsms', 7: 'KKsKsmsm' }) });
     const r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
     expect(r.state.phase).toBe('placing');
     expect(r.state.pending).toHaveLength(3);
-    expect(r.state.pending[0]).toMatchObject({ target: { type: 'anywhere' }, damage: 0, apply: 'locked' });
-    // The Worry (it fell from (0,0) to (0,1) when the set cleared) twice, and the Mud at (1,1).
-    const w = { x: 0, y: 1 };
-    const done = placeGroup(r.state, [w, w, { x: 1, y: 1 }], c).state;
-    const worry = at(done, 0, 1)!;
-    expect(worry.hp).toBe(1); // no damage
-    expect(isLocked(worry, done.round)).toBe(true);
-    expect(isLocked(at(done, 1, 1), done.round)).toBe(true);
+    expect(r.state.pending[0]).toMatchObject({ target: { type: 'anywhere' }, damage: 1, apply: 'locked' });
+    const greed = { x: 0, y: 1 }, worry = at(r.state, 2, 1)!;
+    expect(worry.id).toBe('worry');
+    const done = placeGroup(r.state, [greed, greed, { x: 2, y: 1 }], c).state;
+    const g = at(done, 0, 1)!;
+    expect(g.hp).toBe(1); // 3 − 1 − 1
+    expect(isLocked(g, done.round)).toBe(true);
+    // The Worry died to the hit, so nothing kept its lock.
+    expect(done.board.cells.some((t) => t?.uid === worry.uid)).toBe(false);
+    expect(done.board.cells.filter((t) => t && isLocked(t, done.round)).map((t) => t!.uid)).toEqual([g.uid]);
   });
 
   it("a Locked tile doesn't move or hit you during the enemy turn, and the lock wears off on your next turn", () => {
@@ -525,11 +528,12 @@ describe('refill damping', () => {
   });
 
   it('at 1, tiles already on the board that fall into a set still go off (strategic cascades)', () => {
-    // Swap (0,4) and (0,5): Fasting ×3 down column 0. The Stone above falls to (0,7) and lines up with two more.
-    const s = makeBattle({ rows: base({ 4: 'Fsmsmsms', 5: 'Omsmsmsm', 6: 'Fsmsmsms', 7: 'FOOsmsms' }) });
+    // Swap (0,4) and (0,5): Fasting ×3 down column 0. The Mud above falls to (0,7) and lines up with two more.
+    const s = makeBattle({ rows: base({ 4: 'Fsmsmsms', 5: 'mmsmsmsm', 6: 'Fsmsmsms', 7: 'Fmmsmsms' }) });
+    const mud = [1, 2].map((x) => at(s, x, 7)!.uid);
     const r = playerMove(s, { x: 0, y: 4 }, { x: 0, y: 5 }, withP(1));
     expect(matchedWaves(r)).toBeGreaterThanOrEqual(2);
-    expect(r.state.board.cells.filter((t) => t?.kind === 'stone')).toHaveLength(0);
+    expect(r.state.board.cells.some((t) => t && mud.includes(t.uid))).toBe(false); // the Mud line went off
   });
 });
 
@@ -599,5 +603,61 @@ describe('Grief and The Long Night', () => {
     const r = endTurn(makeBattle({ rows }), c);
     expect(r.state.outcome).toBe('victory');
     expect(r.state.player.hp).toBe(r.state.player.maxHp - 3);
+  });
+});
+
+describe('Momentum', () => {
+  const withMomentum = (row: string, m: number) => makeBattle({ rows: base({ 7: row }), state: (x) => { x.player.momentum = m; } });
+
+  it('unspent Block becomes Momentum at the start of your turn, adding to what you have', () => {
+    const s = makeBattle({ rows: base({}), state: (x) => { x.player.block = 4; x.player.momentum = 2; } });
+    const r = endTurn(s, c); // nothing reaches you
+    expect(r.state.player.block).toBe(0);
+    expect(r.state.player.momentum).toBe(6);
+  });
+
+  it('Block spent on a hit is not Momentum', () => {
+    const s = makeBattle({ rows: base({ 7: 'smsmXmsm' }), state: (x) => { x.player.block = 3; } });
+    const r = endTurn(s, c); // the Worry on the bottom row hits for 1
+    expect(r.state.player.momentum).toBe(2);
+  });
+
+  it('every 3 gives the next damage set +1 Dmg on every hit, and it spends all of it', () => {
+    const r = playerMove(withMomentum('PPsPsmsm', 3), { x: 2, y: 7 }, { x: 3, y: 7 }, c);
+    expect(r.state.pending[0].damage).toBe(4);
+    expect(r.state.player.momentum).toBe(0);
+  });
+
+  it('Time with 6 Momentum deals 1 + 2', () => {
+    const r = playerMove(withMomentum('iisismsm', 6), { x: 2, y: 7 }, { x: 3, y: 7 }, c);
+    expect(r.state.pending[0].damage).toBe(3);
+    expect(r.state.player.momentum).toBe(0);
+  });
+
+  it('less than 3 adds nothing but is still all spent', () => {
+    const r = playerMove(withMomentum('PPsPsmsm', 2), { x: 2, y: 7 }, { x: 3, y: 7 }, c);
+    expect(r.state.pending[0].damage).toBe(3);
+    expect(r.state.player.momentum).toBe(0);
+  });
+
+  it('sets that deal no damage (Anoint, Thanksgiving) leave it alone', () => {
+    expect(playerMove(withMomentum('AAsAsmsm', 5), { x: 2, y: 7 }, { x: 3, y: 7 }, c).state.player.momentum).toBe(5);
+    expect(playerMove(withMomentum('TTsTsmsm', 5), { x: 2, y: 7 }, { x: 3, y: 7 }, c).state.player.momentum).toBe(5);
+  });
+
+  it('abilities neither use nor spend it', () => {
+    const s = makeBattle({ rows: base({}), player: (p) => (p.abilities = [{ id: 'abstain', uses: 3 }]), state: (x) => { x.player.momentum = 6; } });
+    const r = useAbility(s, 0, c);
+    expect(r.state.pending[0].damage).toBe(10);
+    expect(r.state.player.momentum).toBe(6);
+  });
+});
+
+describe('Stone', () => {
+  it('never forms sets: three Stones in a line stay on the board', () => {
+    const s = makeBattle({ rows: base({ 7: 'OOsOsmsm' }) });
+    const r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
+    expect([0, 1, 2].map((x) => at(r.state, x, 7)?.kind)).toEqual(['stone', 'stone', 'stone']);
+    expect(findSets(r.state)).toEqual([]);
   });
 });

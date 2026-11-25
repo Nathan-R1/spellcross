@@ -29,7 +29,7 @@ Every tile definition (tools, junk, the Stone, enemy tiles) is a `TileDef`:
 | **Triggers** | When something happens, each with its **effects** (§2, §3) |
 | **Description** | Optional free text for anything the triggers don't say. Normally empty |
 
-A tile **forms sets only if it has a Set formed trigger**. Space and enemy tiles have none.
+A tile **forms sets only if it has a Set formed trigger**. Space, Stones and enemy tiles have none.
 
 Abilities have no tile, but use the same effects under the **On use** trigger.
 
@@ -40,7 +40,7 @@ the other. A trigger with no effects is **hidden**: there is never an "N/A" or "
 
 | Trigger | When it fires | Used by |
 |---|---|---|
-| **Set formed** | 3+ of this tile clear as a set (from your swap or a cascade) | Tools, Time, Stone |
+| **Set formed** | 3+ of this tile clear as a set (from your swap or a cascade) | Tools, Time |
 | **Each step** | Each step down (Speed > 0). An Attack on *the tile below* is the **push**: the tile moves in if it breaks that tile, and stays if it doesn't | Worry, Greed, Grief |
 | **On activate** | The end of every enemy turn, after every enemy tile has moved, while the tile is on the board (Locked tiles skip it) | Greed, Depression, Worship |
 | **At bottom** | Each enemy turn the tile spends on the bottom row | Worry, Greed, Depression, Grief |
@@ -55,10 +55,10 @@ An effect is a verb with its own sub-properties. Sub-properties that don't apply
 
 | Effect | Sub-properties | Example |
 |---|---|---|
-| **Attack** | **Targets**, **Dmg**, **On destroy**, **Apply** (a tile status for each target that survives) | Prayer: Choose shape (the set's shape) · Dmg 3. Preaching: … Dmg 0 · Apply: [Locked]. Anoint: Choose shape (the set's shape) · Dmg 0 · Apply: +2 [Strengthen] |
+| **Attack** | **Targets**, **Dmg**, **On destroy**, **Apply** (a tile status for each target that survives) | Prayer: Choose shape (the set's shape) · Dmg 3. Preaching: … Dmg 1 · Apply: [Locked]. Anoint: Choose shape (the set's shape) · Dmg 0 · Apply: +2 [Strengthen] |
 | **Create** | the tile (an icon, or random junk) and **where** (targets) | Depression: Create [Depression] on 1 random adjacent tool or junk |
 | **Gain** | what (**Block, Critical, Foresight, Moves, Courage**) and **how much** | Thanksgiving: Gain: [Block], 1/tile |
-| **Clears self** | none: the set just clears | Stone |
+| **Clears self** | none: the set just clears | Parked tools |
 | **Remove self** | none: the tile leaves the board. Not damage, so nothing breaks it and no On destroy | Grief, At bottom (after its hit) |
 
 ### 3.1 Targets
@@ -87,6 +87,7 @@ Fruit, statuses and Foresight change effects instead of adding special cases:
 |---|---|
 | **Critical** | The next tool set's effects all happen **twice** (Attacks queue twice, Gains double). Effects marked *once per turn* still happen once |
 | **Faithfulness** | +1 Dmg per fruit on the tool's Attacks |
+| **Momentum** | +1 Dmg per 3 Momentum on the Attacks (Dmg above 0) of the next set that has one, tool or junk; that set spends all of it. Not abilities |
 | **Foresight** | +1 Dmg per 3 Foresight on **Truth** tools' Attacks, read when the Attack runs (so Prophecy's own Foresight Gain, after its Attack, boosts later sets only) |
 | **Patience** | +1 HP per fruit on tiles the tool's Attacks create (the Word's Stones, Prophecy's Space) |
 | **Peace, Goodness, Self-Control** | Add their own effects to the end of the tool's Set formed list: Gain Block (1 per tile in the set, per fruit), Gain Courage, Gain Moves (once per turn) |
@@ -137,7 +138,7 @@ status (Moves, Courage) stays a word. An Apply reads `Apply: [Locked]` or `Apply
 A board tile's popup starts with its statuses, when it has any: `Status: [Locked] +2 [Strengthen]`.
 
 Every icon opens its popup (tap or hold): a tile's popup, or a status's (icon, name, your amount, what it does). The
-status chips on your panel (Block, Critical, Foresight) open the same popup. Popups stack with Back, so references
+status chips on your panel (Block, Critical, Foresight, Momentum) open the same popup. Popups stack with Back, so references
 can be followed forever.
 
 ## 5. Current tiles
@@ -151,11 +152,11 @@ can be followed forever.
 | Fasting (parked) | 0 | Set formed: Gain Critical, 1 |
 | Thanksgiving | 0 | Set formed: Gain Block, 1 per tile in the set |
 | Worship | 0 | Set formed: Gain Block, 1 per tile in the set. On activate: Attack (Every adjacent [Space] · Dmg 1) |
-| Preaching | 0 | Set formed: Attack (Choose anywhere: 1 tile per tile in the set · Dmg 0 · Apply: Locked) |
+| Preaching | 0 | Set formed: Attack (Choose anywhere: 1 tile per tile in the set · Dmg 1 · Apply: Locked) |
 | Parked tools | 0 | Set formed: Clears self |
 | Time | 0 | Set formed: Attack (Choose anywhere: 1 tile · Dmg 1/3 tiles, rounded up) |
 | Space | 0 | none (never forms sets) |
-| Stone | 0 | Set formed: Clears self |
+| Stone | 0 | none (never forms sets) |
 | Worry | 1 (2 in Hard Choices) | Each step: Attack (the tile below · Dmg 1). At bottom: Attack (You · Dmg 1) |
 | Greed | 2 | Each step: as Worry. On activate: Create random junk on every adjacent tool. At bottom: Attack (You · Dmg 1) |
 | Depression | 0 | On activate: Create [Depression] on 1 random adjacent tool or junk. At bottom: Attack (You · Dmg 1) |

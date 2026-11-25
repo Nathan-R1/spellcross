@@ -43,7 +43,7 @@ describe('statuses in tile text', () => {
   });
 
   it('every status referenced in text exists', () => {
-    for (const id of ['block', 'critical', 'foresight', 'locked', 'strengthen']) expect(statuses[id]?.icon).toBeTruthy();
+    for (const id of ['block', 'momentum', 'critical', 'foresight', 'locked', 'strengthen']) expect(statuses[id]?.icon).toBeTruthy();
   });
 
   it('Time: Dmg: 1/3 tiles (rounded up)', () => {

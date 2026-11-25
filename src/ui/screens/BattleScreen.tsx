@@ -152,6 +152,10 @@ export function BattleScreen() {
               <div className="stat-row">
                 <StatusChip id="block" text={`${view.player.block}`} value={view.player.block} />
                 {view.player.critical > 0 && <StatusChip id="critical" text={`×${view.player.critical}`} value={view.player.critical} />}
+                {view.player.momentum > 0 && (
+                  <StatusChip id="momentum" value={view.player.momentum}
+                    text={`${view.player.momentum} (+${Math.floor(view.player.momentum / content.config.momentumPerBonus)})`} />
+                )}
                 {view.player.foresight > 0 && (
                   <StatusChip id="foresight" value={view.player.foresight}
                     text={`${view.player.foresight} (+${Math.floor(view.player.foresight / content.config.foresightPerBonus)})`} />

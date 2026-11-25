@@ -6,10 +6,10 @@ balance sims when tuning the tile pool, enemies or tools. The rules themselves a
 All numbers come from the **sim bot**, not from players. The bot is greedy and doesn't look ahead: it picks the swap
 whose sets are best right now and aims damage at the lowest enemy tiles. A careful player should do better than it.
 
-**Block:** Block clears at the start of your turn, so the bot **saves its Block tiles** (leaves Thanksgiving and
+**Block:** Block only protects you until the start of your turn, so the bot **saves its Block tiles** (leaves Thanksgiving and
 Worship unmatched) while nothing will hit it in the coming enemy turn, and **fires them when something will**, ahead
 of damage, for the points that cover the hit. "Something will hit" is every unlocked enemy tile on the bottom row or
-close enough to reach it this enemy turn, ignoring Stones in the way (`incomingDamage` in `tests/sim/bot.ts`).
+close enough to reach it this enemy turn, ignoring Stones in the way (`incomingDamage` in `tests/sim/bot.ts`). It doesn't yet value **Momentum** (unspent Block turns into it, combat § 4.3), and the measurements below predate Momentum.
 
 ## 1. Damage targets
 

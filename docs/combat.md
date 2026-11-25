@@ -40,7 +40,7 @@ Numbers marked *(tune)* are starting values for playtesting.
 |---|---|---|---|
 | **Tool** | Prayer, Thanksgiving, The Word, Prophecy, Worship, Preaching, Anoint | Yes: 3+ of the same tool | The effect triggers when the set clears ([tools.md](tools.md)) |
 | **Junk** | Time, Space | Time: 3+ Time. **Space never matches** | Time has a small effect. Space is inert: only damage clears it, and it breaks lines like an enemy tile |
-| **Stone** | Stone | Yes: 3+ Stones clear (damaged or not), with no effect | 2 HP. Blocks enemy tiles (§4.2) |
+| **Stone** | Stone | **Never**: only damage clears it, like Space | 2 HP. Blocks enemy tiles (§4.2). Breaks lines like Space |
 | **Enemy** | Worry | **Never** | Blocks lines. Destroyed by damage, or transformed into a Stone by the Word (§5) |
 
 Different kinds never match each other. An enemy tile or a Space in the middle of a line breaks the line.
@@ -67,7 +67,7 @@ There's no "remove" effect, only **damage**:
 ```
 battle start: choose 3 tools (§2.1) → build the board from the enemy's generator → Block 0, no statuses
 ┌▶ PLAYER TURN
-│    Block clears
+│    unspent Block becomes Momentum (§4.3), then Block is 0
 │    moves = 3
 │    swap … resolve sets, placements, cascades … until moves = 0 or END TURN
 │    END OF PLAYER TURN: your tiles activate (Shining tiles damage adjacent enemy tiles)
@@ -108,8 +108,8 @@ cells it covered).
 1. The set's tiles clear.
 2. Its effect triggers:
    - a **tool** set → the tool's effect ([tools.md](tools.md)),
-   - **Time** → you deal 1 damage to 1 tile,
-   - **Stone** → nothing. (Space never forms sets.)
+   - **Time** → you deal 1 damage to 1 tile.
+   (Space and Stones never form sets.)
 3. If the effect needs **placement** (Prayer's or Prophecy's shape, the Word's or Time's picks), the board first **falls and refills**, then you place it (§5). The board waits until you finish.
 
 **Supportive** tiles (Kindness fruit) orthogonally next to a set of a different tool are pulled into it before
@@ -129,7 +129,7 @@ right now. See [tools.md § Fasting](tools.md#fasting-parked).
 - Thanksgiving → twice the Block.
 - Fasting → Critical 2: the next **two** tool sets are doubled.
 
-Junk and Stone sets don't use up Critical.
+Junk sets don't use up Critical.
 
 ### 3.4 Cascades
 
@@ -170,8 +170,8 @@ the next generated tile into that column.
 
 ### 4.2 Stones
 
-Stones have **2 HP**. They fall with gravity and can be swapped. 3+ Stones in a line match and clear with no
-effect, whether they're damaged or not.
+Stones have **2 HP**. They fall with gravity and can be swapped. They **never form sets**: only damage clears them,
+like Space. (Until 2026-11-25, 3+ Stones in a line matched and cleared.)
 
 Against a Worry, the first step leaves the Stone at 1 HP and stops the Worry for that turn. The second step
 deletes it, and the Worry moves into its cell. So a Stone holds a Worry back for one turn and protects the tile
@@ -183,8 +183,17 @@ below it for two. The same 2 HP means a Time hit or a Word pick (1 damage) only 
   **Courage**.
 - Block **only absorbs damage**. It doesn't stop enemy tiles moving. (Until 2026-11-24 leftover Block also stopped
   enemy steps.)
-- Block is gained on your turn (Thanksgiving, Worship, Peace, Stand Firm), lasts through the enemy turn, and **clears
-  at the start of your next turn**.
+- Block is gained on your turn (Thanksgiving, Worship, Peace, Stand Firm) and lasts through the enemy turn.
+- **Momentum.** At the start of your next turn, the Block you didn't spend isn't lost: it becomes **Momentum**, point
+  for point, added to any you have. Block then starts the turn at 0.
+  - **Every 3 Momentum** gives your next **damage set** **+1 Dmg on every hit**. A damage set is a set (tool or junk)
+    with an Attack of Dmg above 0: Prayer, the Word, Prophecy, Time. With 3 Momentum a Prayer set hits for 4; with 6, a
+    Time set hits for 3.
+  - That set spends **all** your Momentum, even a remainder (5 Momentum gives +1 and leaves 0; 2 gives +0 and leaves 0).
+    The first damage set to resolve takes it, in reading order (§3.2). Under Critical both placements get the bonus.
+  - Sets that deal no damage (Anoint, Preaching, Thanksgiving, Worship) leave it alone. **Abilities** neither use nor
+    spend it.
+  - It lasts the whole battle until spent, and clears after the battle like every status.
 
 ### 4.4 Locked
 
@@ -265,9 +274,9 @@ tile under it takes damage. All of them are damage (§1.2).
 |---|---|---|
 | **Courage** | 20 *(tune)* | Replaces HP. Carries over between battles in a run (TBD with the run) |
 | **Moves** | 3 per turn | |
-| **Block** | 0 | Clears at the start of your turn |
+| **Block** | 0 | At the start of your turn, what's left becomes Momentum |
 | **Courage** max | 20 | Goodness fruit heals up to this |
-| **Statuses** | none | Critical, Foresight. Full list: [tools.md § 6](tools.md#6-statuses) |
+| **Statuses** | none | Critical, Foresight, Momentum. Full list: [tools.md § 6](tools.md#6-statuses) |
 
 ## 8. Screen layout (portrait)
 
@@ -298,7 +307,7 @@ The battle screen is **portrait**: the board is on top, with two panels side by 
 - **Board:** full screen width minus the gutters. Tile size = `min((width − 16) / 8, …)`, so the two panels
   still fit below. Tiles stay square.
 - **Player panel (left):** Courage, Block, statuses, move pips and End Turn. **Hold (or tap) a status chip**
-  (Block, Critical, Foresight) to see what it does. Abilities go here too once they're
+  (Block, Critical, Foresight, Momentum) to see what it does. Abilities go here too once they're
   redesigned (TBD).
 - **Enemy panel (right):** name, a **picture of what's coming**: a small 8×8 grid of the next 8 tiles in each
   column, nearest at the bottom, with enemy squares marked ([enemies.md § 2](enemies.md#2-the-generator)). Below

@@ -37,10 +37,10 @@ Sizes are always counted as **tiles in the set**. A tile whose damage reaches it
 | **Anoint** | Set formed | Attack: Choose shape (the set's shape) · Dmg 0 · Apply: +2 Strengthen |
 | **Thanksgiving** | Set formed | Gain: Block, 1 per tile in the set |
 | **Worship** | Set formed; On activate | Gain: Block, 1 per tile in the set. On activate: Attack: Every adjacent [Space] · Dmg 1 |
-| **Preaching** | Set formed | Attack: Choose anywhere (1 tile per tile in the set) · Dmg 0 · Apply: Locked |
+| **Preaching** | Set formed | Attack: Choose anywhere (1 tile per tile in the set) · Dmg 1 · Apply: Locked |
 | **Time** (junk) | Set formed | Attack: Choose anywhere (1 tile) · Dmg 1/3 tiles (rounded up) |
 | **Space** (junk) | (none: never forms sets) | |
-| **Stone** | Set formed | Clears self |
+| **Stone** | (none: never forms sets) | |
 | **Abstain** | On use | Attack: Choose anywhere (1 tile) · Dmg 10 |
 | **Stand Firm** | On use | Gain: Block, 5 |
 | **Many Fish** | On use | Attack: Choose shape (line of 3, horizontal or vertical) · Dmg 1 |
@@ -57,7 +57,7 @@ add their own Gain effects to the tool's Set formed list, so they show in its po
 | **The Word** | Truth | Targets: **Choose anywhere**, 1 per tile in the set. Dmg **1**. On destroy: **Create Stone** | Yes |
 | **Prophecy** | Truth | Targets: **Choose shape**. Dmg **1**. On destroy: **Create Space**. Also gain **1 Foresight per tile in the set** | Yes, both |
 | **Worship** | Spirit | Gain **1 Block per tile in the set**. On its own, every Worship tile deletes the Space next to it at the end of each enemy turn | Block: yes |
-| **Preaching** | Discipline | Targets: **Choose anywhere**, 1 tile per tile in the set. Dmg **0**. Apply **Locked** | Yes |
+| **Preaching** | Discipline | Targets: **Choose anywhere**, 1 tile per tile in the set. Dmg **1**. Apply **Locked** | Yes |
 
 ### Anoint
 
@@ -99,7 +99,8 @@ main way to defeat enemy tiles. ([combat § 5.1](combat.md#51-choose-shape-praye
 ### Thanksgiving
 
 Match 3+ Thanksgiving: gain 1 **Block** per tile. Block absorbs damage to you, point for point, until the start of
-your next turn ([combat § 4.3](combat.md#43-damage-and-block)). It doesn't stop enemy tiles moving.
+your next turn, when what's left becomes **Momentum** ([combat § 4.3](combat.md#43-damage-and-block)). It doesn't stop
+enemy tiles moving.
 
 ### The Word
 
@@ -133,8 +134,8 @@ made that turn. Time is untouched.
 
 ### Preaching
 
-Match 3+ Preaching: **pick tiles**, 1 per tile in the set, anywhere on the board (any tile). Each takes **0 damage**
-(Faithfulness adds damage as usual) and is **Locked** ([combat § 4.4](combat.md#44-locked)): through the next enemy
+Match 3+ Preaching: **pick tiles**, 1 per tile in the set, anywhere on the board (any tile). Each takes **1 damage**
+(Faithfulness adds damage as usual) and, if it survives, is **Locked** ([combat § 4.4](combat.md#44-locked)): through the next enemy
 turn it doesn't move, activate or deal damage. The same tile can be picked more than once, but locking it again
 only refreshes the lock.
 
@@ -211,7 +212,7 @@ clears:
 - It counts **+1 per Supportive point** towards that set's size (Thanksgiving 3 + one Supportive tile = 4 Block).
 - For **Prayer** and **Prophecy**, its cell joins the set's shape.
 - Its own tool's effect does **not** trigger.
-- It never joins **junk** or **Stone** sets. It still matches normally with its own tool.
+- It never joins **junk** sets. It still matches normally with its own tool.
 
 ### 2.2 Retired virtues
 
@@ -226,10 +227,10 @@ are gone. The Hermit's Devoted virtue becomes a **Love** fruit.
 | Gravity | Falls like any tile |
 | Swappable | Yes |
 | HP | **2** (+1 per Patience on the Word) |
-| Matches | 3+ Stones clear, with no effect, whether damaged or not |
+| Matches | **Never forms sets.** Only damage clears it (like Space) |
 | Vs enemy tiles | Each Worry step deals 1 damage. While the Stone survives, the Worry stays put. Once it's deleted, the Worry moves in |
 | Art (reused) | `tools/dud/rubble.png`. Damaged: the same art with a crack overlay |
-| Popup text | "When 3+ Stones clear: nothing." HP and Speed (0) are in the header, like every tile; blocking enemy steps is just its 2 HP |
+| Popup text | "Never forms sets. Only damage clears it." HP and Speed (0) are in the header, like every tile; blocking enemy steps is just its 2 HP |
 
 ## 4. Junk
 
@@ -244,7 +245,7 @@ Their art is reused.
 ## 5. Abilities
 
 Powers outside the board. Each has **3 uses** per run, and using one **costs no move**. Hold at most **5**.
-Abilities aren't tool sets: Critical, Foresight and fruit don't affect them.
+Abilities aren't tool sets: Critical, Foresight, Momentum and fruit don't affect them.
 
 | Ability | Rarity | Effect |
 |---|---|---|
@@ -263,7 +264,8 @@ Statuses clear after every battle.
 | Status | Lasts | Effect |
 |---|---|---|
 | **Critical** | until used | The next tool set is doubled. Each set uses 1. Stacks as a count. No source while Fasting is parked |
-| **Block** | until the start of your next turn | Each point absorbs 1 damage to you |
+| **Block** | until the start of your next turn | Each point absorbs 1 damage to you. What's left then becomes Momentum |
+| **Momentum** | until spent (whole battle) | From unspent Block. Every 3 gives your next damage set (Attack Dmg above 0, tool or Time) +1 Dmg per hit; that set spends all of it. Abilities don't use it |
 | **Strengthen** (on a tile) | until the tile clears | Stacks. The set the tile clears in counts 1 tile bigger per point (a placed shape grows by 1 cell) |
 | **Locked** (on a tile) | through the next enemy turn | The tile doesn't move, activate (On activate, At bottom) or deal damage. Shown as a padlock |
 | **Foresight** | whole battle, stacks | Every 3 gives Truth tools +1 damage per hit |

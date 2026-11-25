@@ -101,7 +101,7 @@ export function snapshot(s: BattleState, c: Content): ViewSnapshot {
   const p = s.player;
   return {
     board: structuredClone(s.board),
-    player: { hp: p.hp, maxHp: p.maxHp, block: p.block, critical: p.critical, foresight: p.foresight },
+    player: { hp: p.hp, maxHp: p.maxHp, block: p.block, critical: p.critical, foresight: p.foresight, momentum: p.momentum },
     movesLeft: s.movesLeft,
     round: s.round,
     phase: s.phase,
@@ -185,7 +185,7 @@ export function createBattle(setup: BattleSetup, c: Content): BattleResult {
     tools,
     pool,
     player: {
-      hp: setup.player.hp, maxHp: setup.player.maxHp, block: 0, critical: 0, foresight: 0,
+      hp: setup.player.hp, maxHp: setup.player.maxHp, block: 0, critical: 0, foresight: 0, momentum: 0,
       movesPerTurn: setup.player.movesPerTurn, abilities: structuredClone(setup.player.abilities),
     },
     movesLeft: setup.player.movesPerTurn,
@@ -426,13 +426,20 @@ function runSetEffects(ctx: Ctx, effects: Effect[], src: EffectSource): string[]
   const p = s.player;
   const { tool, mult, size } = src;
   const texts: string[] = [];
+  // Momentum: the first set (not an ability) with an Attack of Dmg > 0 spends all of it, +1 Dmg per 3 on those Attacks.
+  let momentum = 0;
+  if (src.sourceTile && p.momentum > 0 && effects.some((e) => e.type === 'attack' && e.dmg > 0)) {
+    momentum = Math.floor(p.momentum / c.config.momentumPerBonus);
+    texts.push(`Momentum ${p.momentum} spent${momentum ? `: +${momentum} damage` : ''}`);
+    p.momentum = 0;
+  }
   for (const e of effects) {
     switch (e.type) {
       case 'attack': {
         const truth = tool?.pillar === 'truth' ? Math.floor(p.foresight / c.config.foresightPerBonus) : 0;
         // Time: 1 per 3 tiles in the set, rounded up (a Strengthened set counts bigger).
         const base = e.dmgPerTiles ? e.dmg * Math.ceil(size / e.dmgPerTiles) : e.dmg;
-        const damage = base + (tool ? tool.fruit.faithfulness + truth : 0);
+        const damage = base + (tool ? tool.fruit.faithfulness + truth : 0) + (e.dmg > 0 ? momentum : 0);
         const onDestroy = {
           ...(e.onDestroy && { onDestroy: e.onDestroy, ...(tool && tool.fruit.patience ? { onDestroyHp: tileBaseHp(ctx, e.onDestroy) + tool.fruit.patience } : {}) }),
           ...(e.apply && { apply: e.apply, ...(e.applyAmount && e.applyAmount !== 1 && { applyAmount: e.applyAmount }) }),
@@ -704,6 +711,11 @@ function proceed(ctx: Ctx) {
         break;
       case 'newTurn':
         s.round += 1;
+        // Unspent Block isn't lost: it becomes Momentum (combat § 4.3).
+        if (s.player.block > 0) {
+          s.player.momentum += s.player.block;
+          emit(ctx, { type: 'effect', source: 'Momentum', text: `+${s.player.block} Momentum (unspent Block)` });
+        }
         s.player.block = 0;
         s.movesLeft = s.player.movesPerTurn;
         s.focusUsed = [];

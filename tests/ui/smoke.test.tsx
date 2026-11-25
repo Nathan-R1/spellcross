@@ -143,7 +143,7 @@ describe('UI smoke', () => {
     tap(screen.getByLabelText('Stone: hold for details'));
     await waitFor(() => expect(title()).toMatch(/^Stone/));
     expect(document.querySelector('.tile-popup')?.textContent).not.toMatch(/On destroy/);
-    expect(document.querySelector('.tile-popup')?.textContent).toMatch(/Set formed:\s*Clears self/);
+    expect(document.querySelector('.tile-popup')?.textContent).toMatch(/Never forms sets\. Only damage clears it\./);
     fireEvent.click(screen.getByText('Back'));
     await waitFor(() => expect(title()).toMatch(/^The Word/));
     expect(screen.queryByText('Back')).toBeNull();

@@ -267,6 +267,8 @@ export interface BattlePlayer {
   block: number;
   critical: number;
   foresight: number;
+  /** Unspent Block carried into your turn; every 3 gives your next damage set +1 Dmg, then it's all spent. */
+  momentum: number;
   movesPerTurn: number;
   abilities: AbilityInstance[];
 }
@@ -296,7 +298,7 @@ export interface BattleState {
 
 export interface ViewSnapshot {
   board: Board;
-  player: { hp: number; maxHp: number; block: number; critical: number; foresight: number };
+  player: { hp: number; maxHp: number; block: number; critical: number; foresight: number; momentum: number };
   movesLeft: number;
   round: number;
   phase: Phase;

@@ -66,7 +66,7 @@ function chooseStrengthen(s: BattleState, n: number): Pos[] {
 export function chooseTargets(s: BattleState): Pos[] {
   const n = pendingGroupSize(s);
   const pl = s.pending[0];
-  if (pl.apply === 'locked' && pl.damage === 0) return chooseLocks(s, n);
+  if (pl.apply === 'locked') return chooseLocks(s, n);
   if (pl.apply === 'strengthen' && pl.damage === 0) return chooseStrengthen(s, n);
   const targets: Pos[] = [];
   const used = new Set<number>();
