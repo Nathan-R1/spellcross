@@ -1,12 +1,20 @@
 // Tools, junk tiles and the Stone (docs/tools.md). What each does is its triggers (docs/tile-effects.md); popup text
 // is generated from them, so `description` holds only anything else. Art is reused from the old spell icons until drawn.
 
-import type { JunkDef, Pillar, TileDef, ToolDef } from '../engine/types';
+import type { JunkDef, Pillar, TileDef, ToolDef, ToolRole } from '../engine/types';
 import { config } from './config';
 
 const T = { hp: 1, speed: 0 };
 const PER_TILE = { perSetTile: 1 };
 const SET_SHAPE = { type: 'chooseShape', shape: 'set' } as const;
+/**
+ * Tile colour by role, so tools of the same pillar (which share a frame) still look very different on the board:
+ * attack pale red, defense brownish grey, control blue, support yellow. Shown as a tint over the dark card brown:
+ * 20% by default, or the colour's own opacity when it has one (#rrggbbaa; attack is 45% so it reads pale, not dark).
+ */
+export const ROLE_COLOR: Record<ToolRole, string> = { attack: '#ff6b6b73', defense: '#ad9e88', control: '#7fc4e8', support: '#f2c14e' };
+export const ROLE_NAME: Record<ToolRole, string> = { attack: 'Attack', defense: 'Defense', control: 'Control', support: 'Support' };
+
 const parked = (id: string, name: string, pillar: Pillar, icon: string, color: string): ToolDef =>
   ({ id, name, pillar, parked: true, description: 'Parked.', icon, color, ...T, triggers: { setFormed: [{ type: 'clearsSelf' }] } });
 
@@ -14,25 +22,25 @@ export const tools: Record<string, ToolDef> = {
   // Parked 2026-11-24, replaced by Anoint. Its Critical still works if it comes back.
   fasting: { id: 'fasting', name: 'Fasting', pillar: 'discipline', parked: true, description: 'Critical: your next tool set is doubled.', icon: 'tools/acid/poison-1.png', color: '#59ff4d', ...T,
     triggers: { setFormed: [{ type: 'gain', what: 'critical', amount: 1 }] } },
-  prayer: { id: 'prayer', name: 'Prayer', pillar: 'faith', description: '', icon: 'tools/fire/dmg-2.png', color: '#ffb3b3', ...T,
+  prayer: { id: 'prayer', name: 'Prayer', pillar: 'faith', description: '', icon: 'tools/fire/dmg-2.png', role: 'attack', color: ROLE_COLOR.attack, ...T,
     triggers: { setFormed: [{ type: 'attack', targets: SET_SHAPE, dmg: 3 }] } },
-  thanksgiving: { id: 'thanksgiving', name: 'Thanksgiving', pillar: 'spirit', description: 'Block absorbs damage to you until your next turn.', icon: 'tools/water/block-1.png', color: '#b366b3', ...T,
+  thanksgiving: { id: 'thanksgiving', name: 'Thanksgiving', pillar: 'spirit', description: 'Block absorbs damage to you until your next turn.', icon: 'tools/water/block-1.png', role: 'defense', color: ROLE_COLOR.defense, ...T,
     triggers: { setFormed: [{ type: 'gain', what: 'block', amount: PER_TILE }] } },
-  word: { id: 'word', name: 'The Word', pillar: 'truth', description: '', icon: 'tools/lightning/dmg-1.png', color: '#ffffb3', ...T,
+  word: { id: 'word', name: 'The Word', pillar: 'truth', description: '', icon: 'tools/lightning/dmg-1.png', role: 'control', color: ROLE_COLOR.control, ...T,
     triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseAnywhere', count: PER_TILE }, dmg: 1, onDestroy: { kind: 'stone', id: 'stone' } }] } },
-  prophecy: { id: 'prophecy', name: 'Prophecy', pillar: 'truth', description: '', icon: 'tools/lightning/default.png', color: '#e6d27a', ...T,
+  prophecy: { id: 'prophecy', name: 'Prophecy', pillar: 'truth', description: '', icon: 'tools/lightning/default.png', role: 'attack', color: ROLE_COLOR.attack, ...T,
     triggers: { setFormed: [
       { type: 'attack', targets: SET_SHAPE, dmg: 1, onDestroy: { kind: 'junk', id: 'space' } },
       { type: 'gain', what: 'foresight', amount: PER_TILE },
     ] } },
-  worship: { id: 'worship', name: 'Worship', pillar: 'spirit', description: 'Block absorbs damage to you until your next turn.', icon: 'tools/earth/default.png', color: '#c58be0', ...T,
+  worship: { id: 'worship', name: 'Worship', pillar: 'spirit', description: 'Block absorbs damage to you until your next turn.', icon: 'tools/earth/default.png', role: 'defense', color: ROLE_COLOR.defense, ...T,
     triggers: {
       setFormed: [{ type: 'gain', what: 'block', amount: PER_TILE }],
       onActivate: [{ type: 'attack', targets: { type: 'adjacent', pick: 'every', filter: ['junk'], ids: ['space'] }, dmg: 1 }],
     } },
-  preaching: { id: 'preaching', name: 'Preaching', pillar: 'discipline', description: '', icon: 'tools/water/default.png', color: '#7fc4e8', ...T,
+  preaching: { id: 'preaching', name: 'Preaching', pillar: 'discipline', description: '', icon: 'tools/water/default.png', role: 'control', color: ROLE_COLOR.control, ...T,
     triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseAnywhere', count: PER_TILE }, dmg: 0, apply: 'locked' }] } },
-  anoint: { id: 'anoint', name: 'Anoint', pillar: 'faith', description: 'A Strengthened tile makes the set it clears in 1 tile bigger per point.', icon: 'tools/fire/default.png', color: '#f2c14e', ...T,
+  anoint: { id: 'anoint', name: 'Anoint', pillar: 'faith', description: 'A Strengthened tile makes the set it clears in 1 tile bigger per point.', icon: 'tools/fire/default.png', role: 'support', color: ROLE_COLOR.support, ...T,
     triggers: { setFormed: [{ type: 'attack', targets: SET_SHAPE, dmg: 0, apply: 'strengthen', applyAmount: 2 }] } },
   // Parked (tools.md §1.2): no effect until redesigned.
   healing: parked('healing', 'Healing', 'love', 'tools/water/healing-1.png', '#b3d9ff'),
@@ -65,7 +73,7 @@ export const PILLAR_FRAME: Record<Pillar, string> = {
 };
 
 const GLYPH: Record<string, string> = {
-  prayer: 'praying-hands', thanksgiving: 'thanksgiving', word: 'bible', worship: 'worship-music', preaching: 'pulpit', anoint: 'anoint',
+  prayer: 'praying-hands', thanksgiving: 'thanksgiving', word: 'bible', prophecy: 'prophecy', worship: 'worship-music', preaching: 'pulpit', anoint: 'anoint',
 };
 for (const [id, glyph] of Object.entries(GLYPH)) tools[id] = { ...tools[id], icon: `tools/svgs/${glyph}.svg`, frame: PILLAR_FRAME[tools[id].pillar] };
 

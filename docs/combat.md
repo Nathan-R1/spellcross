@@ -219,6 +219,9 @@ Every placement is described by the three damage attributes **Targets** (*Choose
 **Dmg** and **On destroy** ([tools § 1.1](tools.md#11-owned-tools-and-the-battle-loadout)). The placing banner
 shows them, e.g. *"Prayer: Targets: Choose shape (3 tiles) · Dmg: 3"*; On destroy appears only when a broken
 tile becomes another tile, shown as that tile's icon (tap it for its popup).
+While a placement waits on you, the instruction panel above the board lights up in the accent colour (a slow
+pulse; none under reduced motion), and its icon slot shows the tile that queued it (The Word, or Time). The slot
+is an empty dashed square the rest of the time.
 
 ### 5.1 Choose shape (Prayer, Prophecy)
 

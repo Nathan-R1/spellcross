@@ -133,14 +133,14 @@ describe('tools', () => {
   it('Time: 3+ give 1 damage to 1 tile; it does not use Critical', () => {
     const s = makeBattle({ rows: base({ 7: 'iisismsm' }), state: (x) => (x.player.critical = 1) });
     const r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
-    expect(r.state.pending).toEqual([{ target: { type: 'anywhere' }, damage: 1, source: 'Time' }]);
+    expect(r.state.pending).toEqual([{ target: { type: 'anywhere' }, damage: 1, source: 'Time', sourceTile: { kind: 'junk', id: 'time' } }]);
     expect(r.state.player.critical).toBe(1);
   });
 
   it('Time: Dmg 1 per 3 tiles in the set, rounded up (5 Time: 2 damage; Strengthen counts)', () => {
     // Swapping the Time at (2,6) down makes 5 in a row.
     const five = makeBattle({ rows: base({ 6: 'smismsms', 7: 'iisiimsm' }) });
-    expect(playerMove(five, { x: 2, y: 6 }, { x: 2, y: 7 }, c).state.pending).toEqual([{ target: { type: 'anywhere' }, damage: 2, source: 'Time' }]);
+    expect(playerMove(five, { x: 2, y: 6 }, { x: 2, y: 7 }, c).state.pending).toEqual([{ target: { type: 'anywhere' }, damage: 2, source: 'Time', sourceTile: { kind: 'junk', id: 'time' } }]);
     // 3 Time with +4 Strengthen count as 7: 3 damage.
     const strong = makeBattle({ rows: base({ 7: 'iisismsm' }), state: (x) => (x.board.cells[7 * 8]!.strength = 4) });
     expect(playerMove(strong, { x: 2, y: 7 }, { x: 3, y: 7 }, c).state.pending[0].damage).toBe(3);

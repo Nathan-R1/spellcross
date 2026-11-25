@@ -7,7 +7,7 @@ import { genCell } from '../../content/enemies';
 import { enemyTileSpeed, incomingHits, isLocked, pendingGroupSize, placementCells, previewPlacements, snapshot, upcomingGrid } from '../../engine/combat';
 import type { BattleState, Placement, Pos, Tile, TimedEvent, ViewSnapshot } from '../../engine/types';
 import { activeBattle, useStore } from '../../state/store';
-import { AbilityBar, Asset, HpBar, Modal, openStatus, openTile, Parts, TileIcon, TopBar, useLongPress } from '../components/common';
+import { AbilityBar, Asset, HpBar, Modal, openStatus, openTile, Parts, TileIcon, TopBar, useLongPress, toolTint } from '../components/common';
 import { describeTile, placementStats, tileRef } from '../../content/describe';
 import { PatternGrid } from '../components/EnemyPattern';
 
@@ -133,12 +133,15 @@ export function BattleScreen() {
       <div className={`battle-body ${wide ? 'wide' : 'tall'}`} ref={bodyRef}>
         {wide && board}
         <div className="battle-side">
-          <div className="instruction panel">
+          <div className={`instruction panel ${pending ? 'active' : ''}`}>
+            <span className="instruction-icon" aria-hidden={!pending?.sourceTile}>
+              {pending?.sourceTile && <TileIcon tile={pending.sourceTile} size={34} battle={battle} />}
+            </span>
             {pending ? (
               <PlacingBanner pending={pending} group={group} chosen={targets.length} orientation={orientation} onOrientation={setOrientation}
                 onContinue={confirm} onAgain={() => setPickState(null)} />
             ) : (
-              <span className="dim">{busy ? '…' : battle.phase === 'player' ? (selection ? 'Tap a neighbouring tile to swap' : 'Tap a tile, then a neighbour to swap them') : ''}</span>
+              <span className="dim instruction-text">{busy ? '…' : battle.phase === 'player' ? (selection ? 'Tap a neighbouring tile to swap' : 'Tap a tile, then a neighbour to swap them') : ''}</span>
             )}
           </div>
           {!wide && board}
@@ -226,7 +229,7 @@ function PlacingBanner({ pending, group, chosen, orientation, onOrientation, onC
 }) {
   const ready = chosen === group;
   return (
-    <div className="placing">
+    <div className="placing instruction-text">
       <span><b><PlacingText p={pending} n={group} /></b></span>
       {pending.target.type === 'line' && (
         <button className="btn" onClick={() => onOrientation(orientation === 'h' ? 'v' : 'h')}>{orientation === 'h' ? '↔ Horizontal' : '↕ Vertical'}</button>
@@ -286,7 +289,7 @@ function TileView({ t, battle, x, y, tile, selected, aimed, applyMark, locked, i
     <div className={`tile ${t.kind} ${selected ? 'selected' : ''} ${matched ? 'matched' : ''} ${aimed ? 'aimed' : ''} ${hurt ? 'hurt' : ''} ${danger ? 'danger' : ''}`}
       style={{ width: tile, height: tile, transform: `translate(${x * tile + 3}px, ${y * tile + 3}px)` }}
       role="gridcell" aria-label={`${look.name}, row ${y + 1} col ${x + 1}${t.hp < t.maxHp ? ', damaged' : ''}${locked ? ', locked' : ''}${danger ? ', will hit you this enemy turn' : ''}${t.strength ? `, strengthened +${t.strength}` : ''}`} {...press}>
-      <div style={{ background: `linear-gradient(160deg, ${look.color}, ${shade(look.color)})` }}>
+      <div style={{ background: t.kind === 'tool' ? toolTint(look.color) : `linear-gradient(160deg, ${look.color}, ${shade(look.color)})` }}>
         <Asset path={look.icon} frame={look.frame} alt={look.name} color="transparent" />
         {supportive && <span className="linked" />}
         {shining && <span className="shine" />}

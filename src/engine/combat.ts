@@ -382,7 +382,7 @@ function applySet(ctx: Ctx, st: FoundSet, key: string) {
   const size = st.cells.length + st.bonus;
   if (key.startsWith('junk:')) {
     const j = c.junk[key.slice(5)];
-    const texts = runSetEffects(ctx, j.triggers.setFormed ?? [], { source: j.name, size, shape, mult: 1, tool: null });
+    const texts = runSetEffects(ctx, j.triggers.setFormed ?? [], { source: j.name, sourceTile: { kind: 'junk', id: key.slice(5) }, size, shape, mult: 1, tool: null });
     if (texts.length) emit(ctx, { type: 'effect', source: j.name, text: `${j.name}: ${texts.join(', ')}` });
     return;
   }
@@ -392,13 +392,15 @@ function applySet(ctx: Ctx, st: FoundSet, key: string) {
   const mult = p.critical > 0 ? 2 : 1;
   if (mult === 2) p.critical -= 1;
   const effects = [...(c.tools[tool.toolId].triggers.setFormed ?? []), ...fruitSetEffects(tool.fruit)];
-  const texts = runSetEffects(ctx, effects, { source: tool.name, size, shape, mult, tool });
+  const texts = runSetEffects(ctx, effects, { source: tool.name, sourceTile: { kind: 'tool', id: tool.toolId, uid: tool.uid }, size, shape, mult, tool });
   emit(ctx, { type: 'effect', source: tool.name, text: `${tool.name}${mult > 1 ? ' (Critical)' : ''}: ${texts.join(', ')}` });
 }
 
 interface EffectSource {
   /** Shown on placements and in the log. */
   source: string;
+  /** The tile behind it, for its placements' icon (abilities have none). */
+  sourceTile?: TileRef;
   /** Tiles in the set (for "per tile in the set"); 0 outside Set formed. */
   size: number;
   /** The set's shape (offsets), for Choose shape: the set's shape. */
@@ -438,12 +440,12 @@ function runSetEffects(ctx: Ctx, effects: Effect[], src: EffectSource): string[]
         const t = e.targets;
         if (t.type === 'chooseShape') {
           const target = t.shape === 'set' ? { type: 'shape' as const, cells: src.shape } : { type: 'line' as const, length: t.length };
-          for (let i = 0; i < mult; i++) s.pending.push({ target, damage, source: src.source, ...onDestroy });
+          for (let i = 0; i < mult; i++) s.pending.push({ target, damage, source: src.source, ...(src.sourceTile && { sourceTile: src.sourceTile }), ...onDestroy });
           texts.push(`${mult > 1 ? `${mult} × ` : ''}${target.type === 'shape' ? `${target.cells.length}-tile shape` : `line of ${target.length}`}, ${damage > 0 || !e.apply ? `${damage} damage` : applyText(e)}${damage > 0 && e.apply ? ` + ${applyText(e)}` : ''}`);
         } else if (t.type === 'chooseAnywhere') {
           const n = amountOf(t.count, size) * mult;
           const target = { type: 'anywhere' as const, ...(t.filter && { filter: t.filter }) };
-          for (let i = 0; i < n; i++) s.pending.push({ target, damage, source: src.source, ...onDestroy });
+          for (let i = 0; i < n; i++) s.pending.push({ target, damage, source: src.source, ...(src.sourceTile && { sourceTile: src.sourceTile }), ...onDestroy });
           texts.push(`${n} × ${damage > 0 || !e.apply ? `${damage} damage` : ''}${damage > 0 && e.apply ? ' + ' : ''}${e.apply ? applyText(e) : ''}${e.onDestroy?.kind === 'stone' ? ' (Stones)' : ''}`);
         } else {
           texts.push(...applyNow(ctx, e, null));

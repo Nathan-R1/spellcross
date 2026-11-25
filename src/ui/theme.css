@@ -217,7 +217,14 @@ h3 { font-size: calc(19px * var(--s)); }
 .tile .crack { position: absolute; inset: 0; border-radius: 6px; background: linear-gradient(135deg, transparent 46%, #000 47%, #000 50%, transparent 51%), linear-gradient(60deg, transparent 56%, #000 57%, #000 59%, transparent 60%); opacity: 0.8; }
 .tile .linked { position: absolute; inset: 0; background: url('/assets/tools/linkedTile.png') center/100% no-repeat; opacity: 0.55; }
 .tile .shine { position: absolute; inset: 0; border-radius: 6px; box-shadow: inset 0 0 8px 2px #ffe9a8; }
-.instruction { width: 100%; flex: 0 0 auto; min-height: 64px; display: flex; align-items: center; justify-content: center; padding: 4px 8px; font-size: 13px; text-align: center; }
+.instruction { width: 100%; flex: 0 0 auto; min-height: 64px; display: flex; transition: background .2s, box-shadow .2s; align-items: center; gap: 8px; padding: 4px 8px; font-size: 13px; text-align: center; }
+.instruction-icon { flex: 0 0 44px; height: 44px; display: flex; align-items: center; justify-content: center; border-radius: 8px; background: rgba(0,0,0,.25); border: 1px dashed rgba(255,255,255,.15); }
+.instruction-text { flex: 1; min-width: 0; }
+/* An action is waiting on you (choose targets): the panel lights up in the accent colour. */
+.instruction.active { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 28%, var(--panel, #2a1a0d)); box-shadow: 0 0 0 2px var(--accent), 0 0 14px color-mix(in srgb, var(--accent) 60%, transparent); animation: instruction-pulse 1.6s ease-in-out infinite; }
+.instruction.active .instruction-icon { border: 2px solid var(--accent); background: rgba(0,0,0,.35); }
+@keyframes instruction-pulse { 50% { box-shadow: 0 0 0 2px var(--accent), 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .instruction.active { animation: none; } }
 .placing { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; justify-content: center; }
 .placing-actions { display: flex; gap: 8px; }
 .battle-panels { width: 100%; flex: 1; display: flex; gap: 6px; min-height: 0; }

@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { content } from '../../content';
-import { PILLAR_NAME } from '../../content/tools';
+import { PILLAR_NAME, ROLE_NAME } from '../../content/tools';
 import { suggestedLoadout } from '../../engine/run';
 import type { ToolInstance } from '../../engine/types';
 import { useStore } from '../../state/store';
-import { AbilityBar, Asset, EffectText, FruitIcon, Modal, PlayerStats, TopBar, useLongPress } from '../components/common';
+import { AbilityBar, Asset, EffectText, FruitIcon, Modal, PlayerStats, TopBar, useLongPress, toolTint } from '../components/common';
 import { describeTile } from '../../content/describe';
 import { EnemyPatternPreview } from '../components/EnemyPattern';
 import { useUiScale } from '../scale';
@@ -65,9 +65,9 @@ export function ToolCard({ tool, selected, onTap, onLong }: { tool: ToolInstance
   const press = useLongPress(onTap, onLong);
   const s = useUiScale();
   return (
-    <button className={`tool-card ${selected ? 'selected' : ''}`} style={{ background: def.color + '33' }} aria-pressed={!!selected} {...press}>
+    <button className={`tool-card ${selected ? 'selected' : ''}`} style={{ background: toolTint(def.color) }} aria-pressed={!!selected} {...press}>
       <span className="lvl">Lv{tool.level}</span>
-      <Asset path={def.icon} frame={def.frame} alt={def.name} size={Math.round(36 * s)} color={def.color} />
+      <Asset path={def.icon} frame={def.frame} alt={def.name} size={Math.round(36 * s)} color="transparent" />
       <span>{def.name}</span>
       <span className="dim pillar">{PILLAR_NAME[tool.pillar]}</span>
       <span className="fruit-row">{tool.sockets.map((f, i) => (f ? <FruitIcon key={i} fruit={f} size={Math.round(14 * s)} /> : <i key={i} className="socket" />))}</span>
@@ -83,7 +83,7 @@ export function ToolInfo({ tool, onClose }: { tool: ToolInstance; onClose: () =>
       <div className="row">
         <Asset path={def.icon} frame={def.frame} alt={def.name} size={56} color={def.color} />
         <div>
-          <h2>{def.name} <span className="dim" style={{ fontSize: 15 }}>Lv {tool.level} · {PILLAR_NAME[tool.pillar]}</span></h2>
+          <h2>{def.name} <span className="dim" style={{ fontSize: 15 }}>Lv {tool.level} · {PILLAR_NAME[tool.pillar]}{def.role && ` · ${ROLE_NAME[def.role]}`}</span></h2>
           <EffectText description={def.description} rows={describeTile({ kind: 'tool', id: tool.toolId, uid: tool.uid }, { instance: tool }).attrs} />
           {fruits.length > 0 && (
             <ul style={{ margin: '6px 0', paddingLeft: 18 }}>

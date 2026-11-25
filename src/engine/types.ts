@@ -101,8 +101,13 @@ export interface TileDef {
   triggers: Triggers;
 }
 
+/** What a tool is for; it also sets the tool's tile colour (docs/tools.md § 1.3). */
+export type ToolRole = 'attack' | 'defense' | 'control' | 'support';
+
 export interface ToolDef extends TileDef {
   pillar: Pillar;
+  /** Parked tools have none. */
+  role?: ToolRole;
   /** Parked tools exist as data but can't be owned yet. */
   parked?: boolean;
 }
@@ -243,6 +248,8 @@ export interface Placement {
   target: PlacementTarget;
   damage: number;
   source: string;
+  /** The tile whose set queued it (its icon shows on the instruction panel while you choose). */
+  sourceTile?: TileRef;
   onDestroy?: TileRef;
   onDestroyHp?: number;
   /** A status put on every tile under it that survives (Preaching: Locked; Anoint: +2 Strengthen). */

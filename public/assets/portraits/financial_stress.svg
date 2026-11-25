@@ -1,5 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <!-- Financial Stress: a pile of unpaid bills with a red OVERDUE stamp -->
+  <rect width="128" height="128" rx="10" fill="#1e2b26"/>
+  <!-- a desk lamp's pool of light behind the pile -->
+  <circle cx="64" cy="64" r="50" fill="#2c3d35"/>
+  <g transform="translate(64 64) scale(.84) translate(-64 -64)">
   <ellipse cx="64" cy="116" rx="46" ry="6" fill="#000" opacity=".35"/>
   <g transform="rotate(-14 52 70)">
     <rect x="22" y="30" width="60" height="78" rx="3" fill="#d9d2bf" stroke="#5c5444" stroke-width="2"/>
@@ -15,5 +19,6 @@
   <g transform="rotate(-18 64 62)">
     <rect x="30" y="50" width="70" height="22" rx="4" fill="none" stroke="#d32f2f" stroke-width="3.5"/>
     <text x="65" y="67" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#d32f2f" letter-spacing="1">OVERDUE</text>
+  </g>
   </g>
 </svg>

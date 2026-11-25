@@ -160,10 +160,22 @@ Every tool icon is its **pillar's frame** with the tool's own **glyph** drawn in
 `src/content/tools.ts`). The glyphs are black line-art SVGs in `public/assets/tools/svgs/`, drawn white with a thin
 dark outline so they read on any tile colour. The frames are pixel art in `public/assets/tools/frames/`.
 
+Every tool has a **role** (`role` on the tool; parked tools have none), shown in its bio after the level and pillar:
+`Lv 1 · Faith · Attack`. The **tile colour** comes from the role, not the pillar (`ROLE_COLOR`), so two tools that
+share a frame still look different. It's drawn the same everywhere, menu cards, board tiles and popups, as a 20%
+tint of the colour over the dark card brown (Attack: 45%, so its red reads pale rather than dark) (`toolTint` in `src/ui/components/common.tsx`):
+
+| Role | Colour | Tools |
+|---|---|---|
+| Attack | pale red `#ff6b6b` at 45% | Prayer, Prophecy |
+| Defense | brownish grey `#ad9e88` | Thanksgiving, Worship |
+| Control | blue `#7fc4e8` | Preaching, The Word |
+| Support | yellow `#f2c14e` | Anoint |
+
 | Pillar | Frame | Tools (glyph) |
 |---|---|---|
 | Faith | yellow | Prayer (praying hands), Anoint (anointing oil) |
-| Truth | brown | The Word (Bible), Prophecy (no glyph yet: old art, unframed) |
+| Truth | brown | The Word (Bible), Prophecy (all-seeing eye) |
 | Spirit | purple | Thanksgiving (raised hands), Worship (music) |
 | Discipline | blue | Preaching (pulpit), Fasting (parked: old art) |
 | Love | pink | Healing, Serving (parked: old art) |

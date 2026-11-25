@@ -9,6 +9,19 @@ import { activeBattle, useStore } from '../../state/store';
 import { enterFullscreen, exitFullscreen, fullscreenSupport, isFullscreen, onFullscreenChange } from '../fullscreen';
 
 /**
+ * A tool's background everywhere it's shown (menu cards, board tiles, popups): its role colour as a tint over the
+ * dark card brown, so a tool looks the same in the menus and on the board. 20% unless the colour has its own opacity
+ * (#rrggbbaa).
+ */
+export const toolTint = (color: string) => {
+  const c = color.length === 9 ? color : `${color}33`;
+  return `linear-gradient(${c}, ${c}), #2a1a0d`;
+};
+
+/** A tile's background: tools get toolTint, everything else its colour. */
+export const tileBackground = (kind: string, color: string) => (kind === 'tool' ? toolTint(color) : color);
+
+/**
  * Image from public/assets with a generated placeholder (coloured circle + initial) when missing (doc 04). With a
  * `frame`, the frame is drawn at full size and the image inset inside it (tool art: pillar frame + glyph).
  */
@@ -16,7 +29,7 @@ export function Asset({ path, alt, size, color = '#6b4523', className, style, fr
   const [broken, setBroken] = useState(false);
   if (frame && assetExists(frame)) {
     return (
-      <span className={`framed ${className ?? ''}`} style={{ width: size, height: size, ...style }} role="img" aria-label={alt}>
+      <span className={`framed ${className ?? ''}`} style={{ width: size, height: size, ...(color !== 'transparent' && { background: toolTint(color), borderRadius: 6 }), ...style }} role="img" aria-label={alt}>
         <img className="frame" src={`/assets/${frame}`} alt="" draggable={false} />
         {path && assetExists(path) && <img className="glyph" src={`/assets/${path}`} alt="" draggable={false} />}
       </span>
@@ -113,7 +126,7 @@ export function TileIcon({ tile, size = 22, battle }: { tile: TileRef; size?: nu
   const open = () => openTile(tile);
   const press = useLongPress(open, open);
   return (
-    <span className={`tile-icon tile-ref k-${tile.kind}`} style={{ background: d.color }} role="button" aria-label={`${d.name}: hold for details`} {...press}>
+    <span className={`tile-icon tile-ref k-${tile.kind}`} style={{ background: tileBackground(tile.kind, d.color) }} role="button" aria-label={`${d.name}: hold for details`} {...press}>
       <Asset path={d.icon} frame={d.frame} alt={d.name} size={size} color="transparent" />
     </span>
   );
@@ -173,7 +186,7 @@ export function TilePopup({ entry, depth }: { entry: { ref: TileRef; live?: Tile
   return (
     <Modal onClose={closeTiles}>
       <div className="row tile-popup">
-        <span className="tile-icon" style={{ background: d.color }}><Asset path={d.icon} frame={d.frame} alt={d.name} size={44} color="transparent" /></span>
+        <span className="tile-icon" style={{ background: tileBackground(entry.ref.kind, d.color) }}><Asset path={d.icon} frame={d.frame} alt={d.name} size={44} color="transparent" /></span>
         <div>
           <h2>{d.name} <span className="dim" style={{ fontSize: 14 }}>HP {d.hp}/{d.maxHp} · Speed: {d.speed}</span></h2>
           <EffectText description={d.description} rows={d.attrs} />

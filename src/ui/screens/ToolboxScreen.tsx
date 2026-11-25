@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { content } from '../../content';
-import { PILLAR_NAME } from '../../content/tools';
+import { PILLAR_NAME, ROLE_NAME } from '../../content/tools';
 import { atTown } from '../../engine/run';
 import { useStore } from '../../state/store';
 import { Asset, EffectText, FruitIcon, Modal } from '../components/common';
@@ -35,7 +35,7 @@ export function ToolboxScreen() {
           const def = content.tools[inst.toolId];
           return (
             <div className="tool-detail">
-              <h2 style={{ margin: 0 }}>{def.name} <span className="dim" style={{ fontSize: 15 }}>Lv {inst.level} · {PILLAR_NAME[inst.pillar]}</span></h2>
+              <h2 style={{ margin: 0 }}>{def.name} <span className="dim" style={{ fontSize: 15 }}>Lv {inst.level} · {PILLAR_NAME[inst.pillar]}{def.role && ` · ${ROLE_NAME[def.role]}`}</span></h2>
               <EffectText description={def.description} rows={describeTile({ kind: 'tool', id: inst.toolId, uid: inst.uid }, { instance: inst }).attrs} />
               <div className="sockets">
                 {inst.sockets.map((f, i) => (
