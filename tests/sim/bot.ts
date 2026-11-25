@@ -159,7 +159,13 @@ export function botMove(s: BattleState, rnd: () => number, c: Content = content,
         const damages = effects.some((e) => e.type === 'attack' && e.dmg > 0);
         const locks = effects.some((e) => e.type === 'attack' && e.apply === 'locked');
         const strengthens = effects.some((e) => e.type === 'attack' && e.apply === 'strengthen');
-        v += damages ? 3 * n : locks ? urgency * n : strengthens ? 2 * n : gains('block') ? blockValue(n) : gains('critical') ? 4 : 0;
+        // How much of something the set gives (Worship: Block 1 per 3 tiles, rounded up).
+        const gained = (what: string) => effects.reduce((sum, e) => sum + (e.type !== 'gain' || e.what !== what ? 0
+          : typeof e.amount === 'number' ? e.amount : 'perTiles' in e.amount ? Math.ceil(n / e.amount.perTiles) : e.amount.perSetTile * n), 0);
+        // Fellowship: its tiles become Community (Block at end of turn while 3+ are in a line), so worth a little.
+        const becomes = effects.some((e) => e.type === 'becomes');
+        v += damages ? 3 * n : locks ? urgency * n : strengthens ? 2 * n : gains('block') ? blockValue(gained('block')) : gains('critical') ? 4 : becomes ? n : 0;
+        v += 2.5 * gained('moves'); // a free swap: about one more set
       } else if (set.key === 'junk:time') v += 2;
       else v += 0.2;
     }

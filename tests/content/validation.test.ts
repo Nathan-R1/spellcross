@@ -50,12 +50,6 @@ describe('content validation', () => {
     }
   });
 
-  it('Worship names its targets with a tile icon: "Every adjacent [Space]"', () => {
-    const rows = describeTile({ kind: 'tool', id: 'worship' }).attrs;
-    const targets = rows.filter((r) => r.label === 'Targets').at(-1)!;
-    expect(targets.parts).toEqual(['Every adjacent ', { kind: 'junk', id: 'space' }]);
-  });
-
   it("every enemy's setup description states its enemy-tile total", () => {
     for (const e of Object.values(c.enemies)) expect(e.description).toContain(String(generatorEnemyTiles(e, c.config.board.width)));
     expect(generatorEnemyTiles(c.enemies.hard_choices)).toBe(32);

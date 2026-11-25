@@ -4,6 +4,7 @@ import { content } from '../../src/content';
 import { createBattle, endTurn, incomingHits, isLocked, enemyTileSpeed, enemyToCome, findSets, pendingGroupSize, place, placeGroup, playerMove, previewPlacements, startingGrid, upcomingGrid, useAbility } from '../../src/engine/combat';
 import { createPlayer } from '../../src/engine/run';
 import { at, F1, F2, makeBattle } from '../helpers';
+import type { BattleState } from '../../src/engine/types';
 import { tc } from '../helpers';
 
 const c = tc;
@@ -411,6 +412,46 @@ describe('Preaching and Locked', () => {
     expect(done.board.cells.filter((t) => t && isLocked(t, done.round)).map((t) => t!.uid)).toEqual([g.uid]);
   });
 
+  it('Fellowship: its set becomes Community tiles in place, so nothing falls; Critical is kept for the next set', () => {
+    const s = makeBattle({ rows: base({ 7: 'LLsLsmsm' }), state: (x) => { x.player.critical = 1; } });
+    const above = [0, 1, 2].map((x) => at(s, x, 6)!.uid);
+    const r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
+    expect([0, 1, 2].map((x) => at(r.state, x, 7)?.id)).toEqual(['community', 'community', 'community']);
+    expect([0, 1, 2].map((x) => at(r.state, x, 6)!.uid)).toEqual(above); // nothing fell
+    expect(r.state.pending).toEqual([]);
+    expect(r.state.player.critical).toBe(1);
+  });
+
+  it('Community never forms sets, even 3 in a row', () => {
+    const s = makeBattle({ rows: base({ 7: 'cccsmsms' }) });
+    expect(findSets(s)).toEqual([]);
+  });
+
+  describe('Community: End of turn, +1 Block per Community tile in a line of 3+', () => {
+    const block = (rows: Record<number, string>, state?: (x: BattleState) => void) => {
+      const r = endTurn(makeBattle({ rows: base(rows), state }), c);
+      const line = r.events.map((e) => e.event).find((e) => e.type === 'effect' && e.source === 'Community');
+      return line?.type === 'effect' ? Number(/\+(\d+) Block/.exec(line.text)![1]) : 0;
+    };
+    it('3 in a row: 3; 3 apart: 0; 2×2: 0', () => {
+      expect(block({ 7: 'cccsmsms' })).toBe(3);
+      expect(block({ 7: 'csmcsmcs' })).toBe(0);
+      expect(block({ 6: 'ccsmsmsm', 7: 'ccmsmsms' })).toBe(0);
+    });
+    it('an L counts every tile once; a 4th tile off the line adds nothing', () => {
+      expect(block({ 5: 'cmsmsmsm', 6: 'csmsmsms', 7: 'cccsmsmc' })).toBe(5);
+    });
+    it('a Locked Community gives nothing but still makes the line', () => {
+      expect(block({ 7: 'cccsmsms' }, (x) => { x.board.cells[7 * 8 + 1]!.lockedUntil = 1; })).toBe(2);
+    });
+    it('the Block covers this enemy turn: a Worry on the bottom row is blocked, the rest becomes Momentum', () => {
+      const s = makeBattle({ rows: base({ 7: 'cccsmsmX' }) });
+      const r = endTurn(s, c);
+      expect(r.state.player.hp).toBe(s.player.hp);
+      expect(r.state.player.momentum).toBe(s.player.momentum + 2);
+    });
+  });
+
   it("a Locked tile doesn't move or hit you during the enemy turn, and the lock wears off on your next turn", () => {
     const s = makeBattle({ rows: base({ 4: 'msXsmsms', 7: 'smsmsmsX' }), state: (x) => {
       x.board.cells[4 * 8 + 2]!.lockedUntil = 1;
@@ -481,21 +522,25 @@ describe('Anoint and Strengthen', () => {
 });
 
 describe('Worship', () => {
-  it('Set formed: 1 Block per tile', () => {
+  it('Set formed: Block 1 per 3 tiles in the set (rounded up), and +1 move', () => {
     const s = makeBattle({ rows: base({ 7: 'VVsVsmsm' }) });
-    expect(playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c).state.player.block).toBe(3);
+    const r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c).state;
+    expect(r.player.block).toBe(1);
+    expect(r.movesLeft).toBe(s.movesLeft - 1 + 1); // the swap's move comes back
   });
 
-  it('On activate: at the end of the enemy turn, each Worship tile deletes every adjacent Space', () => {
-    // Worship at (4,6): Space left, right, above and below it. Mud is untouched.
+  it('4 tiles give 2 Block (rounded up)', () => {
+    // Swap (2,6) down into (2,7): Worship ×4 along the bottom row.
+    const s = makeBattle({ rows: base({ 6: 'msVsmsms', 7: 'VVsVmsms' }) });
+    expect(playerMove(s, { x: 2, y: 6 }, { x: 2, y: 7 }, c).state.player.block).toBe(2);
+  });
+
+  it('no longer clears Space next to it', () => {
     const s = makeBattle({ rows: base({ 6: 'msmsVsms' }) });
-    const spaces = [[3, 6], [5, 6], [4, 5], [4, 7]].map(([x, y]) => at(s, x, y)!);
-    expect(spaces.every((t) => t.id === 'space')).toBe(true);
+    const spaces = [[3, 6], [5, 6], [4, 5], [4, 7]].map(([x, y]) => at(s, x, y)!.uid);
     const r = endTurn(s, c);
     const deleted = r.events.flatMap((e) => (e.event.type === 'damaged' ? e.event.deleted : []));
-    for (const t of spaces) expect(deleted).toContain(t.uid);
-    const mud = at(s, 2, 6)!;
-    expect(deleted).not.toContain(mud.uid);
+    for (const u of spaces) expect(deleted).not.toContain(u);
   });
 });
 

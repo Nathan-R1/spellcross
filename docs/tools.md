@@ -36,10 +36,12 @@ Sizes are always counted as **tiles in the set**. A tile whose damage reaches it
 | **Prophecy** | Set formed | Attack: Choose shape (the set's shape) · Dmg 1 · On destroy: Create [Space]; Gain: Foresight, 1 per tile in the set |
 | **Anoint** | Set formed | Attack: Choose shape (the set's shape) · Dmg 0 · Apply: +2 Strengthen |
 | **Thanksgiving** | Set formed | Gain: Block, 1 per tile in the set |
-| **Worship** | Set formed; On activate | Gain: Block, 1 per tile in the set. On activate: Attack: Every adjacent [Space] · Dmg 1 |
+| **Worship** | Set formed | Gain: Block, 1 per 3 tiles in the set (rounded up). Gain: Moves, 1 |
 | **Preaching** | Set formed | Attack: Choose anywhere (1 tile per tile in the set) · Dmg 1 · Apply: Locked |
+| **Fellowship** | Set formed | Becomes [Community] (in place, nothing falls) |
 | **Time** (junk) | Set formed | Attack: Choose anywhere (1 tile) · Dmg 1/3 tiles (rounded up) |
 | **Space** (junk) | (none: never forms sets) | |
+| **Community** (junk) | End of turn | Gain: Block, 1 (only in a line of 3+). Never forms sets |
 | **Stone** | (none: never forms sets) | |
 | **Abstain** | On use | Attack: Choose anywhere (1 tile) · Dmg 10 |
 | **Stand Firm** | On use | Gain: Block, 5 |
@@ -56,8 +58,9 @@ add their own Gain effects to the tool's Set formed list, so they show in its po
 | **Thanksgiving** | Spirit | Gain **1 Block per tile in the set** | Yes |
 | **The Word** | Truth | Targets: **Choose anywhere**, 1 per tile in the set. Dmg **1**. On destroy: **Create Stone** | Yes |
 | **Prophecy** | Truth | Targets: **Choose shape**. Dmg **1**. On destroy: **Create Space**. Also gain **1 Foresight per tile in the set** | Yes, both |
-| **Worship** | Spirit | Gain **1 Block per tile in the set**. On its own, every Worship tile deletes the Space next to it at the end of each enemy turn | Block: yes |
+| **Worship** | Spirit | Gain **1 Block per 3 tiles in the set** (rounded up) and **+1 move** | Block: yes (per 3). Move: no |
 | **Preaching** | Discipline | Targets: **Choose anywhere**, 1 tile per tile in the set. Dmg **1**. Apply **Locked** | Yes |
+| **Fellowship** | Discipline | The set's tiles **become Community** in place | Yes: one Community per tile |
 
 ### Anoint
 
@@ -67,7 +70,7 @@ like any other.
 
 When a Strengthened tile clears **in a set**, that set counts **1 tile bigger per point**:
 
-- Per-tile effects grow: Thanksgiving and Worship +1 Block, the Word +1 pick, Prophecy +1 Foresight, Preaching +1 pick.
+- Per-tile effects grow: Thanksgiving +1 Block (Worship: its Block counts the bigger set, 1 per 3 rounded up), the Word +1 pick, Prophecy +1 Foresight, Preaching +1 pick.
 - A placed shape (Prayer, Prophecy, Anoint) grows by **1 cell per point**, always along the set's **longest straight line**,
   at the end nearest the Strengthened tile. A row of 3 with +2 becomes a row of 5 wherever the points were; L and T
   sets grow along their longest arm. The line stops growing at the board's length (8), so the shape always fits;
@@ -125,12 +128,12 @@ tool (the Word, Prophecy) **+1 damage per tile**. It doesn't change Stone HP.
 
 ### Worship
 
-Match 3+ Worship: gain 1 **Block** per tile, like Thanksgiving.
+Match 3+ Worship: gain **1 Block per 3 tiles in the set, rounded up** (3 tiles: 1 Block; 4–6: 2; 7–9: 3), and **+1 move**
+this turn. Every Worship set gives the move, so a Worship set made with your last move gives you another. Under Critical
+both double (2 moves).
 
-Worship also works **without being matched**. At the end of every enemy turn (its **On activate**), each Worship tile
-on the board deletes **every Space orthogonally next to it** (1 damage each; Space has 1 HP). Tiles above fall and
-refill as usual. It runs with the enemy tiles' On activate, after their Creates, so it also clears Space that Greed
-made that turn. Time is untouched.
+(Until 2026-11-25 Worship gave 1 Block per tile and, unmatched, deleted the Space next to it at the end of each enemy
+turn.)
 
 ### Preaching
 
@@ -142,12 +145,25 @@ only refreshes the lock.
 Enemy tiles stop when the tile below is another enemy tile, so Locking the **lowest** enemy tile in a column holds
 the whole column for a turn.
 
-Any tile can be picked, but Locking a tool, junk or Stone has no effect beyond stopping its On activate (a Locked
-Worship tile doesn't clear Space that turn). Locked tiles still match, fall and break as usual.
+Any tile can be picked, but Locking a tool, junk or Stone has no effect beyond stopping its On activate (no current
+one has any). Locked tiles still match, fall and break as usual.
+
+### Fellowship
+
+Match 3+ Fellowship: instead of clearing, every Fellowship tile in the set **becomes a Community tile** in the same
+cell, so nothing above falls. Nothing is doubled, so a Fellowship set doesn't use up Critical. Patience gives the
+Community tiles +HP.
+
+**Community** (junk, only Fellowship makes it, never in refills) never forms sets. At the **end of your turn**, every
+Community tile in a straight row or column of **3+ Community** gives **1 Block**, before the enemy turn, so it covers
+that turn's hits (unspent Block becomes Momentum as usual). Lines join as sets do: an L of 3 + 3 counts all 5, a 2×2
+square or 3 loose tiles count 0. A Locked Community tile gives nothing that turn but still makes up the line. So
+Fellowship builds a standing wall of Block: line up two Fellowship sets, or one long one, and it pays every turn
+until the Community is broken.
 
 ### 1.2 Parked tools
 
-Fasting (Discipline), Healing (Love), Serving (Love) and Fellowship (Unity) are parked. They'll come back with new
+Fasting (Discipline), Healing (Love) and Serving (Love) are parked. They'll come back with new
 effects that fit the board-defence game. Fight for Loot's tool reward is a dud until then.
 
 ### 1.3 Levels and Upgrades: TBD
@@ -169,7 +185,7 @@ tint of the colour over the dark card brown (Attack: 45%, so its red reads pale 
 | Role | Colour | Tools |
 |---|---|---|
 | Attack | pale red `#ff6b6b` at 45% | Prayer, Prophecy |
-| Defense | brownish grey `#ad9e88` | Thanksgiving, Worship |
+| Defense | brownish grey `#ad9e88` | Thanksgiving, Worship, Fellowship |
 | Control | blue `#7fc4e8` | Preaching, The Word |
 | Support | yellow `#f2c14e` | Anoint |
 
@@ -178,9 +194,9 @@ tint of the colour over the dark card brown (Attack: 45%, so its red reads pale 
 | Faith | yellow | Prayer (praying hands), Anoint (anointing oil) |
 | Truth | brown | The Word (Bible), Prophecy (all-seeing eye) |
 | Spirit | purple | Thanksgiving (raised hands), Worship (music) |
-| Discipline | blue | Preaching (pulpit), Fasting (parked: old art) |
+| Discipline | blue | Preaching (pulpit), Fellowship (three people), Fasting (parked: old art) |
 | Love | pink | Healing, Serving (parked: old art) |
-| Unity | green | Fellowship (parked: old art) |
+| Unity | green | none yet |
 
 ## 2. Fruit
 
@@ -241,6 +257,7 @@ Their art is reused.
 |---|---|---|
 | **Time** | 3+ Time: Targets: **Choose anywhere** (1 tile, enemy tiles included). Dmg **1 per 3 tiles in the set, rounded up** (3: 1, 4–6: 2, 7+: 3; Strengthen counts) | `junk/time.svg` (spiral) |
 | **Space** | **Never forms sets.** Only damage clears it | `junk/space.svg` (wind) |
+| **Community** | **Never forms sets.** Only Fellowship makes it (never in refills). End of turn: **+1 Block** per Community tile in a line of 3+ | `junk/community.svg` (three people) |
 
 ## 5. Abilities
 

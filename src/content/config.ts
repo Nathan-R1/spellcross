@@ -12,7 +12,7 @@ export const config = {
   refillNoMatchChance: 1 as number,
   /** Tools taken into each battle (combat §2.1). */
   loadoutSize: 3,
-  startingTools: ['anoint', 'prayer', 'thanksgiving', 'word', 'prophecy', 'worship', 'preaching'],
+  startingTools: ['anoint', 'prayer', 'thanksgiving', 'word', 'prophecy', 'worship', 'preaching', 'fellowship'],
   junk: ['time', 'space'],
   stoneHp: 2,
   /** Foresight needed per +1 damage (and +1 Stone HP) on Truth tools. */

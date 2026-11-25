@@ -13,7 +13,7 @@ import { FRUIT_IDS } from '../content/fruits';
 import { junk as JUNK, STONE } from '../content/tools';
 import { createRng, type Rng } from './rng';
 import type {
-  Amount, BattleEvent, Gainable, Targets, BattleResult, BattleState, BattleTool, Board, Effect, FruitId, Placement, Player, Pos, Tile, TileRef, TileStatus, TimedEvent,
+  Amount, BattleEvent, Gainable, Targets, BattleResult, BattleState, BattleTool, Board, Effect, FruitId, Placement, Player, Pos, Tile, TileDef, TileRef, TileStatus, TimedEvent,
   ToolInstance, ViewSnapshot,
 } from './types';
 
@@ -241,8 +241,11 @@ export interface FoundSet {
   strengthened: { p: Pos; n: number }[];
 }
 
-export function findSets(s: BattleState): FoundSet[] {
-  const b = s.board;
+/**
+ * Straight runs of 3+ cells with the same non-null key, in rows and columns, joined into groups where they touch
+ * (so an L or T is one group). Sets use matchKey; Community uses its own id (it never forms sets).
+ */
+function lineGroups(b: Board, key: (t: Tile | null) => string | null): number[][] {
   const parent = new Map<number, number>();
   const find = (i: number): number => {
     let r = i;
@@ -259,8 +262,8 @@ export function findSets(s: BattleState): FoundSet[] {
     for (let line = 0; line < lines; line++) {
       let start = 0;
       for (let i = 1; i <= len; i++) {
-        const k = i < len ? matchKey(b.cells[cell(line, i)]) : null;
-        const prev = matchKey(b.cells[cell(line, start)]);
+        const k = i < len ? key(b.cells[cell(line, i)]) : null;
+        const prev = key(b.cells[cell(line, start)]);
         if (i < len && k !== null && k === prev) continue;
         if (prev !== null && i - start >= 3) for (let j = start; j < i - 1; j++) union(cell(line, j), cell(line, j + 1));
         start = i;
@@ -275,7 +278,17 @@ export function findSets(s: BattleState): FoundSet[] {
     const r = find(i);
     groups.set(r, [...(groups.get(r) ?? []), i]);
   }
-  const sets: FoundSet[] = [...groups.values()]
+  return [...groups.values()];
+}
+
+/** Board cells of tiles in a straight line of 3+ tiles of their own kind and id, matching or not (Community). */
+export function inLineCells(b: Board): Set<number> {
+  return new Set(lineGroups(b, (t) => (t ? `${t.kind}:${t.id}` : null)).flat());
+}
+
+export function findSets(s: BattleState): FoundSet[] {
+  const b = s.board;
+  const sets: FoundSet[] = lineGroups(b, matchKey)
     .map((cells) => cells.sort((a, c2) => a - c2))
     .sort((a, c2) => a[0] - c2[0])
     .map((cells) => ({
@@ -388,11 +401,13 @@ function applySet(ctx: Ctx, st: FoundSet, key: string) {
   }
   if (!key.startsWith('tool:')) return; // Stones: Clears self
   const tool = s.tools[key.slice(5)];
-  // Critical doubles everything this set does (once-per-turn effects still fire once).
-  const mult = p.critical > 0 ? 2 : 1;
-  if (mult === 2) p.critical -= 1;
   const effects = [...(c.tools[tool.toolId].triggers.setFormed ?? []), ...fruitSetEffects(tool.fruit)];
-  const texts = runSetEffects(ctx, effects, { source: tool.name, sourceTile: { kind: 'tool', id: tool.toolId, uid: tool.uid }, size, shape, mult, tool });
+  // Critical doubles everything this set does (once-per-turn effects still fire once). A set with nothing to double
+  // (Fellowship's Becomes) leaves it for the next set.
+  const doubles = effects.some((e) => e.type !== 'becomes' && e.type !== 'clearsSelf');
+  const mult = doubles && p.critical > 0 ? 2 : 1;
+  if (mult === 2) p.critical -= 1;
+  const texts = runSetEffects(ctx, effects, { source: tool.name, sourceTile: { kind: 'tool', id: tool.toolId, uid: tool.uid }, size, shape, mult, tool, cells: st.cells });
   emit(ctx, { type: 'effect', source: tool.name, text: `${tool.name}${mult > 1 ? ' (Critical)' : ''}: ${texts.join(', ')}` });
 }
 
@@ -409,9 +424,11 @@ interface EffectSource {
   mult: number;
   /** The tool whose set this is: its fruit and pillar modify the effects. */
   tool: BattleTool | null;
+  /** The set's own cells (emptied already), for Becomes. */
+  cells?: Pos[];
 }
 
-const amountOf = (a: Amount, size: number) => (typeof a === 'number' ? a : a.perSetTile * size);
+const amountOf = (a: Amount, size: number) => (typeof a === 'number' ? a : 'perTiles' in a ? Math.ceil(size / a.perTiles) : a.perSetTile * size);
 
 /**
  * Run Set formed or On use effects in order. Attacks you aim queue placements; everything else applies now.
@@ -472,6 +489,22 @@ function runSetEffects(ctx: Ctx, effects: Effect[], src: EffectSource): string[]
       case 'create':
         texts.push(...applyNow(ctx, e, null));
         break;
+      case 'becomes': {
+        // The set's cells were just emptied: fill each with the new tile, so nothing falls in (Patience: +HP).
+        const hp = tool?.fruit.patience ?? 0;
+        const uids: number[] = [];
+        for (const q of src.cells ?? []) {
+          const t = createTile(ctx, e.what, hp);
+          if (!t) continue;
+          s.board.cells[idx(s.board, q.x, q.y)] = t;
+          uids.push(t.uid);
+        }
+        if (uids.length) {
+          emit(ctx, { type: 'created', uids });
+          texts.push(`${uids.length} × ${tileName(c, e.what)}`);
+        }
+        break;
+      }
       case 'clearsSelf':
       case 'removeSelf': // a set's tiles clear anyway
         break;
@@ -528,6 +561,7 @@ function gameTargets(ctx: Ctx, t: Targets, at: Pos | null, claimed?: Set<number>
 function applyNow(ctx: Ctx, e: Effect, at: Pos | null): string[] {
   const { s } = ctx;
   if (e.type === 'gain') return gain(ctx, e.what, amountOf(e.amount, 0), e.source);
+  if (e.type === 'becomes') return []; // Set formed only
   if (e.type === 'attack') {
     if (e.targets.type === 'you') {
       hitPlayer(ctx, e.dmg);
@@ -702,6 +736,8 @@ function proceed(ctx: Ctx) {
         break;
       case 'endTurn':
         shining(ctx);
+        if (s.outcome) return;
+        turnEnd(ctx);
         s.stage = 'enemy';
         break;
       case 'enemy':
@@ -755,6 +791,56 @@ function shining(ctx: Ctx) {
     if (p) damageAt(ctx, [p], amount);
   }
   checkVictory(ctx);
+}
+
+/**
+ * At end of turn, for every tile on the board that has it (Community; tile-effects.md § 2), after Shining and before
+ * the enemy turn, so Block gained here covers this enemy turn's hits. Locked tiles skip it. A Gain with `inLine` only
+ * counts tiles in a straight line of 3+ of their own kind. Gains are added up per tile type for one log line.
+ */
+function turnEnd(ctx: Ctx) {
+  const { s, c } = ctx;
+  const b = s.board;
+  let lines: Set<number> | null = null;
+  const totals = new Map<string, { what: Gainable; v: number; uids: number[] }>();
+  for (let y = 0; y < b.height; y++) for (let x = 0; x < b.width; x++) {
+    const t = tileAt(b, x, y);
+    if (!t || isLocked(t, s.round)) continue;
+    const def = tileDef(c, s, t);
+    for (const e of def?.triggers.turnEnd ?? []) {
+      if (e.type !== 'gain') {
+        applyNow(ctx, e, { x, y });
+        continue;
+      }
+      if (e.inLine && !(lines ??= inLineCells(b)).has(idx(b, x, y))) continue;
+      const key = `${def!.name}|${e.what}`;
+      const sum = totals.get(key) ?? { what: e.what, v: 0, uids: [] };
+      sum.v += amountOf(e.amount, 0);
+      sum.uids.push(t.uid);
+      totals.set(key, sum);
+    }
+  }
+  for (const [key, { what, v, uids }] of totals) {
+    const name = key.split('|')[0];
+    emit(ctx, { type: 'shining', uids });
+    emit(ctx, { type: 'effect', source: name, text: `${name}: ${gain(ctx, what, v).join(', ')}` });
+  }
+}
+
+/** The definition behind a board tile (tools by their instance's tool). */
+function tileDef(c: Content, s: BattleState, t: Tile): TileDef | undefined {
+  switch (t.kind) {
+    case 'tool': return c.tools[s.tools[t.id]?.toolId];
+    case 'junk': return c.junk[t.id];
+    case 'enemy': return c.enemyTiles[t.id];
+    case 'stone': return STONE;
+  }
+}
+
+/** A tile's name, for log lines. */
+function tileName(c: Content, ref: TileRef): string {
+  return ref.kind === 'junk' ? c.junk[ref.id]?.name ?? ref.id : ref.kind === 'enemy' ? c.enemyTiles[ref.id]?.name ?? ref.id
+    : ref.kind === 'tool' ? c.tools[ref.id]?.name ?? ref.id : 'Stone';
 }
 
 function activateEnemies(ctx: Ctx) {

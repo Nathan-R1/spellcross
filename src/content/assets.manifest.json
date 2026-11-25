@@ -98,6 +98,7 @@
   "w": 72,
   "h": 72
  },
+ "junk/community.svg": {},
  "junk/space.svg": {},
  "junk/time.svg": {},
  "maps/people/player.png": {
@@ -666,6 +667,7 @@
  },
  "tools/svgs/anoint.svg": {},
  "tools/svgs/bible.svg": {},
+ "tools/svgs/fellowship.svg": {},
  "tools/svgs/praying-hands.svg": {},
  "tools/svgs/prophecy.svg": {},
  "tools/svgs/pulpit.svg": {},

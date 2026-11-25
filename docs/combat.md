@@ -70,7 +70,8 @@ battle start: choose 3 tools (§2.1) → build the board from the enemy's genera
 │    unspent Block becomes Momentum (§4.3), then Block is 0
 │    moves = 3
 │    swap … resolve sets, placements, cascades … until moves = 0 or END TURN
-│    END OF PLAYER TURN: your tiles activate (Shining tiles damage adjacent enemy tiles)
+│    END OF PLAYER TURN: your tiles activate (Shining tiles damage adjacent enemy tiles;
+│      then End of turn triggers: Community in a line of 3+ gives Block)
 │  ENEMY TURN
 │    1. enemy actions, if it has any (default: none; Hard Choices has none)
 │    2. enemy tiles activate, bottom row first (Worry: move down 1, or hit you from the bottom row)
@@ -85,9 +86,10 @@ battle start: choose 3 tools (§2.1) → build the board from the enemy's genera
   are lost.
 - **Abilities** can be used any time during your turn, outside a placement. They cost no move
   ([tools.md § 5](tools.md#5-abilities)).
-- **"Your tiles activate"** is the end-of-turn step. Right now only **Shining** uses it: each tile of a tool
+- **"Your tiles activate"** is the end-of-turn step. First **Shining**: each tile of a tool
   with Joy deals 1 damage per Shining to every **enemy** tile orthogonally next to it, in reading order. Then
-  the board settles. Tool sets themselves trigger the moment they clear, not here.
+  **End of turn** triggers: every Community tile in a line of 3+ Community gives 1 Block
+  ([tools § Fellowship](tools.md#fellowship)), in time to cover the enemy turn. Then the board settles. Tool sets themselves trigger the moment they clear, not here.
 
 ### 2.1 Choosing tools
 

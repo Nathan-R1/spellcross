@@ -156,7 +156,7 @@ Authoritative rules: **[combat.md](combat.md)**. In short:
 ## 7. Player tools
 
 The player starts owning **Prayer, Thanksgiving, The Word, Prophecy, Worship, Preaching and Anoint**, and takes 3 into each battle.
-See [tools.md](tools.md). Healing, Serving, Fellowship and Worship are parked (TBD).
+See [tools.md](tools.md). Healing and Serving are parked (TBD).
 
 ## 8. Abilities
 

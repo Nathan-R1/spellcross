@@ -27,7 +27,8 @@ export interface TileRef {
 }
 
 /** A number, or "N per tile in the set" (Set formed only). */
-export type Amount = number | { perSetTile: number };
+/** A number, "N per tile in the set", or "1 per N tiles in the set, rounded up" (Set formed only). */
+export type Amount = number | { perSetTile: number } | { perTiles: number };
 
 /** Which tiles an effect hits. Chosen by you (anywhere, shape), or by the game (below, adjacent, you). */
 export type Targets =
@@ -63,20 +64,26 @@ export type Effect =
   | { type: 'attack'; targets: Targets; dmg: number; /** Set formed only: Dmg is per this many tiles in the set, rounded up (Time: 1 per 3). */ dmgPerTiles?: number; onDestroy?: TileRef; apply?: TileStatus; /** Strengthen points per tile (default 1). */ applyAmount?: number }
   /** Turn the targets into a new tile. */
   | { type: 'create'; what: CreateWhat; targets: Targets }
-  /** The player gains an amount of something. `oncePerTurn`: only the first time this source fires each turn. */
-  | { type: 'gain'; what: Gainable; amount: Amount; oncePerTurn?: boolean; source?: string }
+  /**
+   * The player gains an amount of something. `oncePerTurn`: only the first time this source fires each turn.
+   * `inLine`: only while this tile is in a straight line of 3+ tiles of its own kind (Community, which never forms sets).
+   */
+  | { type: 'gain'; what: Gainable; amount: Amount; oncePerTurn?: boolean; source?: string; inLine?: boolean }
+  /** Set formed only: the set's tiles turn into this tile in place instead of clearing, so nothing falls (Fellowship). */
+  | { type: 'becomes'; what: TileRef }
   /** Nothing else happens: the set just clears. */
   | { type: 'clearsSelf' }
   /** The tile leaves the board (not damage, so nothing breaks it): Grief after it hits you. Game-picked triggers only. */
   | { type: 'removeSelf' };
 
-export type TriggerId = 'setFormed' | 'eachStep' | 'onActivate' | 'atBottom' | 'onUse';
+export type TriggerId = 'setFormed' | 'turnEnd' | 'eachStep' | 'onActivate' | 'atBottom' | 'onUse';
 /** Display and resolve order. */
-export const TRIGGERS: readonly TriggerId[] = ['setFormed', 'eachStep', 'onActivate', 'atBottom', 'onUse'];
+export const TRIGGERS: readonly TriggerId[] = ['setFormed', 'turnEnd', 'eachStep', 'onActivate', 'atBottom', 'onUse'];
 
 /**
  * When something happens, and what it does. A tile forms sets only if it has `setFormed`.
  *   setFormed:  3+ of it clear as a set
+ *   turnEnd:    end of your turn (before the enemy turn), while on the board (Community)
  *   eachStep:   each step down (Speed > 0); an Attack on 'below' is the push, and it moves in if that breaks the tile
  *   onActivate: end of every enemy turn, while on the board
  *   atBottom:   each enemy turn on the bottom row

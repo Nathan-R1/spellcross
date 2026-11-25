@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" width="64" height="64">
+  <!-- Community: three people side by side, joined (Fellowship's tiles become these) -->
+  <g fill="#f4f7fa" stroke="#4a5c4c" stroke-width="10" stroke-linejoin="round" paint-order="stroke">
+    <circle cx="58" cy="96" r="24"/>
+    <path d="M14 196 C14 152 32 128 58 128 C84 128 102 152 102 196 Z"/>
+    <circle cx="182" cy="96" r="24"/>
+    <path d="M138 196 C138 152 156 128 182 128 C208 128 226 152 226 196 Z"/>
+    <circle cx="120" cy="76" r="30"/>
+    <path d="M62 208 C62 154 86 116 120 116 C154 116 178 154 178 208 Z"/>
+  </g>
+</svg>

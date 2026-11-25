@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <!-- Fellowship: three people side by side, the middle one taller, shoulders overlapping -->
+  <g fill="#000" stroke="#fff" stroke-width="8" paint-order="stroke">
+    <!-- left -->
+    <circle cx="58" cy="92" r="26"/>
+    <path d="M10 196 C10 150 30 126 58 126 C86 126 106 150 106 196 Z"/>
+    <!-- right -->
+    <circle cx="182" cy="92" r="26"/>
+    <path d="M134 196 C134 150 154 126 182 126 C210 126 230 150 230 196 Z"/>
+    <!-- middle, in front -->
+    <circle cx="120" cy="70" r="32"/>
+    <path d="M58 212 C58 154 84 112 120 112 C156 112 182 154 182 212 Z"/>
+  </g>
+</svg>

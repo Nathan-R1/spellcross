@@ -30,14 +30,14 @@ export interface AttrRow {
 }
 
 export const TRIGGER_LABEL: Record<TriggerId, string> = {
-  setFormed: 'Set formed', eachStep: 'Each step', onActivate: 'On activate', atBottom: 'At bottom', onUse: 'On use',
+  setFormed: 'Set formed', turnEnd: 'End of turn', eachStep: 'Each step', onActivate: 'On activate', atBottom: 'At bottom', onUse: 'On use',
 };
 
 const GAIN_LABEL: Record<Gainable, string> = { block: 'Block', critical: 'Critical', foresight: 'Foresight', moves: 'Moves', courage: 'Courage' };
 const KIND_WORD: Record<TileKind, string> = { tool: 'tool', junk: 'junk', stone: 'Stone', enemy: 'enemy tile' };
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
-const amountText = (a: Amount) => (typeof a === 'number' ? String(a) : `${a.perSetTile} per tile in the set`);
+const amountText = (a: Amount) => (typeof a === 'number' ? String(a) : 'perTiles' in a ? `1 per ${a.perTiles} tiles in the set (rounded up)` : `${a.perSetTile} per tile in the set`);
 
 /** A tile's name from its content id (junk, enemy tile or Stone). */
 const tileName = (id: string) => content.junk[id]?.name ?? content.enemyTiles[id]?.name ?? (id === 'stone' ? STONE.name : id);
@@ -55,7 +55,7 @@ export function targetsText(t: Targets): string {
   switch (t.type) {
     case 'chooseAnywhere': {
       const what = t.filter ? t.filter.map((k) => KIND_WORD[k]).join(' or ') : 'tile';
-      return `Choose anywhere (${typeof t.count === 'number' ? plural(t.count, what) : `${t.count.perSetTile} ${what} per tile in the set`})`;
+      return `Choose anywhere (${typeof t.count === 'number' ? plural(t.count, what) : ('perTiles' in t.count ? `1 ${what} per ${t.count.perTiles} tiles in the set` : `${t.count.perSetTile} ${what} per tile in the set`)})`;
     }
     case 'chooseShape': return t.shape === 'set' ? "Choose shape (the set's shape)" : `Choose shape (line of ${t.length}, horizontal or vertical)`;
     case 'below': return 'The tile below';
@@ -108,10 +108,12 @@ export function effectRows(e: Effect, depth: number, bonusDmg = 0): AttrRow[] {
     case 'gain': {
       // "Gain: [Block], 1/tile"; Moves and Courage aren't statuses, so they stay words.
       const status = GAIN_STATUS[e.what];
-      const amount = typeof e.amount === 'number' ? String(e.amount) : `${e.amount.perSetTile}/tile`;
-      const rest = `${amount}${e.oncePerTurn ? ', once per turn' : ''}${e.source ? ` (${e.source})` : ''}`;
+      const amount = typeof e.amount === 'number' ? String(e.amount) : 'perTiles' in e.amount ? `1/${e.amount.perTiles} tiles (rounded up)` : `${e.amount.perSetTile}/tile`;
+      const rest = `${amount}${e.inLine ? ' (only in a line of 3+)' : ''}${e.oncePerTurn ? ', once per turn' : ''}${e.source ? ` (${e.source})` : ''}`;
       return [{ depth, label: 'Gain', parts: status ? [{ status }, `, ${rest}`] : [`${GAIN_LABEL[e.what]}, ${rest}`] }];
     }
+    case 'becomes':
+      return [{ depth, parts: ['Becomes ', e.what, ' (in place, nothing falls)'] }];
     case 'clearsSelf':
       return [{ depth, parts: ['Clears self'] }];
     case 'removeSelf':
@@ -253,6 +255,7 @@ function effectSummary(e: Effect): string {
     }
     case 'gain': return `+${amountText(e.amount)} ${e.what === 'moves' ? 'moves' : GAIN_LABEL[e.what]}`;
     case 'create': return 'Create a tile';
+    case 'becomes': return 'Becomes another tile';
     case 'clearsSelf': return 'Nothing';
     case 'removeSelf': return 'Leaves the board';
   }

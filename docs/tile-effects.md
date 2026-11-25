@@ -41,12 +41,13 @@ the other. A trigger with no effects is **hidden**: there is never an "N/A" or "
 | Trigger | When it fires | Used by |
 |---|---|---|
 | **Set formed** | 3+ of this tile clear as a set (from your swap or a cascade) | Tools, Time |
+| **End of turn** | The end of your turn, after Shining and before the enemy turn, while the tile is on the board (Locked tiles skip it). Block gained here covers this enemy turn's hits | Community |
 | **Each step** | Each step down (Speed > 0). An Attack on *the tile below* is the **push**: the tile moves in if it breaks that tile, and stays if it doesn't | Worry, Greed, Grief |
-| **On activate** | The end of every enemy turn, after every enemy tile has moved, while the tile is on the board (Locked tiles skip it) | Greed, Depression, Worship |
+| **On activate** | The end of every enemy turn, after every enemy tile has moved, while the tile is on the board (Locked tiles skip it) | Greed, Depression |
 | **At bottom** | Each enemy turn the tile spends on the bottom row | Worry, Greed, Depression, Grief |
 | **On use** | An ability is used | Abilities |
 
-Planned, not built yet: **Start of your turn**, **End of your turn** (Joy's Shining fits here), **When broken**
+Planned, not built yet: **Start of your turn**, **When broken**
 (the tile's own death).
 
 ## 3. Effects
@@ -57,7 +58,8 @@ An effect is a verb with its own sub-properties. Sub-properties that don't apply
 |---|---|---|
 | **Attack** | **Targets**, **Dmg**, **On destroy**, **Apply** (a tile status for each target that survives) | Prayer: Choose shape (the set's shape) · Dmg 3. Preaching: … Dmg 1 · Apply: [Locked]. Anoint: Choose shape (the set's shape) · Dmg 0 · Apply: +2 [Strengthen] |
 | **Create** | the tile (an icon, or random junk) and **where** (targets) | Depression: Create [Depression] on 1 random adjacent tool or junk |
-| **Gain** | what (**Block, Critical, Foresight, Moves, Courage**) and **how much** | Thanksgiving: Gain: [Block], 1/tile |
+| **Gain** | what (**Block, Critical, Foresight, Moves, Courage**) and **how much**; **only in a line of 3+** (the tile must be in a straight row or column of 3+ tiles of its own kind, the same rule as a set, though it never forms one) | Thanksgiving: Gain: [Block], 1/tile. Community: Gain: [Block], 1 (only in a line of 3+) |
+| **Becomes** | the tile (Set formed only): the set's own tiles turn into it **in place** instead of clearing, so nothing falls into those cells. Supportive tiles pulled in still clear | Fellowship: Becomes [Community] |
 | **Clears self** | none: the set just clears | Parked tools |
 | **Remove self** | none: the tile leaves the board. Not damage, so nothing breaks it and no On destroy | Grief, At bottom (after its hit) |
 
@@ -68,13 +70,13 @@ An effect is a verb with its own sub-properties. Sub-properties that don't apply
 | **Choose anywhere** (N tiles) | You | Single tiles anywhere on the board, optionally only of some kinds. The same tile can be picked more than once |
 | **Choose shape** (the set's shape / a line of N) | You | A shape placed where it fits, the same way round; a line can be horizontal or vertical |
 | **The tile below** | The game | The tile directly under this one |
-| **Every / N random adjacent** *kinds* | The game | Orthogonally adjacent tiles of the listed kinds (tool, junk, Stone, enemy tile), optionally only some tiles by id (Worship: Space) |
+| **Every / N random adjacent** *kinds* | The game | Orthogonally adjacent tiles of the listed kinds (tool, junk, Stone, enemy tile), optionally only some tiles by id |
 | **You** | The game | The player |
 
 Targets you choose only make sense when you act: **Set formed** and **On use**. Enemy triggers use game-picked
 targets. (A content test enforces this.)
 
-**Amounts** are a number or **"N per tile in the set"** (Set formed only).
+**Amounts** are a number, **"N per tile in the set"** or **"1 per N tiles in the set, rounded up"** (both Set formed only).
 
 **On destroy** is a tile (shown as its icon) that each target this Attack breaks turns into, in place, so nothing
 falls. A tool tile can only be created if that tool is in the battle; otherwise the target just breaks.
@@ -98,7 +100,7 @@ Fruit, statuses and Foresight change effects instead of adding special cases:
 
 All On activate effects resolve together at the end of the enemy turn:
 
-1. Tiles with On activate (enemy tiles and Worship), except Locked ones, are visited in **reading order** (top-left first). Each one's Create targets are **claimed** from the
+1. Tiles with On activate (enemy tiles, and any tool that has it), except Locked ones, are visited in **reading order** (top-left first). Each one's Create targets are **claimed** from the
    board as it is before anything changes, so a tile created this turn doesn't act until next turn.
 2. **A cell can be claimed once per turn: the first claim wins.** "Every adjacent" skips claimed cells, and "N
    random" picks only from unclaimed ones.
@@ -151,11 +153,13 @@ can be followed forever.
 | Anoint | 0 | Set formed: Attack (Choose shape: the set's shape · Dmg 0 · Apply: +2 Strengthen) |
 | Fasting (parked) | 0 | Set formed: Gain Critical, 1 |
 | Thanksgiving | 0 | Set formed: Gain Block, 1 per tile in the set |
-| Worship | 0 | Set formed: Gain Block, 1 per tile in the set. On activate: Attack (Every adjacent [Space] · Dmg 1) |
+| Worship | 0 | Set formed: Gain Block, 1 per 3 tiles in the set (rounded up); Gain Moves, 1 |
 | Preaching | 0 | Set formed: Attack (Choose anywhere: 1 tile per tile in the set · Dmg 1 · Apply: Locked) |
+| Fellowship | 0 | Set formed: Becomes [Community] |
 | Parked tools | 0 | Set formed: Clears self |
 | Time | 0 | Set formed: Attack (Choose anywhere: 1 tile · Dmg 1/3 tiles, rounded up) |
 | Space | 0 | none (never forms sets) |
+| Community | 0 | End of turn: Gain Block, 1 (only in a line of 3+). Never forms sets |
 | Stone | 0 | none (never forms sets) |
 | Worry | 1 (2 in Hard Choices) | Each step: Attack (the tile below · Dmg 1). At bottom: Attack (You · Dmg 1) |
 | Greed | 2 | Each step: as Worry. On activate: Create random junk on every adjacent tool. At bottom: Attack (You · Dmg 1) |

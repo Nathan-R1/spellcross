@@ -33,25 +33,28 @@ export const tools: Record<string, ToolDef> = {
       { type: 'attack', targets: SET_SHAPE, dmg: 1, onDestroy: { kind: 'junk', id: 'space' } },
       { type: 'gain', what: 'foresight', amount: PER_TILE },
     ] } },
-  worship: { id: 'worship', name: 'Worship', pillar: 'spirit', description: 'Block absorbs damage to you until your next turn.', icon: 'tools/earth/default.png', role: 'defense', color: ROLE_COLOR.defense, ...T,
+  worship: { id: 'worship', name: 'Worship', pillar: 'spirit', description: 'Block absorbs damage to you until your next turn. A move is one more swap this turn.', icon: 'tools/earth/default.png', role: 'defense', color: ROLE_COLOR.defense, ...T,
     triggers: {
-      setFormed: [{ type: 'gain', what: 'block', amount: PER_TILE }],
-      onActivate: [{ type: 'attack', targets: { type: 'adjacent', pick: 'every', filter: ['junk'], ids: ['space'] }, dmg: 1 }],
+      setFormed: [{ type: 'gain', what: 'block', amount: { perTiles: 3 } }, { type: 'gain', what: 'moves', amount: 1 }],
     } },
   preaching: { id: 'preaching', name: 'Preaching', pillar: 'discipline', description: '', icon: 'tools/water/default.png', role: 'control', color: ROLE_COLOR.control, ...T,
     triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseAnywhere', count: PER_TILE }, dmg: 1, apply: 'locked' }] } },
   anoint: { id: 'anoint', name: 'Anoint', pillar: 'faith', description: 'A Strengthened tile makes the set it clears in 1 tile bigger per point.', icon: 'tools/fire/default.png', role: 'support', color: ROLE_COLOR.support, ...T,
     triggers: { setFormed: [{ type: 'attack', targets: SET_SHAPE, dmg: 0, apply: 'strengthen', applyAmount: 2 }] } },
+  fellowship: { id: 'fellowship', name: 'Fellowship', pillar: 'discipline', description: '', icon: 'tools/svgs/fellowship.svg', role: 'defense', color: ROLE_COLOR.defense, ...T,
+    triggers: { setFormed: [{ type: 'becomes', what: { kind: 'junk', id: 'community' } }] } },
   // Parked (tools.md §1.2): no effect until redesigned.
   healing: parked('healing', 'Healing', 'love', 'tools/water/healing-1.png', '#b3d9ff'),
   serving: parked('serving', 'Serving', 'love', 'tools/water/dmg-1.png', '#b3d9ff'),
-  fellowship: parked('fellowship', 'Fellowship', 'unity', 'tools/earth/dmg-block-1.png', '#bfa680'),
 };
 
 export const junk: Record<string, JunkDef> = {
   time: { id: 'time', name: 'Time', description: '', icon: 'junk/time.svg', color: '#a58fc9', ...T,
     triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseAnywhere', count: 1 }, dmg: 1, dmgPerTiles: 3 }] } },
   // No setFormed: Space never forms sets, so only damage clears it.
+  // Only Fellowship makes it (not in config.junk, so never in refills). No setFormed: it never forms sets.
+  community: { id: 'community', name: 'Community', description: 'Never forms sets. Only damage clears it.', icon: 'junk/community.svg', color: '#8fb38a', ...T,
+    triggers: { turnEnd: [{ type: 'gain', what: 'block', amount: 1, inLine: true }] } },
   space: { id: 'space', name: 'Space', description: 'Never forms sets. Only damage clears it.', icon: 'junk/space.svg', color: '#9aa3ad', ...T, triggers: {} },
 };
 
@@ -73,7 +76,7 @@ export const PILLAR_FRAME: Record<Pillar, string> = {
 };
 
 const GLYPH: Record<string, string> = {
-  prayer: 'praying-hands', thanksgiving: 'thanksgiving', word: 'bible', prophecy: 'prophecy', worship: 'worship-music', preaching: 'pulpit', anoint: 'anoint',
+  prayer: 'praying-hands', thanksgiving: 'thanksgiving', word: 'bible', prophecy: 'prophecy', worship: 'worship-music', preaching: 'pulpit', anoint: 'anoint', fellowship: 'fellowship',
 };
 for (const [id, glyph] of Object.entries(GLYPH)) tools[id] = { ...tools[id], icon: `tools/svgs/${glyph}.svg`, frame: PILLAR_FRAME[tools[id].pillar] };
 
