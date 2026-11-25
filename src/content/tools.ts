@@ -33,10 +33,8 @@ export const tools: Record<string, ToolDef> = {
       { type: 'attack', targets: SET_SHAPE, dmg: 1, onDestroy: { kind: 'junk', id: 'space' } },
       { type: 'gain', what: 'foresight', amount: PER_TILE },
     ] } },
-  worship: { id: 'worship', name: 'Worship', pillar: 'spirit', description: 'Block absorbs damage to you until your next turn. A move is one more swap this turn.', icon: 'tools/earth/default.png', role: 'defense', color: ROLE_COLOR.defense, ...T,
-    triggers: {
-      setFormed: [{ type: 'gain', what: 'block', amount: { perTiles: 3 } }, { type: 'gain', what: 'moves', amount: 1 }],
-    } },
+  worship: { id: 'worship', name: 'Worship', pillar: 'spirit', description: '', icon: 'tools/earth/default.png', role: 'support', color: ROLE_COLOR.support, ...T,
+    triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseShape', shape: 'square', filter: ['junk'] }, dmg: 1 }] } },
   preaching: { id: 'preaching', name: 'Preaching', pillar: 'discipline', description: '', icon: 'tools/water/default.png', role: 'control', color: ROLE_COLOR.control, ...T,
     triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseAnywhere', count: PER_TILE }, dmg: 1, apply: 'locked' }] } },
   anoint: { id: 'anoint', name: 'Anoint', pillar: 'faith', description: 'A Strengthened tile makes the set it clears in 1 tile bigger per point.', icon: 'tools/fire/default.png', role: 'support', color: ROLE_COLOR.support, ...T,

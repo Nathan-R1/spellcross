@@ -119,7 +119,7 @@ export function BattleScreen() {
   const danger = useMemo(() => (busy ? new Set<number>() : incomingHits(battle, content)), [battle, busy]);
 
   const board = (
-    <BoardView view={view} battle={battle} tile={tile} selection={selection} preview={preview} ghost={pending?.onDestroy ? describeTile(pending.onDestroy).icon : null} placing={!!pending} applyMark={pending?.apply === 'locked' ? '🔒' : pending?.apply === 'strengthen' ? `+${pending.applyAmount ?? 1}` : ''} highlight={highlight} hurt={hurt} danger={danger}
+    <BoardView view={view} battle={battle} tile={tile} selection={selection} preview={preview} ghost={pending?.onDestroy ? describeTile(pending.onDestroy).icon : null} placing={!!pending} buff={!!pending && pending.damage === 0 && pending.apply === 'strengthen'} applyMark={pending?.apply === 'locked' ? '🔒' : pending?.apply === 'strengthen' ? `+${pending.applyAmount ?? 1}` : ''} highlight={highlight} hurt={hurt} danger={danger}
       onTap={onTap} onLong={(t) => openTile(tileRef(t, battle), t)} />
   );
 
@@ -253,26 +253,40 @@ function PlacingBanner({ pending, group, chosen, orientation, onOrientation, onC
   );
 }
 
-function BoardView({ view, battle, tile, selection, preview, ghost, placing, applyMark, highlight, hurt, danger, onTap, onLong }: {
+function BoardView({ view, battle, tile, selection, preview, ghost, placing, buff, applyMark, highlight, hurt, danger, onTap, onLong }: {
   view: ViewSnapshot; battle: BattleState; tile: number; selection: Pos | null; preview: ReturnType<typeof previewPlacements> | null; ghost: string | null;
-  placing: boolean; applyMark: string; highlight: Set<number>; hurt: Set<number>; danger: Set<number>;
+  /** A buff (Anoint: Strengthen, no damage) aims in green; a debuff (damage, Locked) in red. */
+  placing: boolean; buff: boolean; applyMark: string; highlight: Set<number>; hurt: Set<number>; danger: Set<number>;
   onTap: (x: number, y: number) => void; onLong: (t: Tile) => void;
 }) {
   const b = view.board;
   // Tiles whose End of turn will fire (Community in a line of 3+) glow.
   const firing = turnEndFiring(b, view.round, battle, content);
+  // Every cell under the aimed shape(s), hit or not (Worship's square only hits Junk), so its edge can be outlined.
+  const area = new Set((preview?.cells ?? []).map((p) => p.y * b.width + p.x));
+  const edge = (x: number, y: number) => !(x >= 0 && y >= 0 && x < b.width && y < b.height && area.has(y * b.width + x));
+  const line = '3px solid var(--aim)';
   return (
-    <div className={`board ${placing ? 'placing-mode' : ''} ${preview ? 'has-aim' : ''}`} style={{ width: b.width * tile + 6, height: b.height * tile + 6 }} role="grid" aria-label="Tool board">
+    <div className={`board ${placing ? 'placing-mode' : ''} ${preview ? 'has-aim' : ''} ${buff ? 'aim-buff' : ''}`} style={{ width: b.width * tile + 6, height: b.height * tile + 6 }} role="grid" aria-label="Tool board">
       {b.cells.map((t, i) => {
         if (!t) return null;
         const x = i % b.width;
         const y = Math.floor(i / b.width);
         const sel = selection && selection.x === x && selection.y === y;
         return (
-          <TileView key={t.uid} t={t} battle={battle} x={x} y={y} tile={tile} selected={!!sel}
+          <TileView key={t.uid} t={t} inAim={area.has(i)} battle={battle} x={x} y={y} tile={tile} selected={!!sel}
             aimed={!!preview?.damage.has(t.uid)} applyMark={applyMark} locked={isLocked(t, view.round)}
             incoming={preview?.damage.get(t.uid) ?? 0} breaks={!!preview?.deleted.has(t.uid)} ghost={preview?.deleted.has(t.uid) ? ghost : null}
             matched={highlight.has(t.uid)} hurt={hurt.has(t.uid)} danger={danger.has(t.uid)} active={firing.has(i)} onTap={() => onTap(x, y)} onLong={() => onLong(t)} />
+        );
+      })}
+      {[...area].map((i) => {
+        const x = i % b.width;
+        const y = Math.floor(i / b.width);
+        return (
+          <div key={`aoe-${i}`} className="aoe-edge" style={{ width: tile, height: tile, transform: `translate(${x * tile + 3}px, ${y * tile + 3}px)`,
+            borderTop: edge(x, y - 1) ? line : undefined, borderBottom: edge(x, y + 1) ? line : undefined,
+            borderLeft: edge(x - 1, y) ? line : undefined, borderRight: edge(x + 1, y) ? line : undefined }} />
         );
       })}
     </div>
@@ -284,8 +298,8 @@ export function tileLook(t: Tile, battle: BattleState) {
   return describeTile(tileRef(t, battle), { battle });
 }
 
-function TileView({ t, battle, x, y, tile, selected, aimed, applyMark, locked, incoming, breaks, ghost, matched, hurt, danger, active, onTap, onLong }: {
-  t: Tile; battle: BattleState; x: number; y: number; tile: number; selected: boolean; aimed: boolean; applyMark: string; locked: boolean;
+function TileView({ t, inAim, battle, x, y, tile, selected, aimed, applyMark, locked, incoming, breaks, ghost, matched, hurt, danger, active, onTap, onLong }: {
+  t: Tile; inAim: boolean; battle: BattleState; x: number; y: number; tile: number; selected: boolean; aimed: boolean; applyMark: string; locked: boolean;
   incoming: number; breaks: boolean; ghost: string | null; matched: boolean; hurt: boolean; danger: boolean; active: boolean; onTap: () => void; onLong: () => void;
 }) {
   const press = useLongPress(onTap, onLong);
@@ -294,7 +308,7 @@ function TileView({ t, battle, x, y, tile, selected, aimed, applyMark, locked, i
   const supportive = t.kind === 'tool' && (battle.tools[t.id]?.fruit.kindness ?? 0) > 0;
   const shining = t.kind === 'tool' && (battle.tools[t.id]?.fruit.joy ?? 0) > 0;
   return (
-    <div className={`tile ${t.kind} ${selected ? 'selected' : ''} ${matched ? 'matched' : ''} ${aimed ? 'aimed' : ''} ${hurt ? 'hurt' : ''} ${danger ? 'danger' : ''} ${active ? 'active' : ''}`}
+    <div className={`tile ${t.kind} ${selected ? 'selected' : ''} ${matched ? 'matched' : ''} ${aimed ? 'aimed' : ''} ${inAim ? 'in-aim' : ''} ${hurt ? 'hurt' : ''} ${danger ? 'danger' : ''} ${active ? 'active' : ''}`}
       style={{ width: tile, height: tile, transform: `translate(${x * tile + 3}px, ${y * tile + 3}px)` }}
       role="gridcell" aria-label={`${look.name}, row ${y + 1} col ${x + 1}${t.hp < t.maxHp ? ', damaged' : ''}${locked ? ', locked' : ''}${danger ? ', will hit you this enemy turn' : ''}${active ? ', activates at end of turn' : ''}${t.strength ? `, strengthened +${t.strength}` : ''}`} {...press}>
       <div style={{ background: t.kind === 'tool' ? toolTint(look.color) : `linear-gradient(160deg, ${look.color}, ${shade(look.color)})` }}>

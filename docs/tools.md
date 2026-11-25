@@ -36,7 +36,7 @@ Sizes are always counted as **tiles in the set**. A tile whose damage reaches it
 | **Prophecy** | Set formed | Attack: Choose shape (the set's shape) · Dmg 1 · On destroy: Create [Space]; Gain: Foresight, 1 per tile in the set |
 | **Anoint** | Set formed | Attack: Choose shape (the set's shape) · Dmg 0 · Apply: +2 Strengthen |
 | **Thanksgiving** | Set formed | Gain: Block, 1 per tile in the set |
-| **Worship** | Set formed | Gain: Block, 1 per 3 tiles in the set (rounded up). Gain: Moves, 1 |
+| **Worship** | Set formed | Attack: Choose shape (a square as wide as the set is big, Junk only) · Dmg 1 |
 | **Preaching** | Set formed | Attack: Choose anywhere (1 tile per tile in the set) · Dmg 1 · Apply: Locked |
 | **Fellowship** | Set formed | Becomes [Community] (in place, nothing falls) |
 | **Time** (junk) | Set formed | Attack: Choose anywhere (1 tile) · Dmg 1/3 tiles (rounded up) |
@@ -58,7 +58,7 @@ add their own Gain effects to the tool's Set formed list, so they show in its po
 | **Thanksgiving** | Spirit | Gain **1 Block per tile in the set** | Yes |
 | **The Word** | Truth | Targets: **Choose anywhere**, 1 per tile in the set. Dmg **1**. On destroy: **Create Stone** | Yes |
 | **Prophecy** | Truth | Targets: **Choose shape**. Dmg **1**. On destroy: **Create Space**. Also gain **1 Foresight per tile in the set** | Yes, both |
-| **Worship** | Spirit | Gain **1 Block per 3 tiles in the set** (rounded up) and **+1 move** | Block: yes (per 3). Move: no |
+| **Worship** | Spirit (Support) | Targets: **Choose shape**, a square **N×N** for a set of N. Dmg **1**, to **Junk only** | Yes: the square's side is the set's size |
 | **Preaching** | Discipline | Targets: **Choose anywhere**, 1 tile per tile in the set. Dmg **1**. Apply **Locked** | Yes |
 | **Fellowship** | Discipline | The set's tiles **become Community** in place | Yes: one Community per tile |
 
@@ -70,7 +70,8 @@ like any other.
 
 When a Strengthened tile clears **in a set**, that set counts **1 tile bigger per point**:
 
-- Per-tile effects grow: Thanksgiving +1 Block (Worship: its Block counts the bigger set, 1 per 3 rounded up), the Word +1 pick, Prophecy +1 Foresight, Preaching +1 pick.
+- Per-tile effects grow: Thanksgiving +1 Block, the Word +1 pick, Prophecy +1 Foresight, Preaching +1 pick.
+- Worship's square is 1 wider and taller per point (capped at the board).
 - A placed shape (Prayer, Prophecy, Anoint) grows by **1 cell per point**, always along the set's **longest straight line**,
   at the end nearest the Strengthened tile. A row of 3 with +2 becomes a row of 5 wherever the points were; L and T
   sets grow along their longest arm. The line stops growing at the board's length (8), so the shape always fits;
@@ -128,12 +129,12 @@ tool (the Word, Prophecy) **+1 damage per tile**. It doesn't change Stone HP.
 
 ### Worship
 
-Match 3+ Worship: gain **1 Block per 3 tiles in the set, rounded up** (3 tiles: 1 Block; 4–6: 2; 7–9: 3), and **+1 move**
-this turn. Every Worship set gives the move, so a Worship set made with your last move gives you another. Under Critical
-both double (2 moves).
+Support. Match 3+ Worship: **place a square** anywhere on the board, as wide and tall as the set is big (3 tiles: 3×3;
+4: 4×4; capped at the board). Every **Junk** tile under it takes **1 damage**; tools, enemy tiles and Stones under it
+are untouched. Under Critical you place two squares.
 
-(Until 2026-11-25 Worship gave 1 Block per tile and, unmatched, deleted the Space next to it at the end of each enemy
-turn.)
+(Until 2026-11-25 Worship was a Defense tool: 1 Block per 3 tiles in the set, rounded up, and +1 move. Before that it
+gave 1 Block per tile and, unmatched, deleted the Space next to it at the end of each enemy turn.)
 
 ### Preaching
 

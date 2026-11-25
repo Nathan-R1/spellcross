@@ -153,7 +153,7 @@ can be followed forever.
 | Anoint | 0 | Set formed: Attack (Choose shape: the set's shape · Dmg 0 · Apply: +2 Strengthen) |
 | Fasting (parked) | 0 | Set formed: Gain Critical, 1 |
 | Thanksgiving | 0 | Set formed: Gain Block, 1 per tile in the set |
-| Worship | 0 | Set formed: Gain Block, 1 per 3 tiles in the set (rounded up); Gain Moves, 1 |
+| Worship | 0 | Set formed: Attack (Choose shape: a square as wide as the set is big · Junk only · Dmg 1) |
 | Preaching | 0 | Set formed: Attack (Choose anywhere: 1 tile per tile in the set · Dmg 1 · Apply: Locked) |
 | Fellowship | 0 | Set formed: Becomes [Community] |
 | Parked tools | 0 | Set formed: Clears self |

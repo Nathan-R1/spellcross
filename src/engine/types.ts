@@ -30,13 +30,18 @@ export interface TileRef {
 /** A number, "N per tile in the set", or "1 per N tiles in the set, rounded up" (Set formed only). */
 export type Amount = number | { perSetTile: number } | { perTiles: number };
 
+/**
+ * A shape you place: the set's own shape, a square as wide as the set is big (a set of 3: 3×3), or a straight line
+ * (you choose horizontal or vertical). New shapes go here and in combat.ts's shapeTarget.
+ */
+export type Shape = { shape: 'set' } | { shape: 'square' } | { shape: 'line'; length: number };
+
 /** Which tiles an effect hits. Chosen by you (anywhere, shape), or by the game (below, adjacent, you). */
 export type Targets =
   /** You pick `count` single tiles anywhere (only tiles of the `filter` kinds, when given). */
   | { type: 'chooseAnywhere'; count: Amount; filter?: TileKind[] }
-  /** You place a shape: the set's own shape, or a straight line (you choose horizontal or vertical). */
-  | { type: 'chooseShape'; shape: 'set' }
-  | { type: 'chooseShape'; shape: 'line'; length: number }
+  /** You place a shape (see Shape). With `filter`, only tiles of those kinds under it are hit (Worship: Junk only). */
+  | ({ type: 'chooseShape'; filter?: TileKind[] } & Shape)
   /** The tile directly below this one (Each step). */
   | { type: 'below' }
   /** Orthogonally adjacent tiles of these kinds (and only these ids, when given): every one, or `pick` at random. */
@@ -244,8 +249,11 @@ export interface Pos {
   y: number;
 }
 
-/** Where a placed Attack lands: one tile, a shape (offsets from its top-left), or a line (orientation chosen). */
-export type PlacementTarget = { type: 'anywhere'; filter?: TileKind[] } | { type: 'shape'; cells: Pos[] } | { type: 'line'; length: number };
+/**
+ * Where a placed Attack lands: one tile, a shape (offsets from its top-left), or a line (orientation chosen). With
+ * `filter`, only tiles of those kinds are hit (for one tile, it must be one to be chosen).
+ */
+export type PlacementTarget = ({ type: 'anywhere' } | { type: 'shape'; cells: Pos[] } | { type: 'line'; length: number }) & { filter?: TileKind[] };
 
 /**
  * One Attack waiting for you to choose where (Choose anywhere / Choose shape). Every tile under it takes `damage`;

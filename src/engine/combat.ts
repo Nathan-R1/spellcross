@@ -13,7 +13,7 @@ import { FRUIT_IDS } from '../content/fruits';
 import { junk as JUNK, STONE } from '../content/tools';
 import { createRng, type Rng } from './rng';
 import type {
-  Amount, BattleEvent, Gainable, Targets, BattleResult, BattleState, BattleTool, Board, Effect, FruitId, Placement, Player, Pos, Tile, TileDef, TileRef, TileStatus, TimedEvent,
+  Amount, BattleEvent, Gainable, Targets, BattleResult, BattleState, BattleTool, Board, Effect, FruitId, Placement, PlacementTarget, Player, Pos, Tile, TileDef, TileRef, TileStatus, TimedEvent,
   ToolInstance, ViewSnapshot,
 } from './types';
 
@@ -438,6 +438,22 @@ const amountOf = (a: Amount, size: number) => (typeof a === 'number' ? a : 'perT
 /** "Lock" or "+2 Strengthen", for the log. */
 const applyText = (e: { apply?: TileStatus; applyAmount?: number }) => (e.apply === 'locked' ? 'Lock' : e.apply === 'strengthen' ? `+${e.applyAmount ?? 1} Strengthen` : '');
 
+/**
+ * The placement a Choose shape effect queues: the cells it covers (offsets from its top-left), or a line, plus its
+ * filter. `setShape` and `size` are the set's own shape and size (Strengthen already counted). Add new shapes here.
+ */
+function shapeTarget(t: Extract<Targets, { type: 'chooseShape' }>, setShape: Pos[], size: number, b: Board): Exclude<PlacementTarget, { type: 'anywhere' }> {
+  const filter = t.filter && { filter: t.filter };
+  switch (t.shape) {
+    case 'set': return { type: 'shape', cells: setShape, ...filter };
+    case 'square': {
+      const side = Math.min(size, b.width, b.height); // as wide as the set is big, but always fits
+      return { type: 'shape', cells: Array.from({ length: side * side }, (_, i) => ({ x: i % side, y: Math.floor(i / side) })), ...filter };
+    }
+    case 'line': return { type: 'line', length: t.length, ...filter };
+  }
+}
+
 function runSetEffects(ctx: Ctx, effects: Effect[], src: EffectSource): string[] {
   const { s, c } = ctx;
   const p = s.player;
@@ -463,9 +479,10 @@ function runSetEffects(ctx: Ctx, effects: Effect[], src: EffectSource): string[]
         };
         const t = e.targets;
         if (t.type === 'chooseShape') {
-          const target = t.shape === 'set' ? { type: 'shape' as const, cells: src.shape } : { type: 'line' as const, length: t.length };
+          const target = shapeTarget(t, src.shape, size, s.board);
           for (let i = 0; i < mult; i++) s.pending.push({ target, damage, source: src.source, ...(src.sourceTile && { sourceTile: src.sourceTile }), ...onDestroy });
-          texts.push(`${mult > 1 ? `${mult} × ` : ''}${target.type === 'shape' ? `${target.cells.length}-tile shape` : `line of ${target.length}`}, ${damage > 0 || !e.apply ? `${damage} damage` : applyText(e)}${damage > 0 && e.apply ? ` + ${applyText(e)}` : ''}`);
+          const only = t.filter ? ` (${t.filter.join(' or ')} only)` : '';
+          texts.push(`${mult > 1 ? `${mult} × ` : ''}${target.type === 'shape' ? `${target.cells.length}-tile shape` : `line of ${target.length}`}${only}, ${damage > 0 || !e.apply ? `${damage} damage` : applyText(e)}${damage > 0 && e.apply ? ` + ${applyText(e)}` : ''}`);
         } else if (t.type === 'chooseAnywhere') {
           const n = amountOf(t.count, size) * mult;
           const target = { type: 'anywhere' as const, ...(t.filter && { filter: t.filter }) };
@@ -1060,19 +1077,25 @@ export function pendingGroupSize(s: BattleState): number {
   return n;
 }
 
+/** Whether a placement hits this tile: any tile, or only its `filter` kinds when it has one (Worship: Junk only). */
+function hitsTile(pl: Placement, t: Tile | null): boolean {
+  const f = pl.target.filter;
+  return !!t && (!f || f.includes(t.kind));
+}
+
 function applyPlacement(ctx: Ctx, pl: Placement, at: Pos, orientation: 'h' | 'v') {
   const s = ctx.s;
   const cells = placementCells(s, pl, at, orientation, true);
   if (!cells) return; // a later hit aimed at a tile an earlier one already deleted
   if (pl.target.type === 'anywhere' && !tileAt(s.board, at.x, at.y)) return;
-  const gone = damageAt(ctx, cells, pl.damage);
+  const gone = damageAt(ctx, cells.filter((p) => hitsTile(pl, tileAt(s.board, p.x, p.y))), pl.damage);
   if (pl.apply) {
     // Locked: through the coming enemy turn (this round's, or next round's once this round's is over).
     const until = s.stage === 'newTurn' ? s.round + 1 : s.round;
     const uids: number[] = [];
     for (const p of cells) {
       const t = tileAt(s.board, p.x, p.y);
-      if (!t || (pl.target.type === 'anywhere' && pl.target.filter && !pl.target.filter.includes(t.kind))) continue;
+      if (!t || !hitsTile(pl, t)) continue;
       if (pl.apply === 'locked') t.lockedUntil = until;
       else t.strength = (t.strength ?? 0) + (pl.applyAmount ?? 1);
       uids.push(t.uid);
@@ -1129,7 +1152,7 @@ export function previewPlacements(s: BattleState, targets: Pos[], orientation: '
     for (const p of hit) {
       cells.push(p);
       const t = tileAt(s.board, p.x, p.y);
-      if (!t || deleted.has(t.uid)) continue;
+      if (!t || deleted.has(t.uid) || !hitsTile(pl, t)) continue;
       const d = (damage.get(t.uid) ?? 0) + pl.damage;
       damage.set(t.uid, d);
       if (d >= t.hp) deleted.add(t.uid);

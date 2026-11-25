@@ -35,6 +35,10 @@ export const TRIGGER_LABEL: Record<TriggerId, string> = {
 
 const GAIN_LABEL: Record<Gainable, string> = { block: 'Block', critical: 'Critical', foresight: 'Foresight', moves: 'Moves', courage: 'Courage' };
 const KIND_WORD: Record<TileKind, string> = { tool: 'tool', junk: 'junk', stone: 'Stone', enemy: 'enemy tile' };
+/** "junk", "tool or Stone". */
+const kindsText = (kinds: TileKind[]) => kinds.map((k) => KIND_WORD[k]).join(' or ');
+/** ", junk only" for a filtered shape, or nothing. */
+const onlyText = (filter?: TileKind[]) => (filter ? `, ${kindsText(filter)} only` : '');
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 const amountText = (a: Amount) => (typeof a === 'number' ? String(a) : 'perTiles' in a ? `1 per ${a.perTiles} tiles in the set (rounded up)` : `${a.perSetTile} per tile in the set`);
@@ -54,13 +58,14 @@ const GAIN_STATUS: Partial<Record<Gainable, string>> = { block: 'block', critica
 export function targetsText(t: Targets): string {
   switch (t.type) {
     case 'chooseAnywhere': {
-      const what = t.filter ? t.filter.map((k) => KIND_WORD[k]).join(' or ') : 'tile';
+      const what = t.filter ? kindsText(t.filter) : 'tile';
       return `Choose anywhere (${typeof t.count === 'number' ? plural(t.count, what) : ('perTiles' in t.count ? `1 ${what} per ${t.count.perTiles} tiles in the set` : `${t.count.perSetTile} ${what} per tile in the set`)})`;
     }
-    case 'chooseShape': return t.shape === 'set' ? "Choose shape (the set's shape)" : `Choose shape (line of ${t.length}, horizontal or vertical)`;
+    case 'chooseShape': return `Choose shape (${t.shape === 'set' ? "the set's shape" : t.shape === 'square' ? 'a square as wide as the set is big'
+      : `line of ${t.length}, horizontal or vertical`}${onlyText(t.filter)})`;
     case 'below': return 'The tile below';
     case 'adjacent': {
-      const what = t.ids ? t.ids.map(tileName).join(' or ') : t.filter.map((k) => KIND_WORD[k]).join(' or ');
+      const what = t.ids ? t.ids.map(tileName).join(' or ') : kindsText(t.filter);
       return `${t.pick === 'every' ? 'every' : `${t.pick} random`} adjacent ${what}`;
     }
     case 'you': return 'You';
@@ -143,9 +148,9 @@ export interface PlacementStats {
 
 export function placementStats(p: Placement, n: number): PlacementStats {
   const t = p.target;
-  const targets = t.type === 'shape' ? `Choose shape (${n > 1 ? `${n} × ` : ''}${t.cells.length} tiles)`
-    : t.type === 'line' ? `Choose shape (line of ${t.length})`
-    : `Choose anywhere (${plural(n, t.filter ? t.filter.map((k) => KIND_WORD[k]).join(' or ') : 'tile')})`;
+  const targets = t.type === 'shape' ? `Choose shape (${n > 1 ? `${n} × ` : ''}${t.cells.length} tiles${onlyText(t.filter)})`
+    : t.type === 'line' ? `Choose shape (line of ${t.length}${onlyText(t.filter)})`
+    : `Choose anywhere (${plural(n, t.filter ? kindsText(t.filter) : 'tile')})`;
   return { targets, dmg: p.damage, onDestroy: p.onDestroy ?? null, apply: p.apply ? applyParts(p.apply, p.applyAmount) : null };
 }
 

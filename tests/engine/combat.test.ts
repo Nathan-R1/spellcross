@@ -536,25 +536,37 @@ describe('Anoint and Strengthen', () => {
 });
 
 describe('Worship', () => {
-  it('Set formed: Block 1 per 3 tiles in the set (rounded up), and +1 move', () => {
+  it('Set formed: place a 3×3 square for a set of 3, 4×4 for a set of 4', () => {
     const s = makeBattle({ rows: base({ 7: 'VVsVsmsm' }) });
     const r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c).state;
-    expect(r.player.block).toBe(1);
-    expect(r.movesLeft).toBe(s.movesLeft - 1 + 1); // the swap's move comes back
-  });
-
-  it('4 tiles give 2 Block (rounded up)', () => {
+    expect(r.phase).toBe('placing');
+    expect(r.pending[0].target).toEqual({ type: 'shape', cells: [0, 1, 2].flatMap((y) => [0, 1, 2].map((x) => ({ x, y }))), filter: ['junk'] });
+    expect(r.pending[0].damage).toBe(1);
     // Swap (2,6) down into (2,7): Worship ×4 along the bottom row.
-    const s = makeBattle({ rows: base({ 6: 'msVsmsms', 7: 'VVsVmsms' }) });
-    expect(playerMove(s, { x: 2, y: 6 }, { x: 2, y: 7 }, c).state.player.block).toBe(2);
+    const s4 = makeBattle({ rows: base({ 6: 'msVsmsms', 7: 'VVsVmsms' }) });
+    const t = playerMove(s4, { x: 2, y: 6 }, { x: 2, y: 7 }, c).state.pending[0].target;
+    expect(t.type === 'shape' && t.cells.length).toBe(16);
   });
 
-  it('no longer clears Space next to it', () => {
-    const s = makeBattle({ rows: base({ 6: 'msmsVsms' }) });
-    const spaces = [[3, 6], [5, 6], [4, 5], [4, 7]].map(([x, y]) => at(s, x, y)!.uid);
-    const r = endTurn(s, c);
-    const deleted = r.events.flatMap((e) => (e.event.type === 'damaged' ? e.event.deleted : []));
-    for (const u of spaces) expect(deleted).not.toContain(u);
+  it('deals 1 damage only to Junk under the square: tools and enemy tiles are untouched', () => {
+    const s = makeBattle({ rows: base({ 0: 'XPsmsmsm', 7: 'VVsVsmsm' }) });
+    let r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
+    // The set clearing shifted the top row down, so read the 3×3 from the settled board.
+    const under = [0, 1, 2].flatMap((y) => [0, 1, 2].map((x) => at(r.state, x, y)!));
+    const spared = under.filter((t) => t.kind !== 'junk').map((t) => t.uid);
+    const junk = under.filter((t) => t.kind === 'junk').map((t) => t.uid);
+    expect(spared.length).toBeGreaterThanOrEqual(2); // the Worry and the Prayer
+    const preview = previewPlacements(r.state, [{ x: 0, y: 0 }], 'h');
+    expect(preview.cells).toHaveLength(9);
+    for (const u of spared) expect(preview.damage.has(u)).toBe(false);
+    r = place(r.state, { x: 0, y: 0 }, c);
+    const left = new Set(r.state.board.cells.map((t) => t?.uid));
+    for (const u of spared) expect(left.has(u)).toBe(true);
+    for (const u of junk) expect(left.has(u)).toBe(false);
+  });
+
+  it('is a Support tool', () => {
+    expect(c.tools.worship.role).toBe('support');
   });
 });
 

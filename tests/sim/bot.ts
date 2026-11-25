@@ -7,6 +7,32 @@ import type { BattleState, Pos, TimedEvent } from '../../src/engine/types';
 
 const W = 8, H = 8;
 
+type SetEffect = NonNullable<Content['tools'][string]['triggers']['setFormed']>[number];
+/** Whether an Attack can hurt enemy tiles: no filter, or one that includes them (Worship's square is Junk only). */
+export const hitsEnemies = (e: SetEffect) => e.type === 'attack' && (!('filter' in e.targets) || !e.targets.filter || e.targets.filter.includes('enemy'));
+
+/**
+ * Clearing targets (a shape that can't hit enemy tiles, e.g. Worship: Junk only): the anchor that breaks the most
+ * tiles, counting only those with no enemy tile above them in their column (clearing under an enemy drops it closer).
+ */
+function chooseClear(s: BattleState, n: number): Pos[] {
+  const pl = s.pending[0];
+  const enemyAbove = (x: number, y: number) => Array.from({ length: y }, (_, yy) => tileAt(s.board, x, yy)).some((t) => t?.kind === 'enemy');
+  let best: Pos = { x: 0, y: 0 }, bestV = -Infinity;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const cells = placementCells(s, pl, { x, y });
+    if (!cells) continue;
+    let v = 0;
+    for (const p of cells) {
+      const t = tileAt(s.board, p.x, p.y);
+      if (!t || (pl.target.filter && !pl.target.filter.includes(t.kind)) || pl.damage < t.hp) continue;
+      v += enemyAbove(p.x, p.y) ? -1 : 1;
+    }
+    if (v > bestV) { bestV = v; best = { x, y }; }
+  }
+  return Array.from({ length: n }, () => best);
+}
+
 /**
  * Lock targets (Preaching): the enemy tile that would do the most this enemy turn — on the bottom row (it would hit
  * you), else the lowest one that moves, since everything above it in its column waits too. Never one already Locked.
@@ -39,7 +65,7 @@ function chooseStrengthen(s: BattleState, n: number): Pos[] {
     const t = tileAt(s.board, x, y);
     if (t?.kind !== 'tool') continue;
     const effects = content.tools[s.tools[t.id].toolId].triggers.setFormed ?? [];
-    const worth = effects.some((e) => e.type === 'attack' && e.dmg > 0) ? 3 : effects.some((e) => e.type === 'gain') ? 1.5 : 0.5;
+    const worth = effects.some((e) => e.type === 'attack' && e.dmg > 0 && hitsEnemies(e)) ? 3 : effects.some((e) => e.type === 'gain') ? 1.5 : 0.5;
     const pairs = [[1, 0], [-1, 0], [0, 1], [0, -1]].filter(([dx, dy]) => tileAt(s.board, x + dx, y + dy)?.id === t.id).length;
     scored.push({ p: { x, y }, v: worth * (1 + pairs) });
   }
@@ -68,6 +94,7 @@ export function chooseTargets(s: BattleState): Pos[] {
   const pl = s.pending[0];
   if (pl.apply === 'locked') return chooseLocks(s, n);
   if (pl.apply === 'strengthen' && pl.damage === 0) return chooseStrengthen(s, n);
+  if (pl.target.filter && !pl.target.filter.includes('enemy')) return chooseClear(s, n);
   const targets: Pos[] = [];
   const used = new Set<number>();
   for (let k = 0; k < n; k++) {
@@ -156,15 +183,17 @@ export function botMove(s: BattleState, rnd: () => number, c: Content = content,
         // tiles are near the bottom), then Critical.
         const effects = c.tools[s.tools[set.key.slice(5)].toolId].triggers.setFormed ?? [];
         const gains = (what: string) => effects.some((e) => e.type === 'gain' && e.what === what);
-        const damages = effects.some((e) => e.type === 'attack' && e.dmg > 0);
+        // An Attack whose filter leaves out enemy tiles (Worship: Junk only) clears the board but can't hurt enemies.
+        const damages = effects.some((e) => e.type === 'attack' && e.dmg > 0 && hitsEnemies(e));
+        const clears = effects.some((e) => e.type === 'attack' && e.dmg > 0 && !hitsEnemies(e));
         const locks = effects.some((e) => e.type === 'attack' && e.apply === 'locked');
         const strengthens = effects.some((e) => e.type === 'attack' && e.apply === 'strengthen');
-        // How much of something the set gives (Worship: Block 1 per 3 tiles, rounded up).
+        // How much of something the set gives (e.g. Block 1 per 3 tiles, rounded up).
         const gained = (what: string) => effects.reduce((sum, e) => sum + (e.type !== 'gain' || e.what !== what ? 0
           : typeof e.amount === 'number' ? e.amount : 'perTiles' in e.amount ? Math.ceil(n / e.amount.perTiles) : e.amount.perSetTile * n), 0);
         // Fellowship: its tiles become Community (Block at end of turn while 3+ are in a line), so worth a little.
         const becomes = effects.some((e) => e.type === 'becomes');
-        v += damages ? 3 * n : locks ? urgency * n : strengthens ? 2 * n : gains('block') ? blockValue(gained('block')) : gains('critical') ? 4 : becomes ? n : 0;
+        v += damages ? 3 * n : locks ? urgency * n : strengthens ? 2 * n : gains('block') ? blockValue(gained('block')) : gains('critical') ? 4 : becomes || clears ? n : 0;
         v += 2.5 * gained('moves'); // a free swap: about one more set
       } else if (set.key === 'junk:time') v += 2;
       else v += 0.2;

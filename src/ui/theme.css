@@ -202,9 +202,14 @@ h3 { font-size: calc(19px * var(--s)); }
 .framed > .glyph { inset: 19%; width: 62%; height: 62%; object-fit: contain; filter: invert(1) drop-shadow(0 0 1px #000) drop-shadow(0 0 1px #000); }
 .tile.enemy > div { box-shadow: inset 0 0 0 2px #a33; }
 .tile.selected > div { outline: 3px solid #fff; outline-offset: -1px; }
-.board.has-aim .tile:not(.aimed) > div { filter: brightness(0.45) saturate(0.6); }
-.tile.aimed > div { outline: 3px solid #ff3b30; outline-offset: -2px; filter: brightness(1.25); animation: aimed 800ms ease-in-out infinite; }
-@keyframes aimed { 0%,100% { box-shadow: 0 0 0 0 #ff3b30; } 50% { box-shadow: 0 0 10px 3px #ff3b30; } }
+.board.has-aim .tile:not(.aimed):not(.in-aim) > div { filter: brightness(0.45) saturate(0.6); }
+/* The aimed shape's outer edge, drawn over the tiles (cells it covers but doesn't hit stay lit inside it). */
+.aoe-edge { position: absolute; left: 0; top: 0; box-sizing: border-box; pointer-events: none; z-index: 2; }
+/* Aim colour: red for a debuff (damage, Locked), green for a buff (Anoint's Strengthen). */
+.board { --aim: #ff3b30; }
+.board.aim-buff { --aim: #34c759; }
+.tile.aimed > div { outline: 3px solid var(--aim); outline-offset: -2px; filter: brightness(1.25); animation: aimed 800ms ease-in-out infinite; }
+@keyframes aimed { 0%,100% { box-shadow: 0 0 0 0 var(--aim); } 50% { box-shadow: 0 0 10px 3px var(--aim); } }
 .board.placing-mode { box-shadow: inset 0 0 14px #000, 0 0 0 2px var(--accent); }
 .tile.matched > div { animation: halo 260ms ease-out; }
 .tile.hurt > div { animation: shake 240ms; filter: brightness(1.6); }
@@ -277,7 +282,7 @@ h3 { font-size: calc(19px * var(--s)); }
 
 
 /* Placement preview: damage each tile will take, ✕ on tiles that break, a faint Stone where the Word turns one. */
-.tile .incoming { position: absolute; left: 1px; bottom: 0; font-size: 12px; font-weight: bold; color: #fff; background: #ff3b30; border-radius: 6px; padding: 0 3px; }
+.tile .incoming { position: absolute; left: 1px; bottom: 0; font-size: 12px; font-weight: bold; color: #fff; background: var(--aim); border-radius: 6px; padding: 0 3px; }
 .tile .breaks { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 26px; color: #ff3b30; text-shadow: 0 0 3px #000, 0 0 3px #000; }
 .tile .stone-ghost { position: absolute; inset: 15%; background: center/contain no-repeat; opacity: 0.55; }
 
