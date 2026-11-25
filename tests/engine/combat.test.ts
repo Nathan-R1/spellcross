@@ -1,7 +1,7 @@
 // The combat rules (docs/combat.md, docs/tools.md, docs/enemies.md) on hand-drawn boards.
 
 import { content } from '../../src/content';
-import { createBattle, endTurn, incomingHits, isLocked, enemyTileSpeed, enemyToCome, findSets, pendingGroupSize, place, placeGroup, playerMove, previewPlacements, startingGrid, upcomingGrid, useAbility } from '../../src/engine/combat';
+import { createBattle, endTurn, incomingHits, isLocked, enemyTileSpeed, enemyToCome, findSets, pendingGroupSize, place, placeGroup, playerMove, previewPlacements, startingGrid, turnEndFiring, upcomingGrid, useAbility } from '../../src/engine/combat';
 import { createPlayer } from '../../src/engine/run';
 import { at, F1, F2, makeBattle } from '../helpers';
 import type { BattleState } from '../../src/engine/types';
@@ -443,6 +443,20 @@ describe('Preaching and Locked', () => {
     });
     it('a Locked Community gives nothing but still makes the line', () => {
       expect(block({ 7: 'cccsmsms' }, (x) => { x.board.cells[7 * 8 + 1]!.lockedUntil = 1; })).toBe(2);
+    });
+    it('Strengthen counts in a line (+1 per point) and is used up when the tile activates; not in a line, it stays', () => {
+      const str = (x: BattleState, i: number, n: number) => { x.board.cells[i]!.strength = n; };
+      // A line of 3 with +2 on two of them: 3 + 2 + 2 = 7. A loose Community with +2 gives nothing.
+      const s = makeBattle({ rows: base({ 5: 'csmsmsms', 7: 'cccsmsms' }), state: (x) => { str(x, 7 * 8, 2); str(x, 7 * 8 + 1, 2); str(x, 5 * 8, 2); } });
+      const r = endTurn(s, c);
+      const line = r.events.map((e) => e.event).find((e) => e.type === 'effect' && e.source === 'Community');
+      expect(line?.type === 'effect' && line.text).toContain('+7 Block');
+      expect([0, 1, 2].map((x) => at(r.state, x, 7)?.strength ?? 0)).toEqual([0, 0, 0]);
+      expect(at(r.state, 0, 5)?.strength).toBe(2);
+    });
+    it('turnEndFiring: the tiles that will activate (the board glows them), not Locked ones or loose ones', () => {
+      const s = makeBattle({ rows: base({ 5: 'csmsmsms', 7: 'cccsmsms' }), state: (x) => { x.board.cells[7 * 8 + 2]!.lockedUntil = 1; } });
+      expect([...turnEndFiring(s.board, s.round, s, c).keys()]).toEqual([7 * 8, 7 * 8 + 1]);
     });
     it('the Block covers this enemy turn: a Worry on the bottom row is blocked, the rest becomes Momentum', () => {
       const s = makeBattle({ rows: base({ 7: 'cccsmsmX' }) });

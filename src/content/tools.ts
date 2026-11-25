@@ -53,7 +53,7 @@ export const junk: Record<string, JunkDef> = {
     triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseAnywhere', count: 1 }, dmg: 1, dmgPerTiles: 3 }] } },
   // No setFormed: Space never forms sets, so only damage clears it.
   // Only Fellowship makes it (not in config.junk, so never in refills). No setFormed: it never forms sets.
-  community: { id: 'community', name: 'Community', description: 'Never forms sets. Only damage clears it.', icon: 'junk/community.svg', color: '#8fb38a', ...T,
+  community: { id: 'community', name: 'Community', description: 'Never forms sets. Only damage clears it. Strengthen counts in a line: +1 Block per point, used up when it activates.', icon: 'junk/community.svg', color: '#8fb38a', ...T,
     triggers: { turnEnd: [{ type: 'gain', what: 'block', amount: 1, inLine: true }] } },
   space: { id: 'space', name: 'Space', description: 'Never forms sets. Only damage clears it.', icon: 'junk/space.svg', color: '#9aa3ad', ...T, triggers: {} },
 };

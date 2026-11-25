@@ -794,31 +794,48 @@ function shining(ctx: Ctx) {
 }
 
 /**
+ * The tiles whose End of turn effects will fire, by board index, with those effects: unlocked tiles that have the
+ * trigger, keeping only the `inLine` Gains of tiles in a straight line of 3+ of their own kind. The board shows these
+ * tiles glowing (Community in a line), and turnEnd runs them.
+ */
+export function turnEndFiring(b: Board, round: number, s: Pick<BattleState, 'tools'>, c: Content): Map<number, Effect[]> {
+  const out = new Map<number, Effect[]>();
+  let lines: Set<number> | null = null;
+  for (let i = 0; i < b.cells.length; i++) {
+    const t = b.cells[i];
+    if (!t || isLocked(t, round)) continue;
+    const effects = (tileDef(c, s, t)?.triggers.turnEnd ?? []).filter((e) => e.type !== 'gain' || !e.inLine || (lines ??= inLineCells(b)).has(i));
+    if (effects.length) out.set(i, effects);
+  }
+  return out;
+}
+
+/**
  * At end of turn, for every tile on the board that has it (Community; tile-effects.md § 2), after Shining and before
  * the enemy turn, so Block gained here covers this enemy turn's hits. Locked tiles skip it. A Gain with `inLine` only
- * counts tiles in a straight line of 3+ of their own kind. Gains are added up per tile type for one log line.
+ * counts tiles in a straight line of 3+ of their own kind, and Strengthen counts there as it does in a set: each point
+ * is one more tile. A tile that fires loses its Strengthen. Gains are added up per tile type for one log line.
  */
 function turnEnd(ctx: Ctx) {
   const { s, c } = ctx;
   const b = s.board;
-  let lines: Set<number> | null = null;
   const totals = new Map<string, { what: Gainable; v: number; uids: number[] }>();
-  for (let y = 0; y < b.height; y++) for (let x = 0; x < b.width; x++) {
-    const t = tileAt(b, x, y);
-    if (!t || isLocked(t, s.round)) continue;
-    const def = tileDef(c, s, t);
-    for (const e of def?.triggers.turnEnd ?? []) {
+  for (const [i, effects] of turnEndFiring(b, s.round, s, c)) {
+    const t = b.cells[i]!;
+    const at = { x: i % b.width, y: Math.floor(i / b.width) };
+    const name = tileDef(c, s, t)!.name;
+    for (const e of effects) {
       if (e.type !== 'gain') {
-        applyNow(ctx, e, { x, y });
+        applyNow(ctx, e, at);
         continue;
       }
-      if (e.inLine && !(lines ??= inLineCells(b)).has(idx(b, x, y))) continue;
-      const key = `${def!.name}|${e.what}`;
+      const key = `${name}|${e.what}`;
       const sum = totals.get(key) ?? { what: e.what, v: 0, uids: [] };
-      sum.v += amountOf(e.amount, 0);
-      sum.uids.push(t.uid);
+      sum.v += amountOf(e.amount, 0) * (e.inLine ? 1 + (t.strength ?? 0) : 1);
+      if (!sum.uids.includes(t.uid)) sum.uids.push(t.uid);
       totals.set(key, sum);
     }
+    delete t.strength; // used up
   }
   for (const [key, { what, v, uids }] of totals) {
     const name = key.split('|')[0];
@@ -828,7 +845,7 @@ function turnEnd(ctx: Ctx) {
 }
 
 /** The definition behind a board tile (tools by their instance's tool). */
-function tileDef(c: Content, s: BattleState, t: Tile): TileDef | undefined {
+function tileDef(c: Content, s: Pick<BattleState, 'tools'>, t: Tile): TileDef | undefined {
   switch (t.kind) {
     case 'tool': return c.tools[s.tools[t.id]?.toolId];
     case 'junk': return c.junk[t.id];

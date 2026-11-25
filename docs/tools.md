@@ -157,7 +157,10 @@ Community tiles +HP.
 **Community** (junk, only Fellowship makes it, never in refills) never forms sets. At the **end of your turn**, every
 Community tile in a straight row or column of **3+ Community** gives **1 Block**, before the enemy turn, so it covers
 that turn's hits (unspent Block becomes Momentum as usual). Lines join as sets do: an L of 3 + 3 counts all 5, a 2×2
-square or 3 loose tiles count 0. A Locked Community tile gives nothing that turn but still makes up the line. So
+square or 3 loose tiles count 0. A Locked Community tile gives nothing that turn but still makes up the line. **Strengthen** counts as it
+does in a set: each point on a Community tile in a line is +1 Block (a line of 3 with +2 on two of them gives
+3 + 2 + 2 = 7), and a tile that activates loses its Strengthen. A loose (or Locked) one keeps it for later. On the
+board, Community tiles that will activate this end of turn **glow**; loose ones don't. So
 Fellowship builds a standing wall of Block: line up two Fellowship sets, or one long one, and it pays every turn
 until the Community is broken.
 
@@ -257,7 +260,7 @@ Their art is reused.
 |---|---|---|
 | **Time** | 3+ Time: Targets: **Choose anywhere** (1 tile, enemy tiles included). Dmg **1 per 3 tiles in the set, rounded up** (3: 1, 4–6: 2, 7+: 3; Strengthen counts) | `junk/time.svg` (spiral) |
 | **Space** | **Never forms sets.** Only damage clears it | `junk/space.svg` (wind) |
-| **Community** | **Never forms sets.** Only Fellowship makes it (never in refills). End of turn: **+1 Block** per Community tile in a line of 3+ | `junk/community.svg` (three people) |
+| **Community** | **Never forms sets.** Only Fellowship makes it (never in refills). End of turn: **+1 Block** per Community tile in a line of 3+, +1 per Strengthen point (used up). Tiles that will activate glow | `junk/community.svg` (three people) |
 
 ## 5. Abilities
 

@@ -159,7 +159,7 @@ can be followed forever.
 | Parked tools | 0 | Set formed: Clears self |
 | Time | 0 | Set formed: Attack (Choose anywhere: 1 tile · Dmg 1/3 tiles, rounded up) |
 | Space | 0 | none (never forms sets) |
-| Community | 0 | End of turn: Gain Block, 1 (only in a line of 3+). Never forms sets |
+| Community | 0 | End of turn: Gain Block, 1 (only in a line of 3+; Strengthen +1 per point, then cleared). Never forms sets |
 | Stone | 0 | none (never forms sets) |
 | Worry | 1 (2 in Hard Choices) | Each step: Attack (the tile below · Dmg 1). At bottom: Attack (You · Dmg 1) |
 | Greed | 2 | Each step: as Worry. On activate: Create random junk on every adjacent tool. At bottom: Attack (You · Dmg 1) |
