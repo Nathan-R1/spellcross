@@ -68,6 +68,11 @@ describe('UI smoke', () => {
     expect(screen.getAllByRole('gridcell')).toHaveLength(64);
     expect(screen.getAllByLabelText(/^Worry/)).toHaveLength(32);
     expect(screen.getByLabelText('Hard Choices: hold for details')).toBeTruthy();
+    // Block → Momentum: both chips show at 0, side by side, with the arrow between them.
+    const flow = document.querySelector('.block-flow')!;
+    expect(flow.querySelector('.s-block')?.getAttribute('aria-label')).toBe('Block 0: hold for details');
+    expect(flow.querySelector('.flow-arrow')?.textContent).toBe('→');
+    expect(flow.querySelector('.s-momentum')?.getAttribute('aria-label')).toBe('Momentum 0: hold for details');
     fireEvent.click(screen.getByText('End Turn'));
     // The enemy turn ran: either your next turn started, or a set formed during it and is waiting for a placement.
     await waitFor(() => { const b = useStore.getState().run!.battle!; expect(b.round === 2 || b.phase === 'placing').toBe(true); });

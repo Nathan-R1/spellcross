@@ -150,12 +150,14 @@ export function BattleScreen() {
               <b>You</b>
               <HpBar hp={view.player.hp} max={view.player.maxHp} green />
               <div className="stat-row">
-                <StatusChip id="block" text={`${view.player.block}`} value={view.player.block} />
-                {view.player.critical > 0 && <StatusChip id="critical" text={`×${view.player.critical}`} value={view.player.critical} />}
-                {view.player.momentum > 0 && (
+                {/* Block → Momentum: unspent Block becomes Momentum at the start of your turn. Both always show, and stay together. */}
+                <span className="block-flow">
+                  <StatusChip id="block" text={`${view.player.block}`} value={view.player.block} />
+                  <span className="flow-arrow" aria-hidden="true">→</span>
                   <StatusChip id="momentum" value={view.player.momentum}
                     text={`${view.player.momentum} (+${Math.floor(view.player.momentum / content.config.momentumPerBonus)})`} />
-                )}
+                </span>
+                {view.player.critical > 0 && <StatusChip id="critical" text={`×${view.player.critical}`} value={view.player.critical} />}
                 {view.player.foresight > 0 && (
                   <StatusChip id="foresight" value={view.player.foresight}
                     text={`${view.player.foresight} (+${Math.floor(view.player.foresight / content.config.foresightPerBonus)})`} />
