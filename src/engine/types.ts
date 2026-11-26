@@ -96,7 +96,7 @@ export const TRIGGERS: readonly TriggerId[] = ['setFormed', 'turnEnd', 'eachStep
  */
 export type Triggers = Partial<Record<TriggerId, Effect[]>>;
 
-/** What every tile definition has (tools, junk, Stone, enemy tiles). */
+/** What every tile definition has (tools, junk, blessings, enemy tiles). */
 export interface TileDef {
   id: string;
   name: string;
@@ -125,6 +125,8 @@ export interface ToolDef extends TileDef {
 }
 
 export type JunkDef = TileDef;
+/** A tile only your tools create (Stone, Community): never in the pool, never forms sets, skipped by junk-only effects. */
+export type BlessingDef = TileDef;
 
 export interface FruitDef {
   id: FruitId;
@@ -222,12 +224,12 @@ export interface BattleTool {
 
 // ---------------------------------------------------------------- board & battle
 
-export type TileKind = 'tool' | 'junk' | 'stone' | 'enemy';
+export type TileKind = 'tool' | 'junk' | 'blessing' | 'enemy';
 
 export interface Tile {
   uid: number;
   kind: TileKind;
-  /** Tool instance uid, junk id ('time' | 'space'), 'stone', or enemy tile id ('worry'). */
+  /** Tool instance uid, junk id ('time' | 'space'), blessing id ('stone' | 'community'), or enemy tile id ('worry'). */
   id: string;
   hp: number;
   maxHp: number;

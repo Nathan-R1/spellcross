@@ -35,11 +35,11 @@ export const enemyTiles: Record<string, EnemyTileDef> = {
     },
   },
   grief: {
-    id: 'grief', name: 'Grief', icon: 'tools/dud/mist.png', color: '#2a2f4a', hp: 20, speed: 2, description: '',
+    id: 'grief', name: 'Grief', icon: 'tools/dud/mist.png', color: '#2a2f4a', hp: 10, speed: 2, description: '',
     triggers: {
       eachStep: STEP,
-      // It can't really be broken (20 HP): it passes through. From the bottom row it hits hard once, then leaves.
-      atBottom: [{ type: 'attack', targets: { type: 'you' }, dmg: 3 }, { type: 'removeSelf' }],
+      // Tough (10 HP): it mostly passes through. From the bottom row it hits hard once, then leaves.
+      atBottom: [{ type: 'attack', targets: { type: 'you' }, dmg: 4 }, { type: 'removeSelf' }],
     },
   },
 };
@@ -64,6 +64,13 @@ export const enemies: Record<string, EnemyDef> = {
     generator: [N, N, N, N, W('worry'), W('worry'), W('worry'), W('worry')],
     tileSpeed: { worry: 2 },
   },
+  harder_choices: {
+    id: 'harder_choices', name: 'Harder Choices', tier: 'normal', portrait: 'portraits/hard_choices.svg', talents: [20, 30],
+    description: 'Two Worry rows at the bottom of the board (rows 1 and 2) and two at the top (rows 7 and 8): 32 Worries in all, all on the board from the start. Nothing more comes. Worries here take 2 steps per enemy turn.',
+    // Row 1 is the bottom of the board.
+    generator: [W('worry'), W('worry'), N, N, N, N, W('worry'), W('worry')],
+    tileSpeed: { worry: 2 },
+  },
   financial_stress: {
     id: 'financial_stress', name: 'Financial Stress', tier: 'normal', portrait: 'portraits/financial_stress.svg', talents: [25, 40],
     description: 'Worry down both edge columns from row 7 to row 16 (20 Worries; 4 start on the board) and 12 Greed in a 4×3 block on rows 8 to 10 (4 start on the top row of the board): 32 enemy tiles in all.',
@@ -80,7 +87,7 @@ export const enemies: Record<string, EnemyDef> = {
   long_night: {
     id: 'long_night', name: 'The Long Night', tier: 'elite', portrait: 'portraits/long_night.svg', talents: [40, 60],
     description: 'One row of Grief across the top of the board: 8 Grief in all, all on the board. Nothing more comes. '
-      + 'Grief has 20 HP and takes 2 steps per enemy turn. On the bottom row it deals 3 damage to you, then leaves.',
+      + 'Grief has 10 HP and takes 2 steps per enemy turn. On the bottom row it deals 4 damage to you, then leaves.',
     // Rows 1–7 normal. Row 8 (the top of the board): Grief.
     generator: [N, N, N, N, N, N, N, W('grief')],
   },

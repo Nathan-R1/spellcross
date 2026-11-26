@@ -6,13 +6,13 @@ import { config } from './config';
 import { enemies, enemyTiles } from './enemies';
 import { fruits } from './fruits';
 import { statuses } from './statuses';
-import { junk, tools } from './tools';
+import { blessings, junk, tools } from './tools';
 
 const manifestPaths = new Set(Object.keys(manifest as Record<string, unknown>));
 export const assetExists = (path: string) => manifestPaths.has(path);
 
 export function buildContent() {
-  return { tools, junk, fruits, abilities, statuses, enemies, enemyTiles, config, assetExists };
+  return { tools, junk, blessings, fruits, abilities, statuses, enemies, enemyTiles, config, assetExists };
 }
 
 export type Content = ReturnType<typeof buildContent>;

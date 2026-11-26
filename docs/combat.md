@@ -40,7 +40,7 @@ Numbers marked *(tune)* are starting values for playtesting.
 |---|---|---|---|
 | **Tool** | Prayer, Thanksgiving, The Word, Prophecy, Worship, Preaching, Anoint | Yes: 3+ of the same tool | The effect triggers when the set clears ([tools.md](tools.md)) |
 | **Junk** | Time, Space | Time: 3+ Time. **Space never matches** | Time has a small effect. Space is inert: only damage clears it, and it breaks lines like an enemy tile |
-| **Stone** | Stone | **Never**: only damage clears it, like Space | 2 HP. Blocks enemy tiles (§4.2). Breaks lines like Space |
+| **Blessing** | Stone, Community | **Never**: only damage clears it, like Space | Only your tools make them (the Word: Stone; Fellowship: Community), never the pool. They're yours: junk-only effects (Worship) skip them. Stone: 2 HP, blocks enemy tiles (§4.2). Break lines like Space |
 | **Enemy** | Worry | **Never** | Blocks lines. Destroyed by damage, or transformed into a Stone by the Word (§5) |
 
 Different kinds never match each other. An enemy tile or a Space in the middle of a line breaks the line.

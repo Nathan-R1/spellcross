@@ -19,17 +19,17 @@ doc defines the vocabulary they use. Code: types in `src/engine/types.ts` (`Effe
 
 ## 1. A tile
 
-Every tile definition (tools, junk, the Stone, enemy tiles) is a `TileDef`:
+Every tile definition (tools, junk, blessings, enemy tiles) is a `TileDef`:
 
 | Part | What it is |
 |---|---|
 | **Name, icon, colour** | Identity |
 | **HP** | Damage it takes before it breaks |
-| **Speed** | Steps down per enemy turn. **0** for anything that doesn't move by itself (tools, junk, Stones, Depression); gravity still applies. A fight can override it (`EnemyDef.tileSpeed`) |
+| **Speed** | Steps down per enemy turn. **0** for anything that doesn't move by itself (tools, junk, blessings, Depression); gravity still applies. A fight can override it (`EnemyDef.tileSpeed`) |
 | **Triggers** | When something happens, each with its **effects** (§2, §3) |
 | **Description** | Optional free text for anything the triggers don't say. Normally empty |
 
-A tile **forms sets only if it has a Set formed trigger**. Space, Stones and enemy tiles have none.
+A tile **forms sets only if it has a Set formed trigger**. Space, blessings (Stone, Community) and enemy tiles have none.
 
 Abilities have no tile, but use the same effects under the **On use** trigger.
 
@@ -70,7 +70,7 @@ An effect is a verb with its own sub-properties. Sub-properties that don't apply
 | **Choose anywhere** (N tiles) | You | Single tiles anywhere on the board, optionally only of some kinds. The same tile can be picked more than once |
 | **Choose shape** (the set's shape / a line of N) | You | A shape placed anywhere, the same way round, partly off the board if you like (only the part on it hits); a line can be horizontal or vertical |
 | **The tile below** | The game | The tile directly under this one |
-| **Every / N random adjacent** *kinds* | The game | Orthogonally adjacent tiles of the listed kinds (tool, junk, Stone, enemy tile), optionally only some tiles by id |
+| **Every / N random adjacent** *kinds* | The game | Orthogonally adjacent tiles of the listed kinds (tool, junk, blessing, enemy tile), optionally only some tiles by id |
 | **You** | The game | The player |
 
 Targets you choose only make sense when you act: **Set formed** and **On use**. Enemy triggers use game-picked
@@ -159,12 +159,12 @@ can be followed forever.
 | Parked tools | 0 | Set formed: Clears self |
 | Time | 0 | Set formed: Attack (Choose anywhere: 1 tile · Dmg 1/3 tiles, rounded up) |
 | Space | 0 | none (never forms sets) |
-| Community | 0 | End of turn: Gain Block, 1 (only in a line of 3+; Strengthen +1 per point, then cleared). Never forms sets |
-| Stone | 0 | none (never forms sets) |
+| Community (blessing) | 0 | End of turn: Gain Block, 1 (only in a line of 3+; Strengthen +1 per point, then cleared). Never forms sets |
+| Stone (blessing) | 0 | none (never forms sets) |
 | Worry | 1 (2 in Hard Choices) | Each step: Attack (the tile below · Dmg 1). At bottom: Attack (You · Dmg 1) |
 | Greed | 2 | Each step: as Worry. On activate: Create random junk on every adjacent tool. At bottom: Attack (You · Dmg 1) |
 | Depression | 0 | On activate: Create [Depression] on 1 random adjacent tool or junk. At bottom: Attack (You · Dmg 1) |
-| Grief | 2 | Each step: as Worry. At bottom: Attack (You · Dmg 3), Remove self |
+| Grief | 2 | Each step: as Worry. At bottom: Attack (You · Dmg 4), Remove self |
 
 ## 6. Adding something new
 

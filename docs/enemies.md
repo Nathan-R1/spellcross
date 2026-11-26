@@ -78,11 +78,11 @@ Claims and clashes for On activate are in [tile-effects § 3.3](tile-effects.md#
 
 | | |
 |---|---|
-| HP | 20: far more than you can deal in the time it's on the board. It isn't meant to be killed |
+| HP | 10: hard to kill in the time it's on the board, though focused damage can |
 | Speed | 2 |
 | Each step | Dmg 1 to the tile below, and moves in if it breaks (as Worry). A full-HP Stone holds it for a turn |
 | On activate | (none) |
-| At bottom | Dmg **3** to you, then **Remove self**: it leaves the board. Block absorbs the damage as usual |
+| At bottom | Dmg **4** to you, then **Remove self**: it leaves the board. Block absorbs the damage as usual |
 | Art | placeholder: `tools/dud/mist.png` |
 
 Remove self isn't damage, so nothing breaks the tile; it just leaves ([tile-effects § 3](tile-effects.md#3-effects)).
@@ -176,10 +176,10 @@ loadouts with Prophecy win 58–100%, and loadouts without it win 0–17%. See
 | Total | **8** Grief, nothing to come |
 | Actions | None |
 | Reward *(tune)* | 40–60 Talents, a fruit (elite tier) |
-| Description (data) | "One row of Grief across the top of the board: 8 Grief in all, all on the board. Nothing more comes. Grief has 20 HP and takes 2 steps per enemy turn. On the bottom row it deals 3 damage to you, then leaves." |
+| Description (data) | "One row of Grief across the top of the board: 8 Grief in all, all on the board. Nothing more comes. Grief has 10 HP and takes 2 steps per enemy turn. On the bottom row it deals 4 damage to you, then leaves." |
 
 **The sustain elite**, the opposite of All Quiet: you can't win it by damage. Unchecked, every Grief reaches the
-bottom on enemy turn 4 and the row deals 24 at once. You win when the last one leaves. What you control is **how
+bottom on enemy turn 4 and the row deals 32 at once. You win when the last one leaves. What you control is **how
 much of it lands**: Block absorbs it, and Stones and Locks stagger the columns so it arrives over several turns
 instead of all at once.
 

@@ -1,7 +1,7 @@
-// Tools, junk tiles and the Stone (docs/tools.md). What each does is its triggers (docs/tile-effects.md); popup text
+// Tools, junk tiles and blessings (docs/tools.md). What each does is its triggers (docs/tile-effects.md); popup text
 // is generated from them, so `description` holds only anything else. Art is reused from the old spell icons until drawn.
 
-import type { JunkDef, Pillar, TileDef, ToolDef, ToolRole } from '../engine/types';
+import type { BlessingDef, JunkDef, Pillar, ToolDef, ToolRole } from '../engine/types';
 import { config } from './config';
 
 const T = { hp: 1, speed: 0 };
@@ -27,7 +27,7 @@ export const tools: Record<string, ToolDef> = {
   thanksgiving: { id: 'thanksgiving', name: 'Thanksgiving', pillar: 'spirit', description: 'Block absorbs damage to you until your next turn.', icon: 'tools/water/block-1.png', role: 'defense', color: ROLE_COLOR.defense, ...T,
     triggers: { setFormed: [{ type: 'gain', what: 'block', amount: PER_TILE }] } },
   word: { id: 'word', name: 'The Word', pillar: 'truth', description: '', icon: 'tools/lightning/dmg-1.png', role: 'control', color: ROLE_COLOR.control, ...T,
-    triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseAnywhere', count: PER_TILE }, dmg: 1, onDestroy: { kind: 'stone', id: 'stone' } }] } },
+    triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseAnywhere', count: PER_TILE }, dmg: 1, onDestroy: { kind: 'blessing', id: 'stone' } }] } },
   prophecy: { id: 'prophecy', name: 'Prophecy', pillar: 'truth', description: '', icon: 'tools/lightning/default.png', role: 'attack', color: ROLE_COLOR.attack, ...T,
     triggers: { setFormed: [
       { type: 'attack', targets: SET_SHAPE, dmg: 1, onDestroy: { kind: 'junk', id: 'space' } },
@@ -40,7 +40,7 @@ export const tools: Record<string, ToolDef> = {
   anoint: { id: 'anoint', name: 'Anoint', pillar: 'faith', description: 'A Strengthened tile makes the set it clears in 1 tile bigger per point.', icon: 'tools/fire/default.png', role: 'support', color: ROLE_COLOR.support, ...T,
     triggers: { setFormed: [{ type: 'attack', targets: SET_SHAPE, dmg: 0, apply: 'strengthen', applyAmount: 2 }] } },
   fellowship: { id: 'fellowship', name: 'Fellowship', pillar: 'discipline', description: '', icon: 'tools/svgs/fellowship.svg', role: 'defense', color: ROLE_COLOR.defense, ...T,
-    triggers: { setFormed: [{ type: 'becomes', what: { kind: 'junk', id: 'community' } }] } },
+    triggers: { setFormed: [{ type: 'becomes', what: { kind: 'blessing', id: 'community' } }] } },
   // Parked (tools.md §1.2): no effect until redesigned.
   healing: parked('healing', 'Healing', 'love', 'tools/water/healing-1.png', '#b3d9ff'),
   serving: parked('serving', 'Serving', 'love', 'tools/water/dmg-1.png', '#b3d9ff'),
@@ -50,15 +50,21 @@ export const junk: Record<string, JunkDef> = {
   time: { id: 'time', name: 'Time', description: '', icon: 'junk/time.svg', color: '#a58fc9', ...T,
     triggers: { setFormed: [{ type: 'attack', targets: { type: 'chooseAnywhere', count: 1 }, dmg: 1, dmgPerTiles: 3 }] } },
   // No setFormed: Space never forms sets, so only damage clears it.
-  // Only Fellowship makes it (not in config.junk, so never in refills). No setFormed: it never forms sets.
-  community: { id: 'community', name: 'Community', description: 'Never forms sets. Only damage clears it. Strengthen counts in a line: +1 Block per point, used up when it activates.', icon: 'junk/community.svg', color: '#8fb38a', ...T,
-    triggers: { turnEnd: [{ type: 'gain', what: 'block', amount: 1, inLine: true }] } },
   space: { id: 'space', name: 'Space', description: 'Never forms sets. Only damage clears it.', icon: 'junk/space.svg', color: '#9aa3ad', ...T, triggers: {} },
 };
 
-/** The Word's Stone: config.stoneHp HP (+ Patience on the tool that made it). */
-export const STONE: TileDef = { id: 'stone', name: 'Stone', description: 'Never forms sets. Only damage clears it.', icon: 'tools/dud/rubble.png', color: '#7a6a55', hp: config.stoneHp, speed: 0,
-  triggers: {} };
+/**
+ * Blessings: tiles only your tools create (never in the pool or refills). They are yours, so junk-only effects like
+ * Worship skip them. None forms sets: only damage clears them.
+ */
+export const blessings: Record<string, BlessingDef> = {
+  // The Word's Stone: config.stoneHp HP (+ Patience on the tool that made it).
+  stone: { id: 'stone', name: 'Stone', description: 'Never forms sets. Only damage clears it.', icon: 'tools/dud/rubble.png', color: '#7a6a55', hp: config.stoneHp, speed: 0,
+    triggers: {} },
+  // Fellowship's tiles.
+  community: { id: 'community', name: 'Community', description: 'Never forms sets. Only damage clears it. Strengthen counts in a line: +1 Block per point, used up when it activates.', icon: 'junk/community.svg', color: '#8fb38a', ...T,
+    triggers: { turnEnd: [{ type: 'gain', what: 'block', amount: 1, inLine: true }] } },
+};
 
 /**
  * Tool art: each pillar has a frame, and a tool's own SVG glyph is drawn inside it (the Word: a Bible in the Truth

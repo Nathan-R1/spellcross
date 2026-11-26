@@ -65,7 +65,7 @@ describe('tools', () => {
     r = place(r.state, { x: 0, y: 2 }, c);
     // Worries at (0,2),(1,2) deleted, and the Stone at (2,2) (2 HP) breaks too.
     expect(r.state.board.cells.filter((t) => t?.kind === 'enemy').length).toBe(1);
-    expect(r.state.board.cells.some((t) => t?.kind === 'stone')).toBe(false);
+    expect(r.state.board.cells.some((t) => t?.kind === 'blessing')).toBe(false);
     expect(r.state.phase).toBe('player');
   });
 
@@ -79,12 +79,12 @@ describe('tools', () => {
   it('The Word: 1-damage hits; a deleted tile becomes a Stone, a survivor just takes damage', () => {
     const s = makeBattle({ rows: base({ 0: 'XsmsmsmX', 3: 'Omsmsmsm', 7: 'WWsWsmsm' }) });
     let r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
-    expect(r.state.pending.map((p) => [p.target.type, p.onDestroy?.kind])).toEqual([['anywhere', 'stone'], ['anywhere', 'stone'], ['anywhere', 'stone']]);
+    expect(r.state.pending.map((p) => [p.target.type, p.onDestroy?.kind])).toEqual([['anywhere', 'blessing'], ['anywhere', 'blessing'], ['anywhere', 'blessing']]);
     // Columns 0–2 fell one row before placing: the Worry is at (0,1), the Stone at (0,4).
     r = placeGroup(r.state, [{ x: 0, y: 1 }, { x: 0, y: 4 }, { x: 4, y: 4 }], c);
-    expect(at(r.state, 0, 1)).toMatchObject({ kind: 'stone', hp: 2 }); // the Worry → a Stone
-    expect(at(r.state, 0, 4)).toMatchObject({ kind: 'stone', hp: 1 }); // an existing Stone: cracked, no new Stone
-    expect(at(r.state, 4, 4)?.kind).toBe('stone'); // a junk tile → a Stone, nothing falls
+    expect(at(r.state, 0, 1)).toMatchObject({ kind: 'blessing', hp: 2 }); // the Worry → a Stone
+    expect(at(r.state, 0, 4)).toMatchObject({ kind: 'blessing', hp: 1 }); // an existing Stone: cracked, no new Stone
+    expect(at(r.state, 4, 4)?.kind).toBe('blessing'); // a junk tile → a Stone, nothing falls
   });
 
   it("Prophecy: the set's shape, 1 damage to every tile under it; broken tiles become Space; 1 Foresight per tile", () => {
@@ -109,9 +109,9 @@ describe('tools', () => {
 
   it('Foresight: every 3 gives Truth tools +1 damage (and nothing to Stone HP)', () => {
     const word = (f: number) => playerMove(makeBattle({ rows: base({ 7: 'WWsWsmsm' }), state: (x) => (x.player.foresight = f) }), { x: 2, y: 7 }, { x: 3, y: 7 }, c).state.pending[0];
-    expect(word(2)).toMatchObject({ target: { type: 'anywhere' }, damage: 1, onDestroy: { kind: 'stone' } });
-    expect(word(3)).toMatchObject({ target: { type: 'anywhere' }, damage: 2, onDestroy: { kind: 'stone' } });
-    expect(word(6)).toMatchObject({ target: { type: 'anywhere' }, damage: 3, onDestroy: { kind: 'stone' } });
+    expect(word(2)).toMatchObject({ target: { type: 'anywhere' }, damage: 1, onDestroy: { kind: 'blessing' } });
+    expect(word(3)).toMatchObject({ target: { type: 'anywhere' }, damage: 2, onDestroy: { kind: 'blessing' } });
+    expect(word(6)).toMatchObject({ target: { type: 'anywhere' }, damage: 3, onDestroy: { kind: 'blessing' } });
     // Prayer is Faith, not Truth: no bonus.
     const prayer = playerMove(makeBattle({ rows: base({ 7: 'PPsPsmsm' }), state: (x) => (x.player.foresight = 6) }), { x: 2, y: 7 }, { x: 3, y: 7 }, c).state.pending[0];
     expect(prayer).toMatchObject({ target: { type: 'shape' }, damage: 3 });
@@ -172,7 +172,7 @@ describe('fruit', () => {
   it('Faithfulness +1 damage per hit; Patience +1 HP on placed Stones', () => {
     const s = makeBattle({ rows: base({ 7: 'WWsWsmsm' }), player: (p) => (p.tools[3].sockets = ['faithfulness', 'patience', null]) });
     const r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
-    expect(r.state.pending[0]).toMatchObject({ target: { type: 'anywhere' }, damage: 2, onDestroy: { kind: 'stone' }, onDestroyHp: 3 });
+    expect(r.state.pending[0]).toMatchObject({ target: { type: 'anywhere' }, damage: 2, onDestroy: { kind: 'blessing' }, onDestroyHp: 3 });
   });
 
   it('Gentleness: Sturdy tool tiles survive a Worry step', () => {
@@ -204,7 +204,7 @@ describe('enemy turn', () => {
     const s = makeBattle({ rows: base({ 1: 'Omsmsmsm' }) });
     let r = endTurn(s, c);
     expect(at(r.state, 0, 0)?.kind).toBe('enemy');
-    expect(at(r.state, 0, 1)).toMatchObject({ kind: 'stone', hp: 1 });
+    expect(at(r.state, 0, 1)).toMatchObject({ kind: 'blessing', hp: 1 });
     r = endTurn(r.state, c);
     expect(at(r.state, 0, 1)?.kind).toBe('enemy');
   });
@@ -299,7 +299,7 @@ describe('pattern picture', () => {
 
 describe('placing a group', () => {
   it('The Word: all 3 picks are chosen together; the same tile can be picked twice; the preview says what breaks', () => {
-    const s = makeBattle({ rows: base({ 7: 'WWsWsmsm' }), state: (x) => { x.board.cells[5 * 8 + 5] = { uid: 4000, kind: 'stone', id: 'stone', hp: 2, maxHp: 2 }; } });
+    const s = makeBattle({ rows: base({ 7: 'WWsWsmsm' }), state: (x) => { x.board.cells[5 * 8 + 5] = { uid: 4000, kind: 'blessing', id: 'stone', hp: 2, maxHp: 2 }; } });
     const r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
     expect(pendingGroupSize(r.state)).toBe(3);
     const targets = [{ x: 5, y: 5 }, { x: 5, y: 5 }, { x: 7, y: 3 }];
@@ -309,7 +309,7 @@ describe('placing a group', () => {
     expect(() => placeGroup(r.state, targets.slice(0, 2), c)).toThrow(); // all 3 must be chosen
     const done = placeGroup(r.state, targets, c);
     expect(done.state.board.cells.some((t) => t?.uid === 4000)).toBe(false); // broken, and a new Stone took its place
-    expect(at(done.state, 5, 5)?.kind).toBe('stone');
+    expect(at(done.state, 5, 5)?.kind).toBe('blessing');
     expect(done.state.phase).toBe('player');
   });
 });
@@ -362,7 +362,7 @@ describe('Depression and All Quiet', () => {
       const s = makeBattle({ rows: base({ 4: 'msmsOsms', 5: 'smsTDism', 6: 'msmsWsms' }), state: (x) => { x.rng = seed; } });
       const r = endTurn(s, c);
       expect(at(r.state, 4, 5)?.id).toBe('depression');
-      expect(at(r.state, 4, 4)?.kind).toBe('stone');
+      expect(at(r.state, 4, 4)?.kind).toBe('blessing');
       const turned = [[3, 5], [5, 5], [4, 6]].filter(([x, y]) => at(r.state, x, y)?.id === 'depression');
       expect(turned).toHaveLength(1);
       expect(at(r.state, turned[0][0], turned[0][1])?.hp).toBe(3);
@@ -578,6 +578,16 @@ describe('Worship', () => {
     for (const u of junk) expect(left.has(u)).toBe(false);
   });
 
+  it('skips blessings: Community and Stones under the square are untouched', () => {
+    const s = makeBattle({ rows: base({ 0: 'cOsmsXsm', 7: 'VVsVsmsm' }) }); // the Worry keeps the battle going
+    let r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
+    const under = [0, 1, 2].flatMap((y) => [0, 1, 2].map((x) => at(r.state, x, y)!));
+    const blessed = under.filter((t) => t.kind === 'blessing');
+    expect(blessed.map((t) => t.id).sort()).toEqual(['community', 'stone']);
+    r = place(r.state, { x: 0, y: 0 }, c);
+    for (const t of blessed) expect(r.state.board.cells.find((x) => x?.uid === t.uid)).toMatchObject({ hp: t.hp });
+  });
+
   it('is a Support tool', () => {
     expect(c.tools.worship.role).toBe('support');
   });
@@ -644,7 +654,7 @@ describe('incomingHits: the enemy tiles that will hit you this enemy turn', () =
     const before = JSON.stringify(s);
     incomingHits(s, c);
     expect(JSON.stringify(s)).toBe(before);
-    expect(endTurn(s, c).state.player.hp).toBe(s.player.hp - 3);
+    expect(endTurn(s, c).state.player.hp).toBe(s.player.hp - 4);
   });
 });
 
@@ -659,10 +669,10 @@ describe('Grief and The Long Night', () => {
     expect(content.enemies.long_night.tier).toBe('elite');
   });
 
-  it('Grief takes 2 steps, breaking what is below; from the bottom row it hits you for 3 and leaves', () => {
+  it('Grief takes 2 steps, breaking what is below; from the bottom row it hits you for 4 and leaves', () => {
     const s = makeBattle({ rows: base({ 6: 'smsYsmsm' }) });
     const r = endTurn(s, c);
-    expect(r.state.player.hp).toBe(s.player.hp - 3);
+    expect(r.state.player.hp).toBe(s.player.hp - 4);
     expect(r.state.board.cells.some((t) => t?.id === 'grief')).toBe(false);
     expect(r.events.some((e) => e.event.type === 'removed')).toBe(true);
     expect(r.state.outcome).toBeNull(); // the Worry top-left is still there
@@ -671,7 +681,7 @@ describe('Grief and The Long Night', () => {
   it('Block absorbs the Grief hit, and Grief still leaves', () => {
     const s = makeBattle({ rows: base({ 7: 'smsYsmsm' }), state: (st) => { st.player.block = 1; } });
     const r = endTurn(s, c);
-    expect(r.state.player.hp).toBe(s.player.hp - 2);
+    expect(r.state.player.hp).toBe(s.player.hp - 3);
     expect(r.state.board.cells.some((t) => t?.id === 'grief')).toBe(false);
   });
 
@@ -686,7 +696,7 @@ describe('Grief and The Long Night', () => {
     const rows = Array.from({ length: 8 }, (_, y) => (y === 7 ? 'smsYsmsm' : y % 2 ? F2 : F1));
     const r = endTurn(makeBattle({ rows }), c);
     expect(r.state.outcome).toBe('victory');
-    expect(r.state.player.hp).toBe(r.state.player.maxHp - 3);
+    expect(r.state.player.hp).toBe(r.state.player.maxHp - 4);
   });
 });
 
@@ -741,7 +751,7 @@ describe('Stone', () => {
   it('never forms sets: three Stones in a line stay on the board', () => {
     const s = makeBattle({ rows: base({ 7: 'OOsOsmsm' }) });
     const r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
-    expect([0, 1, 2].map((x) => at(r.state, x, 7)?.kind)).toEqual(['stone', 'stone', 'stone']);
+    expect([0, 1, 2].map((x) => at(r.state, x, 7)?.kind)).toEqual(['blessing', 'blessing', 'blessing']);
     expect(findSets(r.state)).toEqual([]);
   });
 });

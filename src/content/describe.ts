@@ -10,7 +10,6 @@ import { TRIGGERS } from '../engine/types';
 import { abilities } from './abilities';
 import { FRUIT_IDS } from './fruits';
 import { content } from './index';
-import { STONE } from './tools';
 
 export type { TileRef } from '../engine/types';
 
@@ -34,8 +33,8 @@ export const TRIGGER_LABEL: Record<TriggerId, string> = {
 };
 
 const GAIN_LABEL: Record<Gainable, string> = { block: 'Block', critical: 'Critical', foresight: 'Foresight', moves: 'Moves', courage: 'Courage' };
-const KIND_WORD: Record<TileKind, string> = { tool: 'tool', junk: 'junk', stone: 'Stone', enemy: 'enemy tile' };
-/** "junk", "tool or Stone". */
+const KIND_WORD: Record<TileKind, string> = { tool: 'tool', junk: 'junk', blessing: 'blessing', enemy: 'enemy tile' };
+/** "junk", "tool or blessing". */
 const kindsText = (kinds: TileKind[]) => kinds.map((k) => KIND_WORD[k]).join(' or ');
 /** ", junk only" for a filtered shape, or nothing. */
 const onlyText = (filter?: TileKind[]) => (filter ? `, ${kindsText(filter)} only` : '');
@@ -43,8 +42,8 @@ const onlyText = (filter?: TileKind[]) => (filter ? `, ${kindsText(filter)} only
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 const amountText = (a: Amount) => (typeof a === 'number' ? String(a) : 'perTiles' in a ? `1 per ${a.perTiles} tiles in the set (rounded up)` : `${a.perSetTile} per tile in the set`);
 
-/** A tile's name from its content id (junk, enemy tile or Stone). */
-const tileName = (id: string) => content.junk[id]?.name ?? content.enemyTiles[id]?.name ?? (id === 'stone' ? STONE.name : id);
+/** A tile's name from its content id (junk, enemy tile or blessing). */
+const tileName = (id: string) => content.junk[id]?.name ?? content.enemyTiles[id]?.name ?? content.blessings[id]?.name ?? id;
 
 const statusLabel = (a: TileStatus, amount = 1) => (a === 'locked' ? 'Locked' : `+${amount} Strengthen`);
 
@@ -73,7 +72,7 @@ export function targetsText(t: Targets): string {
 }
 
 /** A tile id from a target filter as a TileRef, so it shows as its icon. */
-const refOf = (id: string): TileRef => (content.junk[id] ? { kind: 'junk', id } : content.enemyTiles[id] ? { kind: 'enemy', id } : { kind: 'stone', id });
+const refOf = (id: string): TileRef => (content.junk[id] ? { kind: 'junk', id } : content.enemyTiles[id] ? { kind: 'enemy', id } : { kind: 'blessing', id });
 
 /**
  * Targets as text and tile icons: "Every adjacent [Space]" when it names tiles, else the same words as targetsText.
@@ -231,8 +230,10 @@ function describeTileDef(ref: TileRef, ctx: TileCtx, live?: Tile | null): TileDe
       const j = content.junk[ref.id];
       return { ref, name: j?.name ?? ref.id, icon: j?.icon ?? '', color: j?.color ?? '#555', ...hp(j?.hp ?? 1), speed: j?.speed ?? 0, description: j?.description ?? '', attrs: j ? triggerRows(j.triggers) : [], fruits: [] };
     }
-    case 'stone':
-      return { ref, name: STONE.name, icon: STONE.icon, color: STONE.color, ...hp(STONE.hp), speed: STONE.speed, description: STONE.description, attrs: triggerRows(STONE.triggers), fruits: [] };
+    case 'blessing': {
+      const b = content.blessings[ref.id];
+      return { ref, name: b?.name ?? ref.id, icon: b?.icon ?? '', color: b?.color ?? '#555', ...hp(b?.hp ?? 1), speed: b?.speed ?? 0, description: b?.description ?? '', attrs: b ? triggerRows(b.triggers) : [], fruits: [] };
+    }
     case 'enemy': {
       const e = content.enemyTiles[ref.id];
       const speed = (ctx.enemyId ? content.enemies[ctx.enemyId]?.tileSpeed?.[ref.id] : undefined) ?? e.speed;

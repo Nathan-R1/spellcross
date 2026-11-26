@@ -41,8 +41,8 @@ Sizes are always counted as **tiles in the set**. A tile whose damage reaches it
 | **Fellowship** | Set formed | Becomes [Community] (in place, nothing falls) |
 | **Time** (junk) | Set formed | Attack: Choose anywhere (1 tile) · Dmg 1/3 tiles (rounded up) |
 | **Space** (junk) | (none: never forms sets) | |
-| **Community** (junk) | End of turn | Gain: Block, 1 (only in a line of 3+). Never forms sets |
-| **Stone** | (none: never forms sets) | |
+| **Community** (blessing) | End of turn | Gain: Block, 1 (only in a line of 3+). Never forms sets |
+| **Stone** (blessing) | (none: never forms sets) | |
 | **Abstain** | On use | Attack: Choose anywhere (1 tile) · Dmg 10 |
 | **Stand Firm** | On use | Gain: Block, 5 |
 | **Many Fish** | On use | Attack: Choose shape (line of 3, horizontal or vertical) · Dmg 1 |
@@ -115,7 +115,7 @@ Match 3+ Word: **pick tiles**, 1 per tile in the set, anywhere on the board. Eac
   transformation, so nothing falls.
 - If the tile **survives** (a Stone, or a tougher enemy tile), it just takes the damage, and no Stone appears.
 
-Stones block Worries ([§ 3](#3-stone)).
+Stones block Worries ([§ 3](#stone)).
 
 ### Prophecy
 
@@ -130,7 +130,7 @@ tool (the Word, Prophecy) **+1 damage per tile**. It doesn't change Stone HP.
 ### Worship
 
 Support. Match 3+ Worship: **place a square** anywhere on the board, as wide and tall as the set is big (3 tiles: 3×3;
-4: 4×4; capped at the board). Every **Junk** tile under it takes **1 damage**; tools, enemy tiles and Stones under it
+4: 4×4; capped at the board). Every **Junk** tile under it takes **1 damage**; tools, enemy tiles and blessings (Stone, Community) under it
 are untouched. Under Critical you place two squares.
 
 (Until 2026-11-25 Worship was a Defense tool: 1 Block per 3 tiles in the set, rounded up, and +1 move. Before that it
@@ -155,7 +155,7 @@ Match 3+ Fellowship: instead of clearing, every Fellowship tile in the set **bec
 cell, so nothing above falls. Nothing is doubled, so a Fellowship set doesn't use up Critical. Patience gives the
 Community tiles +HP.
 
-**Community** (junk, only Fellowship makes it, never in refills) never forms sets. At the **end of your turn**, every
+**Community** (a [blessing](#3-blessings), only Fellowship makes it, never in refills) never forms sets. At the **end of your turn**, every
 Community tile in a straight row or column of **3+ Community** gives **1 Block**, before the enemy turn, so it covers
 that turn's hits (unspent Block becomes Momentum as usual). Lines join as sets do: an L of 3 + 3 counts all 5, a 2×2
 square or 3 loose tiles count 0. A Locked Community tile gives nothing that turn but still makes up the line. **Strengthen** counts as it
@@ -239,7 +239,18 @@ clears:
 Courageous, Compassionate, Enduring, Temperate, Joyful, Devoted, Fervent, Persevering, Sacrificial and Gracious
 are gone. The Hermit's Devoted virtue becomes a **Love** fruit.
 
-## 3. Stone
+## 3. Blessings
+
+Blessings are tiles **only your tools create**: never in the tile pool or refills, and never made by Greed's random
+junk. They're yours, so junk-only effects (Worship) skip them. None forms sets: only damage clears them. They fall,
+swap and break lines like any tile, and a damaged one shows a crack.
+
+| Blessing | Made by | Effect |
+|---|---|---|
+| **Stone** | The Word | None. 2 HP: blocks Worries (below) |
+| **Community** | Fellowship | End of turn: **+1 Block** per Community tile in a line of 3+ ([Fellowship](#fellowship)) |
+
+### Stone
 
 | | |
 |---|---|
@@ -254,14 +265,13 @@ are gone. The Hermit's Devoted virtue becomes a **Love** fruit.
 
 ## 4. Junk
 
-Junk tiles fill the board alongside your tools. They replace all the old duds and novas, which are retired.
+Junk tiles fill the board alongside your tools. They replace all the old duds and novas, which are retired. (Stone and Community aren't junk: they're [blessings](#3-blessings).)
 Their art is reused.
 
 | Junk | Set effect | Art (reused) |
 |---|---|---|
 | **Time** | 3+ Time: Targets: **Choose anywhere** (1 tile, enemy tiles included). Dmg **1 per 3 tiles in the set, rounded up** (3: 1, 4–6: 2, 7+: 3; Strengthen counts) | `junk/time.svg` (spiral) |
 | **Space** | **Never forms sets.** Only damage clears it | `junk/space.svg` (wind) |
-| **Community** | **Never forms sets.** Only Fellowship makes it (never in refills). End of turn: **+1 Block** per Community tile in a line of 3+, +1 per Strengthen point (used up). Tiles that will activate glow | `junk/community.svg` (three people) |
 
 ## 5. Abilities
 

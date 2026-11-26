@@ -4,7 +4,6 @@ import { content } from '../../src/content';
 import { genCell, generatorEnemyTiles } from '../../src/content/enemies';
 import { events as eventNodes, RANDOM_EVENTS, STOP_EVENTS } from '../../src/content/events';
 import { FRUIT_IDS } from '../../src/content/fruits';
-import { STONE } from '../../src/content/tools';
 import { describeAbility, describeTile, effectRows } from '../../src/content/describe';
 import { TRIGGERS, type Effect, type TileDef, type TileRef } from '../../src/engine/types';
 
@@ -24,10 +23,10 @@ describe('content validation', () => {
     const tiles: [TileRef, TileDef][] = [
       ...Object.values(c.tools).map((d): [TileRef, TileDef] => [{ kind: 'tool', id: d.id }, d]),
       ...Object.values(c.junk).map((d): [TileRef, TileDef] => [{ kind: 'junk', id: d.id }, d]),
-      [{ kind: 'stone', id: 'stone' }, STONE],
+      ...Object.values(c.blessings).map((d): [TileRef, TileDef] => [{ kind: 'blessing', id: d.id }, d]),
       ...Object.values(c.enemyTiles).map((d): [TileRef, TileDef] => [{ kind: 'enemy', id: d.id }, d]),
     ];
-    const refExists = (r: TileRef) => (r.kind === 'tool' ? !!c.tools[r.id] : r.kind === 'junk' ? !!c.junk[r.id] : r.kind === 'enemy' ? !!c.enemyTiles[r.id] : r.id === 'stone');
+    const refExists = (r: TileRef) => (r.kind === 'tool' ? !!c.tools[r.id] : r.kind === 'junk' ? !!c.junk[r.id] : r.kind === 'enemy' ? !!c.enemyTiles[r.id] : !!c.blessings[r.id]);
     const check = (e: Effect, where: string, trigger: string) => {
       expect(effectRows(e, 1).length, where).toBeGreaterThan(0);
       if (e.type === 'attack' && e.onDestroy) expect(refExists(e.onDestroy), `${where} onDestroy`).toBe(true);
@@ -67,7 +66,7 @@ describe('content validation', () => {
 
   it('every icon, portrait and event image exists in the asset manifest', () => {
     const paths = [
-      ...Object.values(c.tools).map((t) => t.icon), ...Object.values(c.junk).map((j) => j.icon), STONE.icon,
+      ...Object.values(c.tools).map((t) => t.icon), ...Object.values(c.junk).map((j) => j.icon), ...Object.values(c.blessings).map((b) => b.icon),
       ...Object.values(c.fruits).map((f) => f.icon), ...Object.values(c.abilities).map((a) => a.icon),
       ...Object.values(c.statuses).map((s) => s.icon), ...Object.values(c.enemyTiles).map((t) => t.icon),
       ...Object.values(c.enemies).map((e) => e.portrait!), ...Object.values(eventNodes).map((n) => n.image),

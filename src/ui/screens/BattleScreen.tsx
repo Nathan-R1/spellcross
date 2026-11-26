@@ -315,8 +315,8 @@ function TileView({ t, inAim, battle, x, y, tile, selected, aimed, applyMark, lo
         <Asset path={look.icon} frame={look.frame} alt={look.name} color="transparent" />
         {supportive && <span className="linked" />}
         {shining && <span className="shine" />}
-        {t.kind === 'stone' && t.hp < t.maxHp && <span className="crack" />}
-        {(enemy || (t.kind !== 'stone' && t.maxHp > 1)) && <span className="hp">{t.hp}</span>}
+        {t.kind === 'blessing' && t.hp < t.maxHp && <span className="crack" />}
+        {(enemy || (t.kind !== 'blessing' && t.maxHp > 1)) && <span className="hp">{t.hp}</span>}
         {enemy && <span className="speed">{'↓'.repeat(enemyTileSpeed(content, battle.enemyId, t.id))}</span>}
         {ghost && <span className="stone-ghost" style={{ backgroundImage: `url(/assets/${ghost})` }} />}
         {breaks && <span className="breaks">✕</span>}

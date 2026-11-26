@@ -10,7 +10,7 @@
 import type { Content } from '../content';
 import { genCell, generatorEnemyTiles } from '../content/enemies';
 import { FRUIT_IDS } from '../content/fruits';
-import { junk as JUNK, STONE } from '../content/tools';
+import { blessings as BLESSINGS, junk as JUNK } from '../content/tools';
 import { createRng, type Rng } from './rng';
 import type {
   Amount, BattleEvent, Gainable, Targets, BattleResult, BattleState, BattleTool, Board, Effect, FruitId, Placement, PlacementTarget, Player, Pos, Tile, TileDef, TileRef, TileStatus, TimedEvent,
@@ -52,15 +52,15 @@ export const tileAt = (b: Board, x: number, y: number): Tile | null =>
 const inBounds = (b: Board, p: Pos) => p.x >= 0 && p.y >= 0 && p.x < b.width && p.y < b.height;
 
 /**
- * What a tile matches with: tools by instance, junk by type, Stones together. Only tiles with a Set formed trigger
- * form sets (so never enemy tiles or Space).
+ * What a tile matches with: tools by instance, junk and blessings by type. Only tiles with a Set formed trigger
+ * form sets (so never enemy tiles, Space or any current blessing).
  */
 export function matchKey(t: Tile | null): string | null {
   if (!t) return null;
   if (t.kind === 'tool') return `tool:${t.id}`;
   // Junk not in the built-in table (test content) matches, as before.
   if (t.kind === 'junk') return !JUNK[t.id] || JUNK[t.id].triggers.setFormed ? `junk:${t.id}` : null;
-  if (t.kind === 'stone') return STONE.triggers.setFormed ? 'stone' : null;
+  if (t.kind === 'blessing') return BLESSINGS[t.id]?.triggers.setFormed ? `blessing:${t.id}` : null;
   return null;
 }
 
@@ -144,7 +144,7 @@ function createTile(ctx: Ctx, ref: TileRef, hpBonus = 0): Tile | null {
   const { s, c } = ctx;
   const make = (kind: Tile['kind'], id: string, hp: number): Tile => ({ uid: s.nextUid++, kind, id, hp: hp + hpBonus, maxHp: hp + hpBonus });
   switch (ref.kind) {
-    case 'stone': return make('stone', 'stone', c.config.stoneHp);
+    case 'blessing': return make('blessing', ref.id, c.blessings[ref.id]?.hp ?? 1);
     case 'junk': return make('junk', ref.id, c.junk[ref.id]?.hp ?? 1);
     case 'enemy': return make('enemy', ref.id, c.enemyTiles[ref.id].hp);
     case 'tool': {
@@ -399,7 +399,7 @@ function applySet(ctx: Ctx, st: FoundSet, key: string) {
     if (texts.length) emit(ctx, { type: 'effect', source: j.name, text: `${j.name}: ${texts.join(', ')}` });
     return;
   }
-  if (!key.startsWith('tool:')) return; // Stones: Clears self
+  if (!key.startsWith('tool:')) return; // Blessings: Clears self
   const tool = s.tools[key.slice(5)];
   const effects = [...(c.tools[tool.toolId].triggers.setFormed ?? []), ...fruitSetEffects(tool.fruit)];
   // Critical doubles everything this set does (once-per-turn effects still fire once). A set with nothing to double
@@ -487,7 +487,7 @@ function runSetEffects(ctx: Ctx, effects: Effect[], src: EffectSource): string[]
           const n = amountOf(t.count, size) * mult;
           const target = { type: 'anywhere' as const, ...(t.filter && { filter: t.filter }) };
           for (let i = 0; i < n; i++) s.pending.push({ target, damage, source: src.source, ...(src.sourceTile && { sourceTile: src.sourceTile }), ...onDestroy });
-          texts.push(`${n} × ${damage > 0 || !e.apply ? `${damage} damage` : ''}${damage > 0 && e.apply ? ' + ' : ''}${e.apply ? applyText(e) : ''}${e.onDestroy?.kind === 'stone' ? ' (Stones)' : ''}`);
+          texts.push(`${n} × ${damage > 0 || !e.apply ? `${damage} damage` : ''}${damage > 0 && e.apply ? ' + ' : ''}${e.apply ? applyText(e) : ''}${e.onDestroy?.kind === 'blessing' ? ` (${tileName(c, e.onDestroy)}s)` : ''}`);
         } else {
           texts.push(...applyNow(ctx, e, null));
         }
@@ -550,7 +550,7 @@ function gain(ctx: Ctx, what: Gainable, v: number, source?: string): string[] {
 
 function tileBaseHp(ctx: Ctx, ref: TileRef): number {
   const { c } = ctx;
-  if (ref.kind === 'stone') return c.config.stoneHp;
+  if (ref.kind === 'blessing') return c.blessings[ref.id]?.hp ?? 1;
   if (ref.kind === 'junk') return c.junk[ref.id]?.hp ?? 1;
   if (ref.kind === 'enemy') return c.enemyTiles[ref.id].hp;
   return 1;
@@ -867,14 +867,14 @@ function tileDef(c: Content, s: Pick<BattleState, 'tools'>, t: Tile): TileDef | 
     case 'tool': return c.tools[s.tools[t.id]?.toolId];
     case 'junk': return c.junk[t.id];
     case 'enemy': return c.enemyTiles[t.id];
-    case 'stone': return STONE;
+    case 'blessing': return c.blessings[t.id];
   }
 }
 
 /** A tile's name, for log lines. */
 function tileName(c: Content, ref: TileRef): string {
   return ref.kind === 'junk' ? c.junk[ref.id]?.name ?? ref.id : ref.kind === 'enemy' ? c.enemyTiles[ref.id]?.name ?? ref.id
-    : ref.kind === 'tool' ? c.tools[ref.id]?.name ?? ref.id : 'Stone';
+    : ref.kind === 'blessing' ? c.blessings[ref.id]?.name ?? ref.id : c.tools[ref.id]?.name ?? ref.id;
 }
 
 function activateEnemies(ctx: Ctx) {
