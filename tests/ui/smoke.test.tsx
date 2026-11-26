@@ -30,7 +30,7 @@ const tap = (el: Element) => {
 const toPrep = () => {
   act(() => useStore.getState().newRun(42));
   act(() => useStore.getState().chooseOption(0));
-  act(() => useStore.getState().debugBattle('hard_choices'));
+  act(() => useStore.getState().debugBattle('harder_choices'));
 };
 
 describe('UI smoke', () => {
@@ -59,7 +59,7 @@ describe('UI smoke', () => {
   it('battle prep → choose 3 tools → battle: 8×8 board, enemy panel, end turn plays the enemy turn', async () => {
     toPrep();
     render(<App />);
-    expect(screen.getByText('Hard Choices')).toBeTruthy();
+    expect(screen.getByText('Harder Choices')).toBeTruthy();
     expect(screen.getByRole('img', { name: 'Coming next and starting board: 32 enemy tiles' })).toBeTruthy();
     const fight = screen.getByText('FIGHT!') as HTMLButtonElement;
     expect(fight.disabled).toBe(false); // the first three tools are preselected
@@ -67,7 +67,7 @@ describe('UI smoke', () => {
     await waitFor(() => screen.getByText('End Turn'));
     expect(screen.getAllByRole('gridcell')).toHaveLength(64);
     expect(screen.getAllByLabelText(/^Worry/)).toHaveLength(32);
-    expect(screen.getByLabelText('Hard Choices: hold for details')).toBeTruthy();
+    expect(screen.getByLabelText('Harder Choices: hold for details')).toBeTruthy();
     // Block → Momentum: both chips show at 0, side by side, with the arrow between them.
     const flow = document.querySelector('.block-flow')!;
     expect(flow.querySelector('.s-block')?.getAttribute('aria-label')).toBe('Block 0: hold for details');
@@ -103,7 +103,7 @@ describe('UI smoke', () => {
     render(<App />);
     fireEvent.click(screen.getByText('⚔ Fight'));
     await waitFor(() => screen.getByText('Choose an enemy'));
-    fireEvent.click(screen.getByText('Hard Choices'));
+    fireEvent.click(screen.getByText('Harder Choices'));
     await waitFor(() => screen.getByText('FIGHT!'));
     fireEvent.click(screen.getByText('FIGHT!'));
     await waitFor(() => screen.getByText('End Turn'));

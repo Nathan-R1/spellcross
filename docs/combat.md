@@ -23,8 +23,8 @@ Numbers marked *(tune)* are starting values for playtesting.
 - **8 columns × 8 rows**, always, and every row is visible.
 - **The enemy's generator:** above the board, the enemy defines a stack of **generated rows**. Each one is
   either a **normal** row (tiles drawn from the tile pool) or an **enemy** row (e.g. 8 Worries). The board's
-  own 8 rows are the bottom of that stack, so the generator also decides the initial board. Hard Choices:
-  four Worry rows (rows 5 to 8 from the bottom, the top half), all on the board from the start
+  own 8 rows are the bottom of that stack, so the generator also decides the initial board. Harder Choices:
+  four Worry rows (rows 1, 2, 7 and 8 from the bottom), all on the board from the start
   ([enemies.md § 2](enemies.md#2-the-generator)).
 - **Gravity and refill:** every tile falls straight down into empty cells below it. That includes tools,
   junk, Stones and **enemy tiles**. Each column refills from **its own position in the generator**: the k-th
@@ -73,7 +73,7 @@ battle start: choose 3 tools (§2.1) → build the board from the enemy's genera
 │    END OF PLAYER TURN: your tiles activate (Shining tiles damage adjacent enemy tiles;
 │      then End of turn triggers: Community in a line of 3+ gives Block)
 │  ENEMY TURN
-│    1. enemy actions, if it has any (default: none; Hard Choices has none)
+│    1. enemy actions, if it has any (default: none; Harder Choices has none)
 │    2. enemy tiles activate, bottom row first (Worry: move down 1, or hit you from the bottom row)
 │       then end-of-enemy-turn effects (Greed turns adjacent tool tiles into junk)
 │    3. the board settles: gravity, refill from the generator, cascades (§3.4)

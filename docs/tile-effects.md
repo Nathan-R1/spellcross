@@ -161,7 +161,7 @@ can be followed forever.
 | Space | 0 | none (never forms sets) |
 | Community (blessing) | 0 | End of turn: Gain Block, 1 (only in a line of 3+; Strengthen +1 per point, then cleared). Never forms sets |
 | Stone (blessing) | 0 | none (never forms sets) |
-| Worry | 1 (2 in Hard Choices) | Each step: Attack (the tile below · Dmg 1). At bottom: Attack (You · Dmg 1) |
+| Worry | 1 (2 in Harder Choices) | Each step: Attack (the tile below · Dmg 1). At bottom: Attack (You · Dmg 1) |
 | Greed | 2 | Each step: as Worry. On activate: Create random junk on every adjacent tool. At bottom: Attack (You · Dmg 1) |
 | Depression | 0 | On activate: Create [Depression] on 1 random adjacent tool or junk. At bottom: Attack (You · Dmg 1) |
 | Grief | 2 | Each step: as Worry. At bottom: Attack (You · Dmg 4), Remove self |

@@ -51,7 +51,7 @@ it.skipIf(!!process.env.TRACE)('balance', () => {
   console.log(lines.join('\n'));
 }, 3_600_000);
 
-// TRACE=1 pnpm sim: play one Hard Choices fight and log every move.
+// TRACE=1 pnpm sim: play one Harder Choices fight and log every move.
 it.runIf(!!process.env.TRACE)('trace', () => {
-  console.log(JSON.stringify(play('hard_choices', ['t2', 't4', 't5'], 1000, true)));
+  console.log(JSON.stringify(play('harder_choices', ['t2', 't4', 't5'], 1000, true)));
 });

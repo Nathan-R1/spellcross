@@ -14,11 +14,11 @@ const base = (rows: Partial<Record<number, string>>) =>
   Array.from({ length: 8 }, (_, y) => rows[y] ?? (y === 0 ? 'X' + F1.slice(1) : y % 2 ? F2 : F1));
 
 describe('battle setup', () => {
-  it('Hard Choices: Worry rows at rows 5 to 8 from the bottom (the top half), nothing to come, no ready-made matches', () => {
+  it('Harder Choices: Worry rows at rows 1, 2, 7 and 8 from the bottom, nothing to come, no ready-made matches', () => {
     const p = createPlayer(content);
-    const { state } = createBattle({ player: p, enemyId: 'hard_choices', loadout: ['t1', 't2', 't3'], seed: 7 }, content);
+    const { state } = createBattle({ player: p, enemyId: 'harder_choices', loadout: ['t1', 't2', 't3'], seed: 7 }, content);
     const worryRows = [0, 1, 2, 3, 4, 5, 6, 7].filter((y) => state.board.cells.slice(y * 8, y * 8 + 8).every((t) => t?.kind === 'enemy'));
-    expect(worryRows).toEqual([0, 1, 2, 3]); // y = 0–3 are rows 8 to 5 from the bottom
+    expect(worryRows).toEqual([0, 1, 6, 7]); // y = 0–1 are rows 8 and 7, y = 6–7 are rows 2 and 1
     expect(state.board.cells.filter((t) => t?.kind === 'enemy')).toHaveLength(32);
     expect(enemyToCome(state, content)).toBe(0);
     expect(findSets(state)).toEqual([]);
@@ -284,10 +284,10 @@ describe('abilities', () => {
 });
 
 describe('pattern picture', () => {
-  it('Hard Choices: Worries on the top 4 rows of the board, nothing coming', () => {
+  it('Harder Choices: Worries on the top 2 and bottom 2 rows of the board, nothing coming', () => {
     const row = (r: (string | null)[]) => (r.every((x) => x === 'worry') ? 'W' : r.every((x) => x === null) ? '.' : '?');
-    expect(startingGrid(content, 'hard_choices').map(row).join('')).toBe('WWWW....');
-    expect(upcomingGrid(content, 'hard_choices', Array(8).fill(8)).map(row).join('')).toBe('........');
+    expect(startingGrid(content, 'harder_choices').map(row).join('')).toBe('WW....WW');
+    expect(upcomingGrid(content, 'harder_choices', Array(8).fill(8)).map(row).join('')).toBe('........');
   });
 
   it('columns advance independently: a column that pulled one tile in shows its next one at the bottom', () => {
@@ -594,11 +594,11 @@ describe('Worship', () => {
 });
 
 describe('per-fight tile speed', () => {
-  it('Hard Choices: Worries take 2 steps per enemy turn; other fights keep speed 1', () => {
-    expect(enemyTileSpeed(content, 'hard_choices', 'worry')).toBe(2);
+  it('Harder Choices: Worries take 2 steps per enemy turn; other fights keep speed 1', () => {
+    expect(enemyTileSpeed(content, 'harder_choices', 'worry')).toBe(2);
     expect(enemyTileSpeed(content, 'financial_stress', 'worry')).toBe(1);
     const s = makeBattle({ rows: base({ 1: 'sXsmsmsm' }) });
-    const hc = endTurn(s, content).state; // real content: the Hard Choices override applies
+    const hc = endTurn(s, content).state; // real content: the Harder Choices override applies
     expect(hc.board.cells.findIndex((t, i) => t?.id === 'worry' && i % 8 === 1)).toBe(3 * 8 + 1); // y=1 → y=3
   });
 });
@@ -659,13 +659,13 @@ describe('incomingHits: the enemy tiles that will hit you this enemy turn', () =
 });
 
 describe('Grief and The Long Night', () => {
-  it('The Long Night: one row of Grief across the top of the board, nothing to come', () => {
+  it('The Long Night: one row of Grief across the top of the board, a second row of 8 to come', () => {
     const p = createPlayer(content);
     const { state } = createBattle({ player: p, enemyId: 'long_night', loadout: ['t1', 't2', 't3'], seed: 7 }, content);
     const grief = state.board.cells.map((t, i) => (t?.id === 'grief' ? i : -1)).filter((i) => i >= 0);
     expect(grief).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
     expect(state.board.cells.filter((t) => t?.kind === 'enemy')).toHaveLength(8);
-    expect(enemyToCome(state, content)).toBe(0);
+    expect(enemyToCome(state, content)).toBe(8);
     expect(content.enemies.long_night.tier).toBe('elite');
   });
 

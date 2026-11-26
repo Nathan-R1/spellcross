@@ -46,7 +46,7 @@ Claims and clashes for On activate are in [tile-effects § 3.3](tile-effects.md#
 | | |
 |---|---|
 | HP | 1 |
-| Speed | 1 (2 in Hard Choices) |
+| Speed | 1 (2 in Harder Choices) |
 | Each step | Dmg 1 to the tile below, and moves in if it breaks. If the tile survives (a full-HP Stone), the Worry stays. Another enemy tile below blocks it, with no damage |
 | On activate | (none) |
 | At bottom | Dmg 1 to you, and it stays |
@@ -88,7 +88,7 @@ Claims and clashes for On activate are in [tile-effects § 3.3](tile-effects.md#
 Remove self isn't damage, so nothing breaks the tile; it just leaves ([tile-effects § 3](tile-effects.md#3-effects)).
 A Grief that leaves counts towards victory like one you destroyed.
 
-A fight can override a tile's speed with `tileSpeed` (e.g. Hard Choices' Worries take 2 steps). The board and
+A fight can override a tile's speed with `tileSpeed` (e.g. Harder Choices' Worries take 2 steps). The board and
 the tile details show the speed for the current fight.
 
 ## 2. The generator
@@ -127,17 +127,17 @@ Actions repeat in a fixed cycle and must be visible ahead of time ("Next: …" o
 
 ## 4. Roster
 
-### Hard Choices (the base enemy)
+### Harder Choices (the base enemy)
 
 | | |
 |---|---|
-| Generator | **Rows 5 to 8** (counting from the bottom of the board) are Worry rows; everything else is normal |
-| On the board at the start | All 32 Worries: the top 4 rows of the board |
+| Generator | **Rows 1, 2, 7 and 8** (counting from the bottom of the board) are Worry rows; everything else is normal |
+| On the board at the start | All 32 Worries: the bottom 2 and top 2 rows of the board (the bottom ones hit you from the first enemy turn) |
 | Speed | **Worries here take 2 steps** per enemy turn (`tileSpeed: { worry: 2 }`) |
 | Total | **4 Worry rows = 32 Worries**, all on the board from the start; nothing more comes |
 | Actions | None |
 | Reward *(tune)* | 20–30 Talents, 25% chance of a fruit (normal tier) |
-| Description (data; the picture is shown instead) | "Four Worry rows filling the top half of the board (rows 5 to 8 from the bottom): **32 Worries** in all, all on the board from the start. Nothing more comes. Worries here take 2 steps per enemy turn." |
+| Description (data; the picture is shown instead) | "Two Worry rows at the bottom of the board (rows 1 and 2) and two at the top (rows 7 and 8): **32 Worries** in all, all on the board from the start. Nothing more comes. Worries here take 2 steps per enemy turn." |
 
 You win the moment no Worries are on the board, even if more are still to come
 ([combat § 6](combat.md#6-winning-and-losing)).
@@ -171,15 +171,16 @@ loadouts with Prophecy win 58–100%, and loadouts without it win 0–17%. See
 
 | | |
 |---|---|
-| Generator | Rows 1–7 normal. Row **8** (the top of the board): a full row of **Grief**. Then normal forever |
-| On the board at the start | All 8 Grief |
-| Total | **8** Grief, nothing to come |
+| Generator | Rows 1–7 normal. Row **8** (the top of the board): a full row of **Grief**. Rows 9–15 normal. Row **16**: a second full row of **Grief**. Then normal forever |
+| On the board at the start | The first row of 8 Grief |
+| Total | **16** Grief: 8 on the board, 8 to come (row 16 falls in once 8 tiles have cleared from a column) |
 | Actions | None |
 | Reward *(tune)* | 40–60 Talents, a fruit (elite tier) |
-| Description (data) | "One row of Grief across the top of the board: 8 Grief in all, all on the board. Nothing more comes. Grief has 10 HP and takes 2 steps per enemy turn. On the bottom row it deals 4 damage to you, then leaves." |
+| Description (data) | "Two rows of Grief: one across the top of the board, and a second row of 8 that falls in later, 16 Grief in all. Grief has 10 HP and takes 2 steps per enemy turn. On the bottom row it deals 4 damage to you, then leaves." |
 
 **The sustain elite**, the opposite of All Quiet: you can't win it by damage. Unchecked, every Grief reaches the
-bottom on enemy turn 4 and the row deals 32 at once. You win when the last one leaves. What you control is **how
+bottom on enemy turn 4 and the row deals 32 at once; the second row then falls in column by column as tiles
+clear, for up to 64 in all. You win when the last one leaves. What you control is **how
 much of it lands**: Block absorbs it, and Stones and Locks stagger the columns so it arrives over several turns
 instead of all at once.
 
@@ -209,8 +210,8 @@ type EnemyAction =
   | { type: 'spawnRandom'; tile: string; count: number; rows?: number[] };
 
 interface EnemyDef {
-  id: string;              // 'hard_choices'
-  name: string;            // 'Hard Choices'
+  id: string;              // 'harder_choices'
+  name: string;            // 'Harder Choices'
   description: string;     // pattern + totals as text (screen readers); the UI draws the picture instead
   portrait: string;
   generator: GeneratedRow[]; // bottom of the board upwards; normal forever after the end
@@ -226,7 +227,7 @@ interface EnemyDef {
 ## 6. Assets needed
 
 - Worry tile art (placeholder until drawn).
-- Hard Choices portrait: `portraits/hard_choices.svg` (a crossroads signpost).
+- Harder Choices portrait: `portraits/hard_choices.svg` (a crossroads signpost).
 - Financial Stress portrait: `portraits/financial_stress.svg` (a pile of overdue bills).
 - Greed tile art (placeholder: the gold coin icon).
 - All Quiet portrait: `portraits/all_quiet.svg` (an empty chair by a rainy window).

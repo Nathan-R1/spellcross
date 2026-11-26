@@ -12,8 +12,8 @@ import type { BattleState, Player, Tile } from '../src/engine/types';
  */
 export const tc: Content = {
   ...content,
-  // makeBattle boards use Hard Choices; keep its Worries at their base speed so hand-drawn boards stay exact.
-  enemies: { ...content.enemies, hard_choices: { ...content.enemies.hard_choices, tileSpeed: undefined } },
+  // makeBattle boards use Harder Choices; keep its Worries at their base speed so hand-drawn boards stay exact.
+  enemies: { ...content.enemies, harder_choices: { ...content.enemies.harder_choices, tileSpeed: undefined } },
   // A fixed tool list so board letters stay put when the real starting tools change. Fasting is parked in the game
   // but still tested here (Critical).
   config: { ...content.config, startingTools: ['fasting', 'prayer', 'thanksgiving', 'word', 'prophecy', 'worship', 'preaching', 'anoint', 'fellowship'] as unknown as Content['config']['startingTools'] },
@@ -47,7 +47,7 @@ export interface MakeBattle {
 export function makeBattle({ rows, player, state }: MakeBattle): BattleState {
   const p = createPlayer(tc);
   player?.(p);
-  const { state: s } = createBattle({ player: p, enemyId: 'hard_choices', loadout: p.tools.map((t) => t.uid), seed: 1 }, tc);
+  const { state: s } = createBattle({ player: p, enemyId: 'harder_choices', loadout: p.tools.map((t) => t.uid), seed: 1 }, tc);
   s.pool = [{ kind: 'junk', id: 'mud', weight: 1 }, { kind: 'junk', id: 'space', weight: 1 }];
   s.genPos = s.genPos.map(() => 999); // generator exhausted: refills are normal
   let uid = 1000;

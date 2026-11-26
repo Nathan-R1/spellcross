@@ -171,7 +171,7 @@ describe('battles in the run', () => {
   });
 
   it('beating the boss wins the run', () => {
-    const r = { ...pastTraveller(), screen: 'prep' as const, prep: { enemyId: 'hard_choices', source: 'boss' as const } };
+    const r = { ...pastTraveller(), screen: 'prep' as const, prep: { enemyId: 'harder_choices', source: 'boss' as const } };
     const done = winBattle(r);
     expect(done.result!.boss).toBe(true);
     expect(run.continueAfterResult(done).screen).toBe('victory');
@@ -458,7 +458,7 @@ describe('remembered loadout', () => {
   it("preselects the last battle's tools, topping up from the list when needed", () => {
     const r = pastTraveller();
     expect(run.suggestedLoadout(r.player, r.lastLoadout, 3)).toEqual(['t1', 't2', 't3']); // first battle: first three tools
-    const prepped = { ...r, screen: 'prep' as const, prep: { enemyId: 'hard_choices', source: 'debug' as const } };
+    const prepped = { ...r, screen: 'prep' as const, prep: { enemyId: 'harder_choices', source: 'debug' as const } };
     const { run: inBattle } = run.startBattle(prepped, ['t5', 't2', 't4'], c);
     expect(inBattle.lastLoadout).toEqual(['t5', 't2', 't4']);
     expect(run.suggestedLoadout(inBattle.player, inBattle.lastLoadout, 3)).toEqual(['t5', 't2', 't4']);

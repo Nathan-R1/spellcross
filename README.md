@@ -101,7 +101,7 @@ public/assets/   art and fonts, copied from Spellford
 | [docs/spec.md](docs/spec.md) | **Start here.** The consolidated game spec: final rules for every system, with all decisions folded in |
 | [docs/features.md](docs/features.md) | Every feature in Spellford, with its status and source file, plus the decision log (D1–D21) |
 | [docs/combat.md](docs/combat.md) | **Combat (authoritative, 2026-11 rework):** 8×8 board, one enemy whose tiles march down, 3 moves per turn, placement (removes, Stones), win/lose, portrait layout, quick fight |
-| [docs/enemies.md](docs/enemies.md) | Enemy tiles (Worry), enemy patterns and actions, the roster (Hard Choices), and the data-file format |
+| [docs/enemies.md](docs/enemies.md) | Enemy tiles (Worry), enemy patterns and actions, the roster (Harder Choices), and the data-file format |
 | [docs/tools.md](docs/tools.md) | The four starting tools, junk tiles (Time, Space), Stones, statuses, and the TBD systems (levels, virtues, abilities) |
 | [docs/open-questions.md](docs/open-questions.md) | Every design decision still to make, with recommendations and the milestone each one blocks |
 | [docs/architecture/01-overview.md](docs/architecture/01-overview.md) | Goals, tech stack, layering, repo layout, key decisions |

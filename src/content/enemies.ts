@@ -57,13 +57,6 @@ function zig(x: number): GeneratedRow {
 }
 
 export const enemies: Record<string, EnemyDef> = {
-  hard_choices: {
-    id: 'hard_choices', name: 'Hard Choices', tier: 'normal', portrait: 'portraits/hard_choices.svg', talents: [20, 30],
-    description: 'Four Worry rows filling the top half of the board (rows 5 to 8 from the bottom): 32 Worries in all, all on the board from the start. Nothing more comes. Worries here take 2 steps per enemy turn.',
-    // Row 1 is the bottom of the board.
-    generator: [N, N, N, N, W('worry'), W('worry'), W('worry'), W('worry')],
-    tileSpeed: { worry: 2 },
-  },
   harder_choices: {
     id: 'harder_choices', name: 'Harder Choices', tier: 'normal', portrait: 'portraits/hard_choices.svg', talents: [20, 30],
     description: 'Two Worry rows at the bottom of the board (rows 1 and 2) and two at the top (rows 7 and 8): 32 Worries in all, all on the board from the start. Nothing more comes. Worries here take 2 steps per enemy turn.',
@@ -86,10 +79,10 @@ export const enemies: Record<string, EnemyDef> = {
   },
   long_night: {
     id: 'long_night', name: 'The Long Night', tier: 'elite', portrait: 'portraits/long_night.svg', talents: [40, 60],
-    description: 'One row of Grief across the top of the board: 8 Grief in all, all on the board. Nothing more comes. '
+    description: 'Two rows of Grief: one across the top of the board, and a second row of 8 that falls in later, 16 Grief in all. '
       + 'Grief has 10 HP and takes 2 steps per enemy turn. On the bottom row it deals 4 damage to you, then leaves.',
-    // Rows 1–7 normal. Row 8 (the top of the board): Grief.
-    generator: [N, N, N, N, N, N, N, W('grief')],
+    // Rows 1–7 normal. Row 8 (the top of the board): Grief. Rows 9–15 normal (they fall in as tiles clear). Row 16: Grief.
+    generator: [N, N, N, N, N, N, N, W('grief'), N, N, N, N, N, N, N, W('grief')],
   },
 };
 
