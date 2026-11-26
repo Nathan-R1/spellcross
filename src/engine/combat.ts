@@ -1047,7 +1047,10 @@ export function useAbility(state: BattleState, index: number, c: Content): Battl
   return finish(ctx);
 }
 
-/** The cells a placement would cover at `at` (its top-left for shapes and lines), or null if it doesn't fit. */
+/**
+ * The board cells a placement covers at `at` (its top-left for shapes and lines, which may be off the board), or null
+ * if none of it is on the board (or a Choose anywhere pick isn't a valid tile).
+ */
 export function placementCells(s: BattleState, pl: Placement, at: Pos, orientation: 'h' | 'v' = 'h', allowEmpty = false): Pos[] | null {
   const b = s.board;
   const t = pl.target;
@@ -1055,7 +1058,9 @@ export function placementCells(s: BattleState, pl: Placement, at: Pos, orientati
   if (t.type === 'shape') cells = t.cells.map((o) => ({ x: at.x + o.x, y: at.y + o.y }));
   else if (t.type === 'line') cells = Array.from({ length: t.length }, (_, i) => (orientation === 'h' ? { x: at.x + i, y: at.y } : { x: at.x, y: at.y + i }));
   else cells = [at];
-  if (!cells.every((p) => inBounds(b, p))) return null;
+  // Shapes and lines may hang off the board: only the cells on it count, and at least one must be.
+  cells = cells.filter((p) => inBounds(b, p));
+  if (cells.length === 0) return null;
   if (!allowEmpty && t.type === 'anywhere' && !tileAt(b, at.x, at.y)) return null;
   if (!allowEmpty && t.type === 'anywhere' && t.filter && !t.filter.includes(tileAt(b, at.x, at.y)!.kind)) return null;
   return cells;

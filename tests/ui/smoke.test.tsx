@@ -127,7 +127,8 @@ describe('UI smoke', () => {
     await waitFor(() => expect(document.querySelector('.instruction')?.textContent).toMatch(/Prayer: Targets: Choose shape \(3 tiles\) · Dmg: 3Tap the board/), { timeout: 8000 });
     tap(screen.getAllByRole('gridcell')[0]);
     await waitFor(() => screen.getByText('Continue'));
-    expect(document.querySelectorAll('.tile.aimed')).toHaveLength(3);
+    // Centred on the corner, the line of 3 hangs one tile off the board: 2 tiles are aimed at.
+    expect(document.querySelectorAll('.tile.aimed')).toHaveLength(2);
     tap(screen.getAllByRole('gridcell')[0]); // tapping a chosen tile unselects it
     await waitFor(() => expect(document.querySelectorAll('.tile.aimed')).toHaveLength(0));
     tap(screen.getAllByRole('gridcell')[0]);

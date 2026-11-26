@@ -68,7 +68,7 @@ An effect is a verb with its own sub-properties. Sub-properties that don't apply
 | Targets | Who picks | Meaning |
 |---|---|---|
 | **Choose anywhere** (N tiles) | You | Single tiles anywhere on the board, optionally only of some kinds. The same tile can be picked more than once |
-| **Choose shape** (the set's shape / a line of N) | You | A shape placed where it fits, the same way round; a line can be horizontal or vertical |
+| **Choose shape** (the set's shape / a line of N) | You | A shape placed anywhere, the same way round, partly off the board if you like (only the part on it hits); a line can be horizontal or vertical |
 | **The tile below** | The game | The tile directly under this one |
 | **Every / N random adjacent** *kinds* | The game | Orthogonally adjacent tiles of the listed kinds (tool, junk, Stone, enemy tile), optionally only some tiles by id |
 | **You** | The game | The player |

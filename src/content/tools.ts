@@ -10,9 +10,9 @@ const SET_SHAPE = { type: 'chooseShape', shape: 'set' } as const;
 /**
  * Tile colour by role, so tools of the same pillar (which share a frame) still look very different on the board:
  * attack pale red, defense brownish grey, control blue, support yellow. Shown as a tint over the dark card brown:
- * 20% by default, or the colour's own opacity when it has one (#rrggbbaa; attack is 45% so it reads pale, not dark).
+ * 20% by default, or the colour's own opacity when it has one (#rrggbbaa; attack and support are 45% so they read light, not dark).
  */
-export const ROLE_COLOR: Record<ToolRole, string> = { attack: '#ff6b6b73', defense: '#ad9e88', control: '#7fc4e8', support: '#f2c14e' };
+export const ROLE_COLOR: Record<ToolRole, string> = { attack: '#ff6b6b73', defense: '#ad9e88', control: '#7fc4e8', support: '#ffd96673' };
 export const ROLE_NAME: Record<ToolRole, string> = { attack: 'Attack', defense: 'Defense', control: 'Control', support: 'Support' };
 
 const parked = (id: string, name: string, pillar: Pillar, icon: string, color: string): ToolDef =>

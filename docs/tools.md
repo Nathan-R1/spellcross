@@ -20,7 +20,7 @@ them. Only those 3 are in the tile pool for that battle ([combat § 1](combat.md
 [tile-effects.md](tile-effects.md); the data is in `src/content/tools.ts` and `src/content/abilities.ts`.
 
 An **Attack** has three sub-properties, always in this order: **Targets** (**Choose anywhere**: pick single tiles,
-the bracket says how many; or **Choose shape**: place a shape where it fits, the same way round, the bracket says
+the bracket says how many; or **Choose shape**: place a shape anywhere, the same way round (it may hang partly off the board), the bracket says
 which), **Dmg** (damage to each target), and **On destroy** (Create + the icon of the tile a broken target turns
 into, in place, so nothing falls; hidden when nothing is created). The placing banner shows the same three.
 
@@ -96,7 +96,7 @@ Match 3+ Fasting: gain **Critical**. The next tool set you complete is **doubled
 
 ### Prayer
 
-Match 3+ Prayer: place a copy of **the set's shape** anywhere it fits, the same way round. Every tile under it
+Match 3+ Prayer: place a copy of **the set's shape** anywhere, the same way round, partly off the board if you like. Every tile under it
 takes **3 damage** *(tune)*. That breaks Worries, Greed, Depression, tools, junk and Stones alike. Prayer is the
 main way to defeat enemy tiles. ([combat § 5.1](combat.md#51-choose-shape-prayer-prophecy))
 
@@ -184,14 +184,14 @@ dark outline so they read on any tile colour. The frames are pixel art in `publi
 Every tool has a **role** (`role` on the tool; parked tools have none), shown in its bio after the level and pillar:
 `Lv 1 · Faith · Attack`. The **tile colour** comes from the role, not the pillar (`ROLE_COLOR`), so two tools that
 share a frame still look different. It's drawn the same everywhere, menu cards, board tiles and popups, as a 20%
-tint of the colour over the dark card brown (Attack: 45%, so its red reads pale rather than dark) (`toolTint` in `src/ui/components/common.tsx`):
+tint of the colour over the dark card brown (Attack and Support: 45%, so the red and yellow read light rather than dark) (`toolTint` in `src/ui/components/common.tsx`):
 
 | Role | Colour | Tools |
 |---|---|---|
 | Attack | pale red `#ff6b6b` at 45% | Prayer, Prophecy |
-| Defense | brownish grey `#ad9e88` | Thanksgiving, Worship, Fellowship |
+| Defense | brownish grey `#ad9e88` | Thanksgiving, Fellowship |
 | Control | blue `#7fc4e8` | Preaching, The Word |
-| Support | yellow `#f2c14e` | Anoint |
+| Support | light yellow `#ffd966` at 45% | Anoint, Worship |
 
 | Pillar | Frame | Tools (glyph) |
 |---|---|---|

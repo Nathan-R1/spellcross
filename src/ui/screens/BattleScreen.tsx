@@ -87,7 +87,7 @@ export function BattleScreen() {
   const taps = pickState?.key === pickKey ? pickState.taps : [];
   const pending = view.phase === 'placing' && !busy ? view.pending : null;
   const group = pending ? pendingGroupSize(battle) : 0;
-  const targets = pending ? taps.map((t) => anchorFor(pending, t, orientation, battle.board.width, battle.board.height)) : [];
+  const targets = pending ? taps.map((t) => anchorFor(pending, t, orientation)) : [];
   const preview = pending && targets.length ? previewPlacements(battle, targets, orientation) : null;
   const onTap = (x: number, y: number) => {
     if (busy) return;
@@ -213,19 +213,19 @@ function PlacingText({ p, n }: { p: Placement; n: number }) {
   );
 }
 
-/** Where a placement goes for a tapped cell: shapes and lines are centred on it, then kept on the board. */
-export function anchorFor(p: Placement, tap: Pos, orientation: 'h' | 'v', width: number, height: number): Pos {
-  const clamp = (v: number, max: number) => Math.max(0, Math.min(max, v));
+/**
+ * Where a placement goes for a tapped cell: shapes and lines are centred on it. Near an edge part of it hangs off the
+ * board (only the cells on the board are hit); the tapped cell is always one of them.
+ */
+export function anchorFor(p: Placement, tap: Pos, orientation: 'h' | 'v'): Pos {
   const t = p.target;
   if (t.type === 'shape') {
-    const w = Math.max(...t.cells.map((c) => c.x)) + 1;
-    const h = Math.max(...t.cells.map((c) => c.y)) + 1;
     const mid = t.cells[Math.floor(t.cells.length / 2)];
-    return { x: clamp(tap.x - mid.x, width - w), y: clamp(tap.y - mid.y, height - h) };
+    return { x: tap.x - mid.x, y: tap.y - mid.y };
   }
   if (t.type === 'line') {
     const back = Math.floor(t.length / 2);
-    return orientation === 'h' ? { x: clamp(tap.x - back, width - t.length), y: tap.y } : { x: tap.x, y: clamp(tap.y - back, height - t.length) };
+    return orientation === 'h' ? { x: tap.x - back, y: tap.y } : { x: tap.x, y: tap.y - back };
   }
   return tap;
 }

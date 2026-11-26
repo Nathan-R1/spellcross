@@ -224,7 +224,8 @@ holes to aim at.
 - **Tapping a chosen tile again unselects it** (for shapes and lines, any tile inside it). So each tile can be
   chosen once per group.
 - Then **Continue** or **Select again**.
-- Shapes and lines are centred on the tile you tap and kept on the board. Placements are **mandatory** and can't be saved for later.
+- Shapes and lines are centred on the tile you tap. Near an edge they can **hang off the board**: only the part on
+  the board hits (a 3×3 can show just 2×3). Placements are **mandatory** and can't be saved for later.
 
 Every placement is described by the three damage attributes **Targets** (*Choose shape* or *Choose anywhere*),
 **Dmg** and **On destroy** ([tools § 1.1](tools.md#11-owned-tools-and-the-battle-loadout)). The placing banner
@@ -238,8 +239,8 @@ is an empty dashed square the rest of the time.
 
 - A Prayer or Prophecy set gives one copy of **the set's shape**: a horizontal 3 gives a horizontal line of 3, a
   vertical 4 gives a vertical line of 4, and an L of 5 gives that same L.
-- You choose where it goes. It can sit anywhere it fits entirely on the board, the **same way round** (no
-  rotating).
+- You choose where it goes, the **same way round** (no rotating). It can hang partly off the board; only the
+  tiles under the part on the board are hit.
 - **Every tile under it takes damage** (§1.2): enemy tiles, tools, junk and Stones alike. Prayer deals **3**
   *(tune)*; Prophecy deals **1**, and a tile Prophecy breaks becomes **Space** in place (nothing falls).
 

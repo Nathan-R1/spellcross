@@ -1,7 +1,7 @@
 // The combat rules (docs/combat.md, docs/tools.md, docs/enemies.md) on hand-drawn boards.
 
 import { content } from '../../src/content';
-import { createBattle, endTurn, incomingHits, isLocked, enemyTileSpeed, enemyToCome, findSets, pendingGroupSize, place, placeGroup, playerMove, previewPlacements, startingGrid, turnEndFiring, upcomingGrid, useAbility } from '../../src/engine/combat';
+import { createBattle, endTurn, incomingHits, isLocked, enemyTileSpeed, enemyToCome, findSets, pendingGroupSize, place, placeGroup, placementCells, playerMove, previewPlacements, startingGrid, turnEndFiring, upcomingGrid, useAbility } from '../../src/engine/combat';
 import { createPlayer } from '../../src/engine/run';
 import { at, F1, F2, makeBattle } from '../helpers';
 import type { BattleState } from '../../src/engine/types';
@@ -69,10 +69,11 @@ describe('tools', () => {
     expect(r.state.phase).toBe('player');
   });
 
-  it("a shape must fit on the board and keeps the set's orientation", () => {
+  it("a shape keeps the set's orientation, may hang off the board, but must touch it", () => {
     const s = makeBattle({ rows: base({ 7: 'PPsPsmsm' }) });
     const r = playerMove(s, { x: 2, y: 7 }, { x: 3, y: 7 }, c);
-    expect(() => place(r.state, { x: 6, y: 0 }, c)).toThrow();
+    expect(placementCells(r.state, r.state.pending[0], { x: 6, y: 0 })).toEqual([{ x: 6, y: 0 }, { x: 7, y: 0 }]);
+    expect(() => place(r.state, { x: 8, y: 0 }, c)).toThrow();
   });
 
   it('The Word: 1-damage hits; a deleted tile becomes a Stone, a survivor just takes damage', () => {
@@ -259,12 +260,24 @@ describe('abilities', () => {
     expect(r.state.player.abilities[0].uses).toBe(2);
   });
 
+  it('a shape or line can hang off the board: only the cells on it are hit', () => {
+    let r = useAbility(withAbilities, 3, c); // Many Fish: line of 3
+    const before = at(r.state, 0, 7)!;
+    const cells = placementCells(r.state, r.state.pending[0], { x: 0, y: 6 }, 'v');
+    expect(cells).toEqual([{ x: 0, y: 6 }, { x: 0, y: 7 }]);
+    const aim = previewPlacements(r.state, [{ x: -1, y: 7 }], 'h');
+    expect(aim.cells).toEqual([{ x: 0, y: 7 }, { x: 1, y: 7 }]);
+    r = place(r.state, { x: 0, y: 6 }, c, 'v');
+    expect(r.state.phase).toBe('player');
+    expect(r.events.some((e) => e.event.type === 'damaged' && e.event.uids.includes(before.uid))).toBe(true);
+  });
+
   it('Abstain deals 10 damage to one tile; Many Fish 1 damage to a line of 3', () => {
     let r = useAbility(withAbilities, 2, c);
     expect(r.state.pending[0]).toMatchObject({ target: { type: 'anywhere' }, damage: 10 });
     r = place(r.state, { x: 3, y: 3 }, c);
     r = useAbility(r.state, 3, c);
-    expect(() => place(r.state, { x: 0, y: 6 }, c, 'v')).toThrow(); // runs off the board
+    expect(() => place(r.state, { x: 0, y: 8 }, c, 'v')).toThrow(); // entirely off the board
     r = place(r.state, { x: 0, y: 1 }, c, 'v');
     expect(r.state.phase).toBe('player');
   });
